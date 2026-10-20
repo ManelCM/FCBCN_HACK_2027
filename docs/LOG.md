@@ -11,6 +11,21 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-20 (noche 4) — Manel (con agente)
+- Hecho:
+  - Humo en datos reales (lo ejecutó Manel, solo agregados, E005): pipeline validado (el baseline s50 da 0,3256 en los 5 min públicos, igual que EVALUATION.md). L1 da 0,469 en esos 5 min (solo humo).
+  - **Hallazgo del ATD** (E005-E006): el balón falta en ~134 huecos largos (> 4 s) que cubren el 41 % de lo evaluado. Son una mezcla de parón y juego vivo (56 % D en la ventana pública), y dentro de ellos los jugadores van más lentos (0,97 frente a 1,62 m/s). El Smart Tagging solo coincide con el final del 13 % de los huecos.
+  - Banco **v2** recalibrado con huecos largos (E006). L3 = LightGBM (46 features por frame) + Viterbi: **0,502** dejando un partido fuera en v2, frente a 0,300 del baseline y 0,326 de L1 (E007-E010). Sin Smart Tagging (aporta +0,008, ruido). ADR-0007: L3 es la entrega principal y el baseline la reserva. Modelo versionado en `src/hackbarca/models/artifacts/` (gzip determinista).
+  - T8 (E009): la pérdida está en la **segmentación de equipo** (con equipo perfecto, 0,87), no en el D (0,58) ni en el retraso de las fronteras (óptimo en 0).
+- Pendiente:
+  - **Ejecutar el humo de L3** sobre los datos reales (`make_submission --model l3`).
+  - Mejorar la segmentación de equipo: features de trayectoria del balón y de presión, más capacidad o un modelo secuencial, HSMM con prior de duración. Más partidos de entrenamiento (DFL).
+  - Abrir la PR `t5-banco-externo` → `main` (contiene T1-T8 y la rama `docs-log-t1`) y revisar los ADR 0001-0007.
+  - Los informes "huérfanos" de `external/.../evaluation/reports/` son la salida por defecto de `run_evaluation.py` (escribe dentro del submódulo). Ahora lo redirigimos a `submissions/` (ignorado). Quien los generó puede borrarlos del submódulo.
+- Bloqueos / preguntas para el equipo:
+  - Nombre exacto del equipo para `submissions/<equipo>.csv`.
+  - DFL (figshare) solo se descarga con navegador.
+
 ## 2026-10-20 (noche 3) — Manel (con agente)
 - Hecho:
   - T2-T4 revisados (`load_match`, wrapper de evaluación, baseline de reserva). Corregido T4: sugería puntuar con `--gt private`, que **solo existe en la máquina de la organización**. Nunca tendremos el spellF1 del partido completo: solo los 5 min públicos (humo) y el banco externo.
