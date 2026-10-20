@@ -13,8 +13,8 @@ __pycache__/
 .ipynb_checkpoints/
 *.egg-info/
 
-# Modelos / artefactos pesados
-models/
+# Modelos / artefactos pesados (solo en la raiz, no src/hackbarca/models)
+/models/
 *.pkl
 *.joblib
 *.parquet
