@@ -50,7 +50,18 @@ def main(argv=None) -> int:
     parser.add_argument("--trials", type=int, default=40)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--no-tags", action="store_true", help="ablation: sin Smart Tagging")
+    parser.add_argument("--num-leaves", type=int, default=None)
+    parser.add_argument("--min-leaf", type=int, default=None)
+    parser.add_argument("--rounds", type=int, default=None)
     args = parser.parse_args(argv)
+
+    from hackbarca.models import l3
+    if args.num_leaves:
+        l3.LGB_PARAMS["num_leaves"] = args.num_leaves
+    if args.min_leaf:
+        l3.LGB_PARAMS["min_data_in_leaf"] = args.min_leaf
+    if args.rounds:
+        l3.N_ROUNDS = args.rounds
 
     games = load_bench(use_tags=not args.no_tags)
     gts = [gt for _, gt in games]
@@ -64,6 +75,8 @@ def main(argv=None) -> int:
             imp = sorted(zip(model.feature_importance("gain"), model.feature_name()), reverse=True)
             print("importancia (gain) top 15: " + ", ".join(n for _, n in imp[:15]))
     name = "oof_l3_notags.npz" if args.no_tags else "oof_l3.npz"
+    if args.num_leaves or args.min_leaf or args.rounds:
+        name = name.replace(".npz", "_nl{}_ml{}_r{}.npz".format(args.num_leaves, args.min_leaf, args.rounds))
     np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
                         **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
 
