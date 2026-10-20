@@ -11,6 +11,14 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-21 — Manel (con agente)
+- Hecho:
+  - Humo de L3 en datos reales (E011): 0,5875 en los 5 min públicos (L1 0,4686, baseline 0,3256).
+  - **Nombre del equipo: `La MasIA`.** SUBMISSION.md exige `La MasIA.csv` y `La MasIA.pdf` (el evaluador pone el nombre del fichero en el ranking).
+- Pendiente:
+  - Generar la entrega: `uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA"`.
+  - Documento técnico `La MasIA.pdf`, repo público y formulario (antes del 17 nov).
+
 ## 2026-10-20 (noche 4) — Manel (con agente)
 - Hecho:
   - Humo en datos reales (lo ejecutó Manel, solo agregados, E005): pipeline validado (el baseline s50 da 0,3256 en los 5 min públicos, igual que EVALUATION.md). L1 da 0,469 en esos 5 min (solo humo).
