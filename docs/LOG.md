@@ -11,6 +11,23 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-20 (noche 2) — Manel (con agente)
+- Hecho:
+  - **Limpieza de atribución de IA**: `git filter-branch` sobre `main` para quitar los `Co-Authored-By` que quedaron en 6 commits antiguos, y `push --force` a `origin/main`. **Los compañeros necesitan `git fetch` + resetear sus ramas locales a `origin/main` o su próximo push chocará.**
+  - **T1 completado** (rama `t1-entorno-uv`, PR pendiente de abrir manualmente en GitHub — `gh` no disponible en este entorno): `pyproject.toml` + `uv.lock` (Python 3.11, kloppy==3.18.0, pandas<3, lightgbm, scikit-learn, matplotlib, pytest) y estructura `src/hackbarca/{io,features,models,decode,eval,pipeline}`. Verificado con `uv sync` + `uv run pytest` desde cero.
+  - **Bug encontrado y arreglado** en `.gitignore`: la regla `models/` (pensada para artefactos de modelos entrenados en la raíz) no estaba anclada y también ignoraba `src/hackbarca/models/`, nuestro paquete de código — se habría perdido silenciosamente. Corregido a `/models/` en la misma rama.
+  - Verificados por `test -f` (sin leer contenido) los 5 ficheros tácticos imprescindibles en `data/tactical/`: todos presentes.
+  - Leída toda la documentación propia + repo oficial (`possession_metrics.py` incluido). Hallazgo importante: **ningún ADR está formalmente aceptado** (los 5 siguen en estado "Propuesta", sin revisiones marcadas) pese a que ya actuamos como si 0002/0004 estuvieran en vigor.
+  - Hallazgo: hay outputs de `run_evaluation.py` en `external/.../evaluation/reports/` y `scoreboard.csv` que nadie ha documentado en `docs/experimentos.md` — alguien ya corrió el scorer oficial y no dejó registro.
+- Pendiente:
+  - Abrir la PR de `t1-entorno-uv` → `main` en GitHub (rama ya empujada).
+  - **Aprobar formalmente los ADR 0001-0005** (marcar revisores).
+  - Averiguar quién generó los reports huérfanos de `run_evaluation.py` y documentarlos en `experimentos.md`, o reproducirlos y documentarlos yo.
+  - T2 (load_match), T3 (evaluación local), T4 (reproducir baseline oficial) — siguientes en la cola.
+- Bloqueos / preguntas para el equipo:
+  - **Importante**: tras el `push --force` a `main`, cualquiera con cambios locales basados en el `main` antiguo debe hacer `git fetch origin && git reset --hard origin/main` (o rebase) en su copia **antes** de volver a hacer push, si no divergirá.
+  - T4 (reproducir baseline oficial sobre datos reales) necesita que una persona ejecute el comando — el agente no puede tocar `data/` (ADR-0004).
+
 ## 2026-10-20 (noche) — Manel
 - Hecho:
   - Repo movido a `C:\dev\hack_barca` (fuera de OneDrive, sin `ç`). La copia antigua del Escritorio queda obsoleta.
