@@ -18,11 +18,11 @@ externo calibrado v2, más el humo de los 5 min públicos para comprobar que el 
 ## Decisión
 - Entrega principal: **L3 sin Smart Tagging**.
   `uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name <equipo>`
-- El modelo se **versiona** (`src/hackbarca/models/artifacts/l3_lgbm.txt`, 3,1 MB) junto con su
+- El modelo se **versiona** (`src/hackbarca/models/artifacts/l3_lgbm.txt.gz`, 7,6 MB) junto con su
   decodificación (`l3_decode.json`). La entrega exige reproducir el fichero exacto, y no queremos
   depender de que LightGBM entrene bit a bit igual en otra máquina. Se regenera con
   `train_l3_final` (determinista: dos entrenamientos dan el mismo sha256; tras E010 el artefacto
-  es el de 127 hojas, `21b33679…` generado en Windows).
+  es el de 127 hojas, guardado como `l3_lgbm.txt.gz` determinista, sha256 `e8a5c4f6…`).
 - Reserva: el baseline s50 (`--model baseline`).
 
 ## Justificación
