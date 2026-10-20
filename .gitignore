@@ -1,0 +1,28 @@
+# Datos del reto: NUNCA en git (ADR-0002)
+data/*
+!data/README.md
+submissions/
+*.mp4
+*.avi
+*.mkv
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Modelos / artefactos pesados
+models/
+*.pkl
+*.joblib
+*.parquet
+
+# SO / IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+.env
