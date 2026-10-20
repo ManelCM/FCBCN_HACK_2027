@@ -69,9 +69,11 @@ def main(argv=None):
     print("Validacion OK: {} filas, {} posesiones declaradas de duracion media {:.1f}s".format(
         result.n_rows, result.n_spells, result.mean_spell_duration_s))
     print("Recuento de labels: {}".format(result.label_counts))
-    print("\nSiguiente paso: puntuarlo con el scorer oficial (lee solo CSVs, no necesita data/):")
-    print("    cd external/more-than-a-hack-2027 && python evaluation/run_evaluation.py "
-          "--results ../../submissions --gt private")
+    # La GT del partido completo ('--gt private') solo existe en la maquina de la organizacion:
+    # nosotros solo podemos puntuar contra los 5 min publicos, que sirven de humo, no para elegir.
+    print("\nComprobacion de humo con la GT publica de 5 min (no sirve para elegir modelos):")
+    print("    cd external/more-than-a-hack-2027/evaluation && uv run python run_evaluation.py "
+          "--results ../../../submissions --out ../../../submissions --gt public --no-detail")
     return 0
 
 
