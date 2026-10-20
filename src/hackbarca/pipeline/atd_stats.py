@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import warnings
 
 import numpy as np
 
@@ -31,10 +32,75 @@ def _runs(mask: np.ndarray) -> np.ndarray:
 
 
 def _pct(values, qs=(10, 50, 90)) -> str:
+    values = np.asarray(values, dtype=float)
+    values = values[~np.isnan(values)]
     if len(values) == 0:
         return "n=0"
     return "n={} ".format(len(values)) + " ".join(
         "p{}={:.0f}".format(q, np.percentile(values, q)) for q in qs)
+
+
+LONG_GAP = 100
+
+
+def collective_speed(match) -> np.ndarray:
+    """Mediana por frame de la velocidad (m/s) de los jugadores, derivada de posiciones a 1 s."""
+    lag = match.fps
+    vx = match.players_x[lag:] - match.players_x[:-lag]
+    vy = match.players_y[lag:] - match.players_y[:-lag]
+    out = np.full(match.n_frames, np.nan)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)  # frames sin ningun jugador
+        out[lag // 2:lag // 2 + len(vx)] = np.nanmedian(np.sqrt(vx * vx + vy * vy), axis=1)
+    return out
+
+
+def _near_boundary(x, y, match, margin=3.0):
+    return ((x < margin) | (x > match.pitch_length - margin) |
+            (y < margin) | (y > match.pitch_width - margin))
+
+
+def long_gap_report(match, graded: np.ndarray, windows=None, gt=None) -> None:
+    """Son parones los huecos largos sin balon? Solo agregados."""
+    missing = np.isnan(match.ball_x)
+    edges = np.diff(np.concatenate(([0], missing.astype(np.int8), [0])))
+    gaps = [(a, b) for a, b in zip(np.flatnonzero(edges == 1), np.flatnonzero(edges == -1))
+            if b - a > LONG_GAP and graded[a:b].any() and a > 0 and b < match.n_frames]
+    in_long = np.zeros(match.n_frames, dtype=bool)
+    for a, b in gaps:
+        in_long[a:b] = True
+    speed = collective_speed(match)
+    visible_players = (~np.isnan(match.players_x)).sum(1)
+    print("-- huecos largos (> {} frames): n={} cubren {:.3f} de lo evaluado".format(
+        LONG_GAP, len(gaps), (in_long & graded).sum() / max(graded.sum(), 1)))
+    if not gaps:
+        return
+    print("velocidad colectiva mediana (m/s): en hueco largo={:.2f}  con balon={:.2f}".format(
+        np.nanmedian(speed[in_long & graded]), np.nanmedian(speed[~missing & graded])))
+    print("jugadores visibles mediana: en hueco largo={:.0f}  con balon={:.0f}".format(
+        np.median(visible_players[in_long & graded]), np.median(visible_players[~missing & graded])))
+    before = np.array([_near_boundary(match.ball_x[a - 1], match.ball_y[a - 1], match) for a, _ in gaps])
+    after = np.array([_near_boundary(match.ball_x[b], match.ball_y[b], match) for _, b in gaps])
+    print("balon a < 3 m de una linea: justo antes del hueco={:.2f}  justo despues={:.2f}".format(
+        before.mean(), after.mean()))
+    # velocidad en los primeros/ultimos 2 s del hueco frente al centro: un paron se "calma"
+    mid = [np.nanmedian(speed[a + (b - a) // 4:b - (b - a) // 4]) for a, b in gaps]
+    print("velocidad colectiva mediana en el centro de cada hueco: " + _pct(np.array(mid) * 100, (10, 50, 90))
+          + "  (cm/s)")
+    if windows:
+        starts = np.array([s for s, _ in windows])
+        ends = np.array([b for _, b in gaps])
+        tagged = np.mean([np.any((starts >= b - 75) & (starts <= b + 250)) for b in ends])
+        print("huecos largos con un SET PIECE que empieza en [fin-3 s, fin+10 s]: {:.2f} ({} SET PIECES)".format(
+            tagged, len(windows)))
+    if gt is not None:
+        alive = (gt == pm.H) | (gt == pm.A)
+        dead = gt == pm.D
+        print("con GT: velocidad colectiva mediana vivo={:.2f}  muerto={:.2f} (m/s)".format(
+            np.nanmedian(speed[alive]), np.nanmedian(speed[dead])))
+        if in_long[alive | dead].any():
+            print("con GT: frames de hueco largo que son muerto={:.3f}".format(
+                np.mean(dead[in_long & (alive | dead)])))
 
 
 def describe(match, gt: np.ndarray | None, graded: np.ndarray, title: str) -> None:
@@ -83,21 +149,30 @@ def main(argv=None) -> int:
 
     if args.bench:
         from hackbarca.io.degrade import degrade
-        from hackbarca.io.external import load_metrica_bench
-        for i, game in enumerate(("1", "2", "3")):
+        from hackbarca.io.external import load_metrica_bench, metrica_events
+        from hackbarca.io.smart_tagging import simulate_set_piece_windows
+        from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES
+        for i, game in enumerate(BENCH_GAMES):
             match, gt = load_metrica_bench(game)
-            describe(degrade(match, seed=i), gt, gt != pm.X, "metrica game {} degradado".format(game))
+            degraded = degrade(match, BENCH_DEGRADE, seed=i)
+            windows = simulate_set_piece_windows(metrica_events(game), seed=i)
+            describe(degraded, gt, gt != pm.X, "metrica game {} degradado".format(game))
+            long_gap_report(degraded, gt != pm.X, windows, gt)
         return 0
 
     from hackbarca.io.load_match import load_match
+    from hackbarca.io.smart_tagging import set_piece_windows
     match = load_match()
+    windows = set_piece_windows()
     graded = np.zeros(match.n_frames, dtype=bool)
     for start, stop in GRADED:
         graded[start:stop] = True
     public = load_gt_codes(PUBLIC_GT)
     describe(match, None, graded, "ATD BAR-ATH partido completo (sin GT)")
+    long_gap_report(match, graded, windows)
     window = public != pm.X
     describe(match, public, window, "ATD BAR-ATH ventana publica 5 min (GT publica)")
+    long_gap_report(match, window, windows, np.where(window, public, pm.X))
     return 0
 
 
