@@ -13,7 +13,7 @@ externo calibrado v2, más el humo de los 5 min públicos para comprobar que el 
 1. **Baseline oficial s50**: banco v2 0,300. Seguro, pero es el suelo.
 2. **L1** (reglas + Viterbi): banco v2 0,326 (+0,026, en el límite del ruido).
 3. **L3 con Smart Tagging**: banco v2 0,486.
-4. **L3 sin Smart Tagging**: banco v2 0,479.
+4. **L3 sin Smart Tagging**: banco v2 0,479; con más capacidad (E010) **0,502**.
 
 ## Decisión
 - Entrega principal: **L3 sin Smart Tagging**.
@@ -21,7 +21,8 @@ externo calibrado v2, más el humo de los 5 min públicos para comprobar que el 
 - El modelo se **versiona** (`src/hackbarca/models/artifacts/l3_lgbm.txt`, 3,1 MB) junto con su
   decodificación (`l3_decode.json`). La entrega exige reproducir el fichero exacto, y no queremos
   depender de que LightGBM entrene bit a bit igual en otra máquina. Se regenera con
-  `train_l3_final` (determinista: dos entrenamientos dan el mismo sha256 `fbce83ed…`).
+  `train_l3_final` (determinista: dos entrenamientos dan el mismo sha256; tras E010 el artefacto
+  es el de 127 hojas, `21b33679…` generado en Windows).
 - Reserva: el baseline s50 (`--model baseline`).
 
 ## Justificación
