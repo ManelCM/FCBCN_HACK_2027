@@ -7,6 +7,7 @@
 - Commits pequeños, con este formato: `tipo(área): descripción`.
   - tipos: `feat`, `fix`, `exp` (experimento), `docs`, `data` (scripts de datos), `refactor`, `chore`
   - ejemplo: `exp(posesion): baseline vecino más cercano + histéresis 0.4s → 81.2% acc val`
+- **Sin atribución de IA en commits ni PRs** (nada de `Co-Authored-By: Claude`). Configurado en `.claude/settings.json`.
 - Antes de abrir una PR: `git fetch && git rebase origin/main`.
 - La PR se rellena con la plantilla (`.github/pull_request_template.md`): qué, por qué, cómo se ha validado y qué ADR/experimento la respalda.
 
