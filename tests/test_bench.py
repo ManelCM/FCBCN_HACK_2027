@@ -67,6 +67,29 @@ def test_nearest_team_and_baseline():
     assert (pred[100:200] == 2).all()
 
 
+def test_long_ball_model_makes_few_long_gaps():
+    match = _synthetic_match(n=20000)
+    params = DegradeParams(ball_model="long", gap_median=200, short_gap_frac=0.0,
+                           ball_drop_rate=0.4, dead_ball_visible=1.0)
+    a, b = degrade(match, params, seed=3), degrade(match, params, seed=3)
+    missing = np.isnan(a.ball_x)
+    np.testing.assert_array_equal(missing, np.isnan(b.ball_x))
+    edges = np.diff(np.concatenate(([0], missing.astype(np.int8), [0])))
+    lengths = np.flatnonzero(edges == -1) - np.flatnonzero(edges == 1)
+    assert np.median(lengths) > 80
+    assert 0.2 < missing.mean() < 0.6
+
+
+def test_swap_teams_is_an_involution():
+    from hackbarca.features.frame_features import frame_features, swap_teams
+    df = frame_features(_synthetic_match(n=600), windows=[(100, 225)])
+    back = swap_teams(swap_teams(df))
+    np.testing.assert_allclose(back.to_numpy(), df.to_numpy(), equal_nan=True)
+    swapped = swap_teams(df)
+    np.testing.assert_allclose(swapped["d1_h"], df["d1_a"], equal_nan=True)
+    np.testing.assert_allclose(swapped["near_sign"], -df["near_sign"], equal_nan=True)
+
+
 def test_degrade_is_deterministic_and_anonymous():
     match = _synthetic_match()
     params = DegradeParams(ball_drop_rate=0.3, tracklet_mean=200)

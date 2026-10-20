@@ -25,6 +25,14 @@ class DegradeParams:
     # En el tracking limpio el balon falta casi solo con balon muerto; el automatico lo sigue
     # viendo en parte de los parones. Prob. de que cada racha sin balon pase a visible.
     dead_ball_visible: float = 0.0
+    # "bursty" (E002): rachas geometricas. "long" (E006): como el ATD real, pocos huecos largos
+    # (mezcla corto/lognormal) y mas probables con balon muerto.
+    ball_model: str = "bursty"
+    gap_median: float = 268.0          # frames, componente lognormal (modelo "long")
+    gap_sigma: float = 0.9
+    short_gap_frac: float = 0.2
+    short_gap_mean: float = 10.0
+    dead_weight: float = 1.0           # cuanto mas probable es abrir un hueco con balon muerto
     # Jugadores: tracklets con huecos, reasignados a slots sin identidad.
     tracklet_mean: float = 750.0       # frames (30 s)
     player_gap_mean: float = 25.0      # frames
@@ -33,11 +41,25 @@ class DegradeParams:
     slots_per_team: int = 23           # 46 slots en el ATD tactico
 
 
-def _bursty_mask(rng, n: int, start_prob: np.ndarray, gap_mean: float) -> np.ndarray:
+def _long_lengths(rng, size: int, p: "DegradeParams") -> np.ndarray:
+    short = rng.random(size) < p.short_gap_frac
+    lengths = np.round(np.exp(rng.normal(np.log(p.gap_median), p.gap_sigma, size))).astype(np.int64)
+    lengths[short] = rng.geometric(1.0 / max(p.short_gap_mean, 1.0), size=int(short.sum()))
+    return np.maximum(lengths, 1)
+
+
+def _mean_long_length(p: "DegradeParams") -> float:
+    return ((1 - p.short_gap_frac) * p.gap_median * np.exp(p.gap_sigma ** 2 / 2)
+            + p.short_gap_frac * p.short_gap_mean)
+
+
+def _bursty_mask(rng, n: int, start_prob: np.ndarray, gap_mean: float,
+                 lengths: np.ndarray | None = None) -> np.ndarray:
     """Mascara True en rachas: en cada frame libre empieza un hueco con prob. start_prob[t]."""
     mask = np.zeros(n, dtype=bool)
     starts = np.flatnonzero(rng.random(n) < start_prob)
-    lengths = rng.geometric(1.0 / max(gap_mean, 1.0), size=len(starts))
+    if lengths is None:
+        lengths = rng.geometric(1.0 / max(gap_mean, 1.0), size=len(starts))
     end_prev = 0
     for s, length in zip(starts, lengths):
         if s < end_prev:
@@ -77,6 +99,8 @@ def degrade(match: MatchTracking, params: DegradeParams = DegradeParams(),
     visible = ~np.isnan(match.ball_x)
     occluded = visible & (_nearest_distance(match) < params.occlusion_radius)
     weight = np.where(occluded, params.occlusion_boost, 1.0)
+    if params.ball_model == "long":
+        return _degrade_players(rng, match, params, *_long_ball(rng, match, params, visible, weight))
     # p tal que la fraccion borrada ~ ball_drop_rate: rate ~= p * gap / (1 + p * gap)
     rate = min(params.ball_drop_rate, 0.95)
     base = rate / ((1.0 - rate) * params.ball_gap_mean * np.mean(weight[visible]) + 1e-12)
@@ -87,7 +111,28 @@ def degrade(match: MatchTracking, params: DegradeParams = DegradeParams(),
     ball_y[drop] = np.nan
     if params.dead_ball_visible > 0:
         _reveal_gaps(rng, ball_x, ball_y, ~visible, params.dead_ball_visible, params.ball_noise)
+    return _degrade_players(rng, match, params, ball_x, ball_y)
 
+
+def _long_ball(rng, match: MatchTracking, params: DegradeParams, visible, weight):
+    """Modelo "long": se rellenan los huecos limpios (el ATD ve el balon en casi todos los
+    parones) y se borran huecos largos, mas probables donde el limpio no tenia balon (~muerto)."""
+    n = match.n_frames
+    ball_x = match.ball_x + rng.normal(0, params.ball_noise, n)
+    ball_y = match.ball_y + rng.normal(0, params.ball_noise, n)
+    _reveal_gaps(rng, ball_x, ball_y, ~visible, params.dead_ball_visible, params.ball_noise)
+    weight = np.where(visible, weight, params.dead_weight)
+    rate = min(params.ball_drop_rate, 0.95)
+    base = rate / ((1.0 - rate) * _mean_long_length(params) * np.mean(weight) + 1e-12)
+    start_prob = np.clip(base * weight, 0, 1)
+    drop = _bursty_mask(rng, n, start_prob, 0, lengths=_long_lengths(rng, n, params))
+    ball_x[drop] = np.nan
+    ball_y[drop] = np.nan
+    return ball_x, ball_y
+
+
+def _degrade_players(rng, match: MatchTracking, params: DegradeParams, ball_x, ball_y):
+    n = match.n_frames
     # --- jugadores: tracklets -> slots ---
     px = match.players_x + rng.normal(0, params.player_noise, match.players_x.shape)
     py = match.players_y + rng.normal(0, params.player_noise, match.players_y.shape)
