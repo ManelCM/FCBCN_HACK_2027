@@ -73,7 +73,7 @@ def main(argv=None):
     # nosotros solo podemos puntuar contra los 5 min publicos, que sirven de humo, no para elegir.
     print("\nComprobacion de humo con la GT publica de 5 min (no sirve para elegir modelos):")
     print("    cd external/more-than-a-hack-2027/evaluation && uv run python run_evaluation.py "
-          "--results ../../../submissions --out ../../../submissions --gt public --no-detail")
+          "--results ../../../submissions --out ../../../submissions/reports --gt public --no-detail")
     return 0
 
 
