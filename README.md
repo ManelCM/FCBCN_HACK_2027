@@ -16,7 +16,7 @@ Más detalles en [docs/00_reto.md](docs/00_reto.md).
 ## Puesta en marcha
 
 ```bash
-git clone --recursive <url-de-nuestro-repo>          # trae el repo oficial en external/
+git clone --recursive https://github.com/ManelCM/FCBCN_HACK_2027.git C:/dev/hack_barca   # trae el repo oficial en external/
 # Datos del reto (tras inscribirse): descomprimir en data/  → ver data/README.md
 ```
 
