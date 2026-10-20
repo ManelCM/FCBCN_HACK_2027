@@ -29,3 +29,6 @@ desktop.ini
 
 # Config local de Claude Code (personal)
 .claude/settings.local.json
+
+# Datos abiertos externos (DFL/IDSSE, Metrica sample): se descargan, no se versionan
+/external_data/

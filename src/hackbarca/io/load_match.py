@@ -61,6 +61,7 @@ class MatchTracking:
     ball_x: np.ndarray
     ball_y: np.ndarray
     ball_speed: np.ndarray
+    period: np.ndarray | None = None  # (n_frames,) 1/2, 0 sin dato; None si se desconoce
 
     @property
     def n_slots(self) -> int:
