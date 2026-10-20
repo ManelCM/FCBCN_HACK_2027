@@ -11,6 +11,19 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-20 (noche 3) — Manel (con agente)
+- Hecho:
+  - T2-T4 revisados (`load_match`, wrapper de evaluación, baseline de reserva). Corregido T4: sugería puntuar con `--gt private`, que **solo existe en la máquina de la organización**. Nunca tendremos el spellF1 del partido completo: solo los 5 min públicos (humo) y el banco externo.
+  - T5: banco externo con Metrica sample-data (3 partidos, ~1.140 posesiones), GT H/A/D derivada de eventos, simulador de degradación tipo ATD **calibrado** para que el baseline reproduzca los 8 números publicados (ADR-0006, E001-E002). DFL bloqueado: figshare no deja descargar sin navegador.
+  - T6: L1 = reglas + Viterbi + ventanas de reanudación del Smart Tagging. spellF1 0,363 dejando un partido fuera, frente a 0,293 del baseline s50 en el mismo banco (E003-E004).
+  - Comando único de entrega: `make_submission --model {baseline,l1}`, determinista y con validación.
+- Pendiente:
+  - **Que una persona ejecute** sobre los datos reales (solo imprimen agregados): `atd_stats` y `make_submission` para baseline y L1, y el humo con la GT pública. Comandos en la PR de `t5-banco-externo`.
+  - T7 (LightGBM + Viterbi), T8 (análisis de errores). Refinar la calibración (2 parámetros en el borde de la rejilla).
+- Bloqueos / preguntas para el equipo:
+  - Nombre exacto del equipo (el del formulario) para `submissions/<equipo>.csv`.
+  - Si alguien puede bajar con navegador los 21 ficheros DFL de figshare a `external_data/dfl/<match_id>/{meta,event,tracking}.xml`, el banco pasa de 3 a 10 partidos.
+
 ## 2026-10-20 (noche 2) — Manel (con agente)
 - Hecho:
   - **Limpieza de atribución de IA**: `git filter-branch` sobre `main` para quitar los `Co-Authored-By` que quedaron en 6 commits antiguos, y `push --force` a `origin/main`. **Los compañeros necesitan `git fetch` + resetear sus ramas locales a `origin/main` o su próximo push chocará.**
