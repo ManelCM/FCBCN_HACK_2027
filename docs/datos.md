@@ -17,19 +17,24 @@ data/
 └─ broadcast/                                  opcional, NO sincronizado con el táctico
    ├─ BAR-ATH_broadcast.mp4 · _atd.xml · _atd.txt · _homography.csv
 ```
-Alternativa recomendada: guardar los datos **fuera del repo y fuera de OneDrive** y apuntar a ellos con `MTAH_DATA_DIR=<ruta>`, que leen `games.py` y nuestro código.
+## Configuración acordada
+- Repo clonado en una **ruta ASCII fuera de OneDrive** (p. ej. `C:\dev\hack_barca`). OneDrive no debe sincronizar datos restringidos y la `ç` daba problemas de codificación en Windows.
+- Datos en `<repo>/data/` (ignorado por git y bloqueado a los agentes en `.claude/settings.json`).
+- Variable de entorno de usuario **`MTAH_DATA_DIR=<repo>\data`**, para que `games.py` del repo oficial encuentre los datos sin copiarlos a `external/`.
 
 ## Inventario (Manel, 2026-10-20)
-Solo nombres y tamaños; los zips pasan la comprobación de integridad (CRC).
+Solo nombres y tamaños. Los zips pasan la comprobación CRC.
 
 | Fichero | Estado |
 |---|---|
-| tactical `atd.xml`, `atd.txt`, `homography.csv`, `smart_tagging.xml` | ✅ descargados → **tenemos todo lo imprescindible** |
-| broadcast `atd.xml`, `homography.csv` | ✅ |
-| broadcast `atd.txt` | ❌ falta (seguramente la parte `-009`). Es opcional |
-| `tactical.mp4`, `broadcast.mp4` | ⏳ descarga en curso (`.opdownload`); hay duplicados por reintentos |
+| tactical `atd.xml`, `atd.txt`, `homography.csv`, `smart_tagging.xml` | ✅ en `data/tactical/` → **tenemos todo lo imprescindible** |
+| Alineación oficial (`check_alignment_raw`) | ✅ 199.319 registros = 199.319 frames, contiguos |
+| broadcast `atd.xml`, `homography.csv` | ✅ en `data/broadcast/` |
+| broadcast `atd.txt` | ❌ falta (parte `-009` del zip de Drive). Opcional |
+| `tactical.mp4` | ⏳ descargando. Opcional para el modelo, útil para depurar a ojo (solo personas) |
+| `broadcast.mp4` | ❌ descarga parada. Opcional |
 
-Comprobación tras descomprimir (la hace una persona): `python external/more-than-a-hack-2027/starter/load_atd.py` → debe decir `OK -- one record per video frame`.
+Comprobación: `python external/more-than-a-hack-2027/starter/load_atd.py` → `OK -- one record per video frame`.
 
 ## Entorno verificado
 - Python 3.11 + `kloppy==3.18.0` + numpy/pandas/lightgbm/sklearn instalan con uv (fijar `pandas<3`).

@@ -11,6 +11,16 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-20 (noche) — Manel
+- Hecho:
+  - Repo movido a `C:\dev\hack_barca` (fuera de OneDrive, sin `ç`). La copia antigua del Escritorio queda obsoleta.
+  - Datos descomprimidos en `data/` y `MTAH_DATA_DIR` configurada. Alineación oficial OK (199.319/199.319). Inventario en `docs/datos.md`.
+  - Entorno verificado: Python 3.11, kloppy 3.18, LightGBM y el scorer oficial.
+- Pendiente:
+  - Bajar de Drive la parte `-009` (broadcast `atd.txt`) y los vídeos (opcionales).
+  - Crear el remoto en GitHub y hacer push.
+- Bloqueos: ninguno para empezar a trabajar.
+
 ## 2026-10-20 (tarde) — Manel
 - Hecho:
   - Leídas las bases oficiales (repo `metrica-sports/more-than-a-hack-2027`). `00_reto.md`, la investigación y la estrategia se han reescrito con ellas.
