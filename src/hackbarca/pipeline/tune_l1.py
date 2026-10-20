@@ -16,8 +16,9 @@ import numpy as np
 from hackbarca.decode.viterbi import decode_runs, transition_costs
 from hackbarca.eval.bench import pm, pooled
 from hackbarca.io.degrade import degrade
-from hackbarca.io.external import load_metrica_bench
-from hackbarca.models.l1 import EPS, L1Params, interpolate_ball, team_distances
+from hackbarca.io.external import load_metrica_bench, metrica_events
+from hackbarca.io.smart_tagging import simulate_set_piece_windows
+from hackbarca.models.l1 import EPS, L1Params, apply_tags, interpolate_ball, team_distances
 from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES
 
 GAPS = (10, 25, 50, 100)
@@ -32,14 +33,18 @@ def sample_params(rng) -> L1Params:
         switch=float(np.exp(rng.uniform(np.log(5), np.log(400)))),
         to_dead=float(np.exp(rng.uniform(np.log(5), np.log(200)))),
         from_dead=float(np.exp(rng.uniform(np.log(5), np.log(200)))),
+        tag_before=int(rng.integers(25, 400)),
+        p_tag_before=float(rng.uniform(0.3, 0.95)) if rng.random() < 0.75 else 0.0,
+        p_tag_in=float(rng.uniform(0.05, 0.7)),
     )
 
 
 class CachedGame:
     """Partido degradado con distancias precalculadas por max_gap (lo caro de las emisiones)."""
 
-    def __init__(self, match, gt):
+    def __init__(self, match, gt, windows=None):
         self.match, self.gt, self.runs = match, gt, pm.valid_runs(gt)
+        self.windows = windows
         self.cache = {}
 
     def features(self, max_gap):
@@ -57,6 +62,7 @@ class CachedGame:
         known, diff, out = self.features(p.max_gap)
         p_home = np.where(known, 1.0 / (1.0 + np.exp(-diff / p.dist_scale)), 0.5)
         p_dead = np.where(known, np.where(out, p.p_dead_out, p.p_dead_visible), p.p_dead_gap)
+        p_dead = apply_tags(p_dead, self.windows, p)
         probs = np.stack([(1 - p_dead) * p_home, (1 - p_dead) * (1 - p_home), p_dead], axis=1)
         trans = transition_costs(p.switch, p.to_dead, p.from_dead)
         return decode_runs(-np.log(probs + EPS), trans, self.runs)
@@ -71,7 +77,8 @@ def main(argv=None) -> int:
     games = []
     for i, game in enumerate(BENCH_GAMES):
         match, gt = load_metrica_bench(game)
-        games.append(CachedGame(degrade(match, BENCH_DEGRADE, seed=i), gt))
+        windows = simulate_set_piece_windows(metrica_events(game), seed=i)
+        games.append(CachedGame(degrade(match, BENCH_DEGRADE, seed=i), gt, windows))
 
     rng = np.random.default_rng(args.seed)
     trials = [L1Params()] + [sample_params(rng) for _ in range(args.trials)]
