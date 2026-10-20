@@ -26,3 +26,6 @@ desktop.ini
 .vscode/
 .idea/
 .env
+
+# Config local de Claude Code (personal)
+.claude/settings.local.json

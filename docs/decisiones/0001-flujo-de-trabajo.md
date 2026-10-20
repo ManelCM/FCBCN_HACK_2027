@@ -22,5 +22,6 @@ Opción 2. Repositorio privado en GitHub, `main` protegida (PR + 1 aprobación) 
 - El coste (unos minutos por PR) es pequeño frente a 4 semanas de reto.
 
 ## Consecuencias
+- **Visibilidad**: el repo es **privado durante el desarrollo** y lo hacemos **público** (obligatorio según SUBMISSION.md) justo antes de entregar, tras comprobar que no contiene datos ni derivados frame a frame. Así no regalamos el enfoque a otros equipos durante el reto.
 - Hay que revisar PRs ajenas con prioridad (objetivo: menos de 12 h).
 - Las PRs triviales (typos en docs) pueden ir con *self-merge* si se avisa en el LOG.

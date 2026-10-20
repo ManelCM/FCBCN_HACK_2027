@@ -22,4 +22,6 @@ Python ≥ 3.11 con `uv`. Librerías base: `kloppy`, `databallpy`, `pandas`/`pol
 - LightGBM: buen rendimiento con features tabulares y poco ajuste.
 
 ## Consecuencias
-Fijar la versión de Python que funcione con todas las dependencias (ojo: algunas librerías pueden no tener *wheels* para 3.14 todavía; probablemente 3.12).
+- La organización fija **`kloppy==3.18.0`** para leer su EPTS y el scorer se prueba con Python 3.8 y 3.11 → usaremos **Python 3.11** (`uv python pin 3.11`) para ir sobre seguro.
+- El repo oficial se incluye como **submódulo git** en `external/more-than-a-hack-2027` (commit fijado) para usar su scorer, `games.py` y sus loaders sin copiarlos. Es MIT. Clonar con `git clone --recursive`.
+- La entrega debe regenerar **exactamente** el mismo fichero: `uv.lock`, semillas fijas y nada no determinista sin semilla.

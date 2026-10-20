@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./data/**)",
+      "Read(./submissions/**)",
+      "Read(./external/more-than-a-hack-2027/data/**)",
+      "Read(./external/more-than-a-hack-2027/evaluation/results/**)",
+      "Edit(./data/**)",
+      "Bash(cat data/*)",
+      "Bash(head data/*)",
+      "Bash(tail data/*)",
+      "Bash(less data/*)",
+      "Bash(grep * data/*)",
+      "Bash(cat submissions/*)",
+      "Bash(head submissions/*)"
+    ]
+  }
+}

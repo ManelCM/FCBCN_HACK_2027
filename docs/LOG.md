@@ -11,6 +11,17 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-20 (tarde) — Manel
+- Hecho:
+  - Leídas las bases oficiales (repo `metrica-sports/more-than-a-hack-2027`). `00_reto.md`, la investigación y la estrategia se han reescrito con ellas.
+  - Hallazgos clave: métrica **spellF1** (segmentación, fronteras a < 0,5 s), **sin leaderboard**, **prohibido enseñar los datos a LLMs en la nube** (incluido Claude), repo de entrega **público y reproducible exacto**.
+  - Nuevos ADR: 0004 (agentes ciegos a los datos) y 0005 (validación con datos externos). ADR 0001 y 0003 actualizados.
+  - Añadido el repo oficial como submódulo en `external/`.
+- Pendiente:
+  - **Aprobar el ADR-0004 antes de que nadie descargue los datos con un agente abierto.**
+  - Preguntas Q1-Q3 a la organización (issue o email).
+  - Verificar los campos de DFL open data y Metrica sample-data.
+
 ## 2026-10-20 — Manel
 - Hecho:
   - Investigación del reto (More Than A Hack 2027): calendario, fases, requisitos → `docs/00_reto.md`.

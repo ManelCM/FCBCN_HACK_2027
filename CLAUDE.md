@@ -2,6 +2,17 @@
 
 Trabajamos **3 personas en paralelo**, cada una con su agente. Este fichero es el contrato común para que todos los agentes vayan alineados.
 
+## ⛔ REGLA Nº 1 — Los agentes NO ven los datos del reto (ADR-0004)
+
+Las bases prohíben pasar a un LLM en la nube los datos del reto **o extractos de ellos**, y este agente es un LLM en la nube. Por tanto:
+- **Nunca** leas, hagas `cat`/`head`/`grep`, abras ni listes el contenido de ficheros en `data/` (ATD, XML, homografía, vídeo, Smart Tagging) ni de predicciones frame a frame (`submissions/`, `evaluation/results/*.csv` propios).
+- **Nunca** imprimas filas, DataFrames, arrays ni imágenes que vengan de esos datos. Los scripts que ejecutes sobre datos reales solo pueden sacar **métricas agregadas**, y mejor que los ejecute una persona.
+- Para desarrollar y probar, usa la documentación pública (DATA.md del repo oficial), **datos sintéticos**, **datos abiertos externos** (Metrica sample-data, DFL) y la **GT pública de 5 min** del repo oficial.
+- Si una tarea parece necesitar ver los datos, **para y pide a la persona** que lo mire ella.
+
+## Fuente de verdad del reto
+Repo oficial: https://github.com/metrica-sports/more-than-a-hack-2027. Resumen en `docs/00_reto.md`. La métrica es **spellF1** (segmentación en posesiones), no la accuracy: lee `docs/investigacion/01_posesion_estado_del_arte.md` §1 antes de proponer cualquier modelo.
+
 ## Antes de hacer nada
 
 1. `git pull` y lee `docs/LOG.md` (últimas entradas) y `docs/decisiones/` (ADRs en estado *Aceptada* o *Propuesta*).
