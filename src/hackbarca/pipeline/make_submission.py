@@ -36,6 +36,22 @@ def predict(model: str, data_dir: str | None) -> np.ndarray:
         from hackbarca.models.l1 import predict_l1
         from hackbarca.models.l1_config import L1_FROZEN
         return predict_l1(match, list(GRADED), L1_FROZEN, set_piece_windows(data_dir=data_dir))
+    if model == "l3":
+        import json
+
+        import lightgbm as lgb
+
+        from hackbarca.io.smart_tagging import set_piece_windows
+        from hackbarca.models.l3 import DecodeParams, decode, features_for, predict_proba
+        from hackbarca.pipeline.train_l3_final import DECODE_PATH, MODEL_PATH
+        with open(DECODE_PATH) as handle:
+            config = json.load(handle)
+        windows = set_piece_windows(data_dir=data_dir) if config["use_tags"] else None
+        # descanso entre las dos mitades evaluadas: los equipos cambian de campo
+        halftime = (GRADED[0][1] + GRADED[1][0]) // 2
+        proba = predict_proba(lgb.Booster(model_file=MODEL_PATH),
+                              features_for(match, windows, halftime))
+        return decode(proba, list(GRADED), DecodeParams(**config["decode"]))
     raise ValueError("modelo desconocido: " + model)
 
 
@@ -51,7 +67,7 @@ def write_csv(path: str, codes: np.ndarray) -> None:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", choices=("baseline", "l1"), required=True)
+    parser.add_argument("--model", choices=("baseline", "l1", "l3"), required=True)
     parser.add_argument("--team-name", required=True)
     parser.add_argument("--out-dir", default=os.path.join(_REPO_ROOT, "submissions"))
     parser.add_argument("--data-dir", default=None)

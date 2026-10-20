@@ -35,12 +35,12 @@ def sample_decode(rng) -> DecodeParams:
     )
 
 
-def load_bench():
+def load_bench(use_tags: bool = True):
     games = []
     for i, game in enumerate(BENCH_GAMES):
         match, gt = load_metrica_bench(game)
         degraded = degrade(match, BENCH_DEGRADE, seed=i)
-        windows = simulate_set_piece_windows(metrica_events(game), seed=i)
+        windows = simulate_set_piece_windows(metrica_events(game), seed=i) if use_tags else None
         games.append((features_for(degraded, windows), gt))
     return games
 
@@ -49,9 +49,10 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--trials", type=int, default=40)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--no-tags", action="store_true", help="ablation: sin Smart Tagging")
     args = parser.parse_args(argv)
 
-    games = load_bench()
+    games = load_bench(use_tags=not args.no_tags)
     gts = [gt for _, gt in games]
     runs = [pm.valid_runs(gt) for gt in gts]
     oof = []
@@ -62,7 +63,8 @@ def main(argv=None) -> int:
         if g == 0:
             imp = sorted(zip(model.feature_importance("gain"), model.feature_name()), reverse=True)
             print("importancia (gain) top 15: " + ", ".join(n for _, n in imp[:15]))
-    np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", "oof_l3.npz"),
+    name = "oof_l3_notags.npz" if args.no_tags else "oof_l3.npz"
+    np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
                         **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
 
     argmax = [np.argmax(p, 1).astype(np.int8) for p in oof]
