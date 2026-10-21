@@ -33,12 +33,38 @@ class DegradeParams:
     short_gap_frac: float = 0.2
     short_gap_mean: float = 10.0
     dead_weight: float = 1.0           # cuanto mas probable es abrir un hueco con balon muerto
+    # Forma de la trayectoria (v2.1, E013): el ATD real esta filtrado (residuo 0,04 m) y aplana
+    # las patadas. Suavizado gaussiano por tramos + error lento correlado (AR(1)).
+    ball_smooth_sigma: float = 0.0     # frames; 0 = sin suavizar
+    ball_corr_noise: float = 0.0       # m, desviacion del error correlado
+    ball_corr_tau: float = 25.0        # frames, escala temporal del error correlado
     # Jugadores: tracklets con huecos, reasignados a slots sin identidad.
     tracklet_mean: float = 750.0       # frames (30 s)
     player_gap_mean: float = 25.0      # frames
     player_noise: float = 0.2          # m
     team_flip_prob: float = 0.0        # prob. de que un tracklet salga con el equipo cambiado
     slots_per_team: int = 23           # 46 slots en el ATD tactico
+
+
+def _ball_signal(rng, x: np.ndarray, y: np.ndarray, p: "DegradeParams"):
+    """Balon "visto por el tracker": suavizado por tramos visibles + error correlado + ruido."""
+    from scipy.ndimage import gaussian_filter1d
+    from scipy.signal import lfilter
+
+    n = len(x)
+    x, y = x.copy(), y.copy()
+    if p.ball_smooth_sigma > 0:
+        visible = ~np.isnan(x)
+        edges = np.diff(np.concatenate(([0], visible.astype(np.int8), [0])))
+        for a, b in zip(np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)):
+            x[a:b] = gaussian_filter1d(x[a:b], p.ball_smooth_sigma, mode="nearest")
+            y[a:b] = gaussian_filter1d(y[a:b], p.ball_smooth_sigma, mode="nearest")
+    if p.ball_corr_noise > 0:
+        rho = np.exp(-1.0 / max(p.ball_corr_tau, 1.0))
+        scale = p.ball_corr_noise * np.sqrt(1 - rho ** 2)
+        x = x + lfilter([scale], [1, -rho], rng.normal(0, 1, n))
+        y = y + lfilter([scale], [1, -rho], rng.normal(0, 1, n))
+    return x + rng.normal(0, p.ball_noise, n), y + rng.normal(0, p.ball_noise, n)
 
 
 def _long_lengths(rng, size: int, p: "DegradeParams") -> np.ndarray:
@@ -118,8 +144,11 @@ def _long_ball(rng, match: MatchTracking, params: DegradeParams, visible, weight
     """Modelo "long": se rellenan los huecos limpios (el ATD ve el balon en casi todos los
     parones) y se borran huecos largos, mas probables donde el limpio no tenia balon (~muerto)."""
     n = match.n_frames
-    ball_x = match.ball_x + rng.normal(0, params.ball_noise, n)
-    ball_y = match.ball_y + rng.normal(0, params.ball_noise, n)
+    if params.ball_smooth_sigma > 0 or params.ball_corr_noise > 0:
+        ball_x, ball_y = _ball_signal(rng, match.ball_x, match.ball_y, params)
+    else:  # camino original (v2), para que E006-E012 sigan siendo reproducibles
+        ball_x = match.ball_x + rng.normal(0, params.ball_noise, n)
+        ball_y = match.ball_y + rng.normal(0, params.ball_noise, n)
     _reveal_gaps(rng, ball_x, ball_y, ~visible, params.dead_ball_visible, params.ball_noise)
     weight = np.where(visible, weight, params.dead_weight)
     rate = min(params.ball_drop_rate, 0.95)

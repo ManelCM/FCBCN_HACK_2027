@@ -78,6 +78,7 @@ def _gap_context(match: MatchTracking, team_near: np.ndarray):
 
 TOUCH_DV = 9.0  # m/s de cambio de velocidad del balon para considerar un toque
 TOUCH_W = 8     # frames a cada lado para estimar la velocidad antes y despues
+TOUCH_RATE = 0.4  # v3: toques por segundo de balon visible (eventos con balon en Metrica: ~0,42)
 
 
 def _centered_max(values: np.ndarray, half: int) -> np.ndarray:
@@ -93,7 +94,7 @@ def _fill_last(values: np.ndarray, valid: np.ndarray) -> np.ndarray:
     return np.where(idx >= 0, values[np.maximum(idx, 0)], np.nan)
 
 
-def _v2_features(match: MatchTracking, bx, by, known, dist, team_near) -> dict:
+def _v2_features(match: MatchTracking, bx, by, known, dist, team_near, relative: bool = False) -> dict:
     """Toques, receptor, cinematica del mas cercano, presion y compacidad (features v2)."""
     n, fps = match.n_frames, match.fps
     f = {}
@@ -110,8 +111,20 @@ def _v2_features(match: MatchTracking, bx, by, known, dist, team_near) -> dict:
     vx, vy = after_x, after_y
     dvz = np.nan_to_num(dv)
     local_max = dvz >= _centered_max(dvz, 5)
-    touch = (dvz > TOUCH_DV) & local_max
-    f["touch_dv"] = dv
+    if relative:
+        # v3: umbral por partido para TOUCH_RATE toques/s de balon visible (sin etiquetas): la
+        # feature significa lo mismo aunque el tracker suavice mas o menos las patadas
+        candidates = np.sort(dvz[local_max & known & (dvz > 0)])[::-1]
+        k = int(TOUCH_RATE * known.sum() / fps)
+        threshold = candidates[min(k, len(candidates) - 1)] if len(candidates) else np.inf
+        touch = (dvz > threshold) & local_max
+        ranks = np.full(n, np.nan)
+        ok = ~np.isnan(dv)
+        ranks[ok] = (np.argsort(np.argsort(dv[ok])) + 0.5) / ok.sum()
+        f["touch_rank"] = ranks
+    else:
+        touch = (dvz > TOUCH_DV) & local_max
+        f["touch_dv"] = dv
     sign = np.nan_to_num(team_near)
     f["last_touch_sign"] = _fill_last(sign, touch)
     f["next_touch_sign"] = _fill_last(sign[::-1], touch[::-1])[::-1]
@@ -153,6 +166,27 @@ def _v2_features(match: MatchTracking, bx, by, known, dist, team_near) -> dict:
             f["spread_x_" + name] = np.nanstd(px, axis=1)
             f["spread_y_" + name] = np.nanstd(py, axis=1)
     return f
+
+
+def _v4_features(match: MatchTracking, f: dict) -> dict:
+    """Movimiento colectivo para los huecos sin balon: quien empuja y quien repliega."""
+    n, fps = match.n_frames, match.fps
+    out = {}
+    for name in ("h", "a"):
+        for base in ("block", "front"):
+            series = f["%s_%s" % (base, name)]
+            v = np.full(n, np.nan)
+            v[fps // 2:fps // 2 + n - fps] = series[fps:] - series[:-fps]  # m/s, diferencia en 1 s
+            for w in WINDOWS[1:]:
+                out["%s_v_m%d_%s" % (base, w, name)] = _centered_mean(v, w)
+    missing = np.isnan(match.ball_x)
+    jump = np.full(n, np.nan)
+    edges = np.diff(np.concatenate(([0], missing.astype(np.int8), [0])))
+    for a, b in zip(np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)):
+        if a > 0 and b < n:
+            jump[a:b] = np.hypot(match.ball_x[b] - match.ball_x[a - 1], match.ball_y[b] - match.ball_y[a - 1])
+    out["gap_jump"] = jump
+    return out
 
 
 SIGNED_V2 = ("last_touch_sign", "next_touch_sign") + tuple("touch_sign_m%d" % w for w in WINDOWS[:2])
@@ -238,7 +272,9 @@ def frame_features(match: MatchTracking, windows=None, max_gap: int = 10,
     f["tag_to_log"] = np.log1p(to_tag)
     f["tag_from_log"] = np.log1p(from_tag)
     if version >= 2:
-        f.update(_v2_features(match, bx, by, known, dist, team_near))
+        f.update(_v2_features(match, bx, by, known, dist, team_near, relative=version >= 3))
+    if version >= 4:
+        f.update(_v4_features(match, f))
     return pd.DataFrame(f)
 
 

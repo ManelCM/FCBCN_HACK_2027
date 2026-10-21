@@ -1,5 +1,7 @@
 """Configuracion fija del banco externo (ADR-0006). Cambiarla invalida las comparaciones previas."""
 
+from dataclasses import replace
+
 from hackbarca.io.degrade import DegradeParams
 
 BENCH_GAMES = ("1", "2", "3")
@@ -24,4 +26,10 @@ BENCH_DEGRADE_V2 = DegradeParams(
     occlusion_boost=1.0,
 )
 
-BENCH_DEGRADE = BENCH_DEGRADE_V2
+# v2.1 (E013): como v2 pero con la trayectoria del balon filtrada como en el ATD real (residuo
+# 0,04 m, patadas aplanadas: dv p50/p90/p99 1,8/5,6/11,8 y 0,04 toques/s, atd_stats). Rejilla de
+# 32 puntos solo sobre la dinamica del balon.
+BENCH_DEGRADE_V2_1 = replace(BENCH_DEGRADE_V2, ball_noise=0.02, ball_smooth_sigma=10.0,
+                             ball_corr_noise=0.8, ball_corr_tau=75.0)
+
+BENCH_DEGRADE = BENCH_DEGRADE_V2_1
