@@ -76,7 +76,90 @@ def _gap_context(match: MatchTracking, team_near: np.ndarray):
     return before, after, since, until
 
 
-def frame_features(match: MatchTracking, windows=None, max_gap: int = 10) -> pd.DataFrame:
+TOUCH_DV = 9.0  # m/s de cambio de velocidad del balon para considerar un toque
+TOUCH_W = 8     # frames a cada lado para estimar la velocidad antes y despues
+
+
+def _centered_max(values: np.ndarray, half: int) -> np.ndarray:
+    padded = np.pad(values, half, mode="edge")
+    windows = np.lib.stride_tricks.sliding_window_view(padded, 2 * half + 1)
+    return windows.max(axis=1)
+
+
+def _fill_last(values: np.ndarray, valid: np.ndarray) -> np.ndarray:
+    """Ultimo valor valido hasta cada frame (NaN antes del primero)."""
+    idx = np.where(valid, np.arange(len(values)), -1)
+    idx = np.maximum.accumulate(idx)
+    return np.where(idx >= 0, values[np.maximum(idx, 0)], np.nan)
+
+
+def _v2_features(match: MatchTracking, bx, by, known, dist, team_near) -> dict:
+    """Toques, receptor, cinematica del mas cercano, presion y compacidad (features v2)."""
+    n, fps = match.n_frames, match.fps
+    f = {}
+    # toque = cambio brusco entre la velocidad media de los TOUCH_W frames anteriores y la de los
+    # posteriores; con ventanas cortas el ruido del tracker (~0,3 m) dispara toques falsos
+    w = TOUCH_W
+    before_x, before_y = np.full(n, np.nan), np.full(n, np.nan)
+    after_x, after_y = np.full(n, np.nan), np.full(n, np.nan)
+    before_x[w:] = (bx[w:] - bx[:-w]) * fps / w
+    before_y[w:] = (by[w:] - by[:-w]) * fps / w
+    after_x[:-w] = (bx[w:] - bx[:-w]) * fps / w
+    after_y[:-w] = (by[w:] - by[:-w]) * fps / w
+    dv = np.hypot(after_x - before_x, after_y - before_y)
+    vx, vy = after_x, after_y
+    dvz = np.nan_to_num(dv)
+    local_max = dvz >= _centered_max(dvz, 5)
+    touch = (dvz > TOUCH_DV) & local_max
+    f["touch_dv"] = dv
+    sign = np.nan_to_num(team_near)
+    f["last_touch_sign"] = _fill_last(sign, touch)
+    f["next_touch_sign"] = _fill_last(sign[::-1], touch[::-1])[::-1]
+    idx = np.arange(n)
+    last_idx = _fill_last(idx.astype(float), touch)
+    next_idx = _fill_last(idx[::-1].astype(float), touch[::-1])[::-1]
+    f["since_touch_log"] = np.log1p(np.where(np.isnan(last_idx), 1e4, idx - last_idx))
+    f["to_touch_log"] = np.log1p(np.where(np.isnan(next_idx), 1e4, next_idx - idx))
+    signed_touch = np.where(touch, sign, 0.0)
+    for w in WINDOWS[:2]:
+        f["touch_sign_m%d" % w] = _centered_mean(signed_touch, w)
+
+    moving = known & (np.hypot(np.nan_to_num(vx), np.nan_to_num(vy)) > 5.0)
+    for team, name in ((HOME, "h"), (AWAY, "a")):
+        cols = match.team_of_track == team
+        px, py = match.players_x[:, cols], match.players_y[:, cols]
+        d = dist[:, cols]
+        # receptor: distancia del jugador mas cercano a donde ira el balon en 0,5 s y 1 s
+        for tau, tag in ((0.5, "05"), (1.0, "10")):
+            fx = np.nan_to_num(bx) + np.nan_to_num(vx) * tau
+            fy = np.nan_to_num(by) + np.nan_to_num(vy) * tau
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                r = np.nanmin(np.hypot(px - fx[:, None], py - fy[:, None]), axis=1)
+            f["recv%s_%s" % (tag, name)] = np.where(moving, r, np.nan)
+        # el mas cercano: velocidad de acercamiento al balon y presion rival a su alrededor
+        has = np.isfinite(d).any(1)
+        k = np.argmin(d, axis=1)
+        d1 = np.where(has, d[idx, k], np.nan)
+        close = np.full(n, np.nan)
+        close[2:-2] = -(d1[4:] - d1[:-4]) * fps / 4
+        f["close_" + name] = close
+        nx, ny = px[idx, k], py[idx, k]
+        other = match.team_of_track != team
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            od = np.hypot(match.players_x[:, other] - nx[:, None], match.players_y[:, other] - ny[:, None])
+            f["press_" + name] = np.where(has & known, (od < 5).sum(1), np.nan).astype(float)
+            f["spread_x_" + name] = np.nanstd(px, axis=1)
+            f["spread_y_" + name] = np.nanstd(py, axis=1)
+    return f
+
+
+SIGNED_V2 = ("last_touch_sign", "next_touch_sign") + tuple("touch_sign_m%d" % w for w in WINDOWS[:2])
+
+
+def frame_features(match: MatchTracking, windows=None, max_gap: int = 10,
+                   version: int = 1) -> pd.DataFrame:
     n = match.n_frames
     raw_missing = np.isnan(match.ball_x)
     bx, by, _ = interpolate_ball(match, max_gap)
@@ -154,6 +237,8 @@ def frame_features(match: MatchTracking, windows=None, max_gap: int = 10) -> pd.
     f["tag_in"] = in_tag
     f["tag_to_log"] = np.log1p(to_tag)
     f["tag_from_log"] = np.log1p(from_tag)
+    if version >= 2:
+        f.update(_v2_features(match, bx, by, known, dist, team_near))
     return pd.DataFrame(f)
 
 
@@ -169,6 +254,7 @@ def swap_teams(df: pd.DataFrame) -> pd.DataFrame:
         if col.endswith("_h"):
             other = col[:-2] + "_a"
             out[col], out[other] = df[other], df[col]
-    for col in SIGNED + NEGATED:
-        out[col] = -df[col]
+    for col in SIGNED + NEGATED + SIGNED_V2:
+        if col in df.columns:
+            out[col] = -df[col]
     return out

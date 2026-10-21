@@ -35,13 +35,13 @@ def sample_decode(rng) -> DecodeParams:
     )
 
 
-def load_bench(use_tags: bool = True):
+def load_bench(use_tags: bool = True, version: int = 1):
     games = []
     for i, game in enumerate(BENCH_GAMES):
         match, gt = load_metrica_bench(game)
         degraded = degrade(match, BENCH_DEGRADE, seed=i)
         windows = simulate_set_piece_windows(metrica_events(game), seed=i) if use_tags else None
-        games.append((features_for(degraded, windows), gt))
+        games.append((features_for(degraded, windows, version=version), gt))
     return games
 
 
@@ -50,6 +50,7 @@ def main(argv=None) -> int:
     parser.add_argument("--trials", type=int, default=40)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--no-tags", action="store_true", help="ablation: sin Smart Tagging")
+    parser.add_argument("--features", type=int, default=1, help="version de las features")
     parser.add_argument("--num-leaves", type=int, default=None)
     parser.add_argument("--min-leaf", type=int, default=None)
     parser.add_argument("--rounds", type=int, default=None)
@@ -63,7 +64,7 @@ def main(argv=None) -> int:
     if args.rounds:
         l3.N_ROUNDS = args.rounds
 
-    games = load_bench(use_tags=not args.no_tags)
+    games = load_bench(use_tags=not args.no_tags, version=args.features)
     gts = [gt for _, gt in games]
     runs = [pm.valid_runs(gt) for gt in gts]
     oof = []
@@ -77,6 +78,8 @@ def main(argv=None) -> int:
     name = "oof_l3_notags.npz" if args.no_tags else "oof_l3.npz"
     if args.num_leaves or args.min_leaf or args.rounds:
         name = name.replace(".npz", "_nl{}_ml{}_r{}.npz".format(args.num_leaves, args.min_leaf, args.rounds))
+    if args.features != 1:
+        name = name.replace(".npz", "_f{}.npz".format(args.features))
     np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
                         **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
 

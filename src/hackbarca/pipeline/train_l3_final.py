@@ -43,15 +43,17 @@ def main(argv=None) -> int:
     parser.add_argument("--to-dead", type=float, required=True)
     parser.add_argument("--from-dead", type=float, required=True)
     parser.add_argument("--no-tags", action="store_true")
+    parser.add_argument("--features", type=int, default=1)
     args = parser.parse_args(argv)
 
-    games = load_bench(use_tags=not args.no_tags)
+    games = load_bench(use_tags=not args.no_tags, version=args.features)
     model = train([df for df, _ in games], [gt for _, gt in games])
     os.makedirs(ARTIFACTS, exist_ok=True)
     save_model(model)
     decode = DecodeParams(args.temperature, args.switch, args.to_dead, args.from_dead)
     with open(DECODE_PATH, "w") as handle:
-        json.dump({"decode": asdict(decode), "use_tags": not args.no_tags}, handle, indent=2)
+        json.dump({"decode": asdict(decode), "use_tags": not args.no_tags, "features": args.features},
+                  handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)
     return 0
 

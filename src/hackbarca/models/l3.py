@@ -70,5 +70,5 @@ def decode(proba: np.ndarray, runs, params: DecodeParams = DecodeParams()) -> np
     return decode_runs(cost, transition_costs(params.switch, params.to_dead, params.from_dead), runs)
 
 
-def features_for(match: MatchTracking, windows=None, halftime_frame=None) -> pd.DataFrame:
-    return frame_features(ensure_period(match, halftime_frame), windows)
+def features_for(match: MatchTracking, windows=None, halftime_frame=None, version: int = 1) -> pd.DataFrame:
+    return frame_features(ensure_period(match, halftime_frame), windows, version=version)

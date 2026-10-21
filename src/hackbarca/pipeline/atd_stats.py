@@ -120,6 +120,12 @@ def describe(match, gt: np.ndarray | None, graded: np.ndarray, title: str) -> No
         print("  {} visibles/frame: {}".format(name, _pct(visible[:, cols].sum(1)[graded], (5, 50, 95))))
     lengths = np.concatenate([_runs(visible[:, s]) for s in range(match.n_slots)])
     print("longitud de tracklets (frames): " + _pct(lengths, (10, 50, 90)))
+    from hackbarca.features.frame_features import TOUCH_DV, _centered_max, frame_features
+    dv = np.nan_to_num(frame_features(match, version=2)["touch_dv"].to_numpy())
+    touch = (dv > TOUCH_DV) & (dv >= _centered_max(dv, 5))
+    seen = graded & ~ball_missing
+    print("toques por segundo con balon visible (banco ~0,49): {:.2f}  dv mediano={:.1f} m/s".format(
+        touch[seen].sum() / max(seen.sum() / match.fps, 1e-9), float(np.median(dv[seen]))))
     print("speed jugadores no-NaN={:.3f} speed balon no-NaN={:.3f}".format(
         np.mean(~np.isnan(match.players_speed)[visible]) if visible.any() else 0.0,
         np.mean(~np.isnan(match.ball_speed)[~ball_missing]) if (~ball_missing).any() else 0.0))

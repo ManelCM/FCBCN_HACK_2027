@@ -90,6 +90,24 @@ def test_swap_teams_is_an_involution():
     np.testing.assert_allclose(swapped["near_sign"], -df["near_sign"], equal_nan=True)
 
 
+def test_v2_touch_detected_at_a_kick():
+    from hackbarca.features.frame_features import frame_features
+    match = _synthetic_match(n=400)
+    # balon rodando a 2 m/s hacia +x y patada a 20 m/s hacia +y en el frame 200
+    t = np.arange(400)
+    bx = np.where(t < 200, 30 + 2 * t / 25, 30 + 2 * 200 / 25)
+    by = np.where(t < 200, 30.0, 30 + 20 * (t - 200) / 25)
+    match = MatchTracking(n_frames=400, fps=25, pitch_length=105.0, pitch_width=68.0,
+                          team_of_track=match.team_of_track, players_x=match.players_x[:400],
+                          players_y=match.players_y[:400], players_speed=match.players_speed[:400],
+                          ball_x=bx.astype(float), ball_y=np.minimum(by, 67.0),
+                          ball_speed=np.full(400, np.nan))
+    df = frame_features(match, version=2)
+    peak = int(np.nanargmax(df["touch_dv"].to_numpy()))
+    assert abs(peak - 200) <= 2
+    assert df["since_touch_log"].iloc[210] < df["since_touch_log"].iloc[190]
+
+
 def test_degrade_is_deterministic_and_anonymous():
     match = _synthetic_match()
     params = DegradeParams(ball_drop_rate=0.3, tracklet_mean=200)

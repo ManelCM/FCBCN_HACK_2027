@@ -48,7 +48,7 @@ def predict(model: str, data_dir: str | None) -> np.ndarray:
         # descanso entre las dos mitades evaluadas: los equipos cambian de campo
         halftime = (GRADED[0][1] + GRADED[1][0]) // 2
         proba = predict_proba(load_model(),
-                              features_for(match, windows, halftime))
+                              features_for(match, windows, halftime, config.get("features", 1)))
         return decode(proba, list(GRADED), DecodeParams(**config["decode"]))
     raise ValueError("modelo desconocido: " + model)
 
