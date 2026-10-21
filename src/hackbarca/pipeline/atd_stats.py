@@ -126,6 +126,26 @@ def describe(match, gt: np.ndarray | None, graded: np.ndarray, title: str) -> No
     seen = graded & ~ball_missing
     print("toques por segundo con balon visible (banco ~0,49): {:.2f}  dv mediano={:.1f} m/s".format(
         touch[seen].sum() / max(seen.sum() / match.fps, 1e-9), float(np.median(dv[seen]))))
+    raw_dv = frame_features(match, version=2)["touch_dv"].to_numpy()
+    print("dv balon (m/s) p50/p90/p99/p99.9: " + " / ".join(
+        "{:.1f}".format(v) for v in np.nanpercentile(raw_dv[seen], [50, 90, 99, 99.9])))
+    speed = np.full(match.n_frames, np.nan)
+    speed[4:] = np.hypot(match.ball_x[4:] - match.ball_x[:-4], match.ball_y[4:] - match.ball_y[:-4]) * match.fps / 4
+    print("velocidad balon (m/s) p50/p90/p99: " + " / ".join(
+        "{:.1f}".format(v) for v in np.nanpercentile(speed[seen], [50, 90, 99])))
+    starts = np.flatnonzero(np.diff(ball_missing.astype(np.int8)) == 1)  # ultimo frame con balon
+    starts = starts[graded[starts] & (starts >= 4)]
+    print("velocidad balon justo antes de perderlo (m/s) p50/p90: " + " / ".join(
+        "{:.1f}".format(v) for v in np.nanpercentile(speed[starts], [50, 90])) if len(starts) else "sin huecos")
+    # suavidad: autocorrelacion del ruido de posicion (residuo frente a media movil de 9 frames)
+    k = 9
+    kernel = np.ones(k) / k
+    bx = np.where(ball_missing, np.nan, match.ball_x)
+    resid = bx - np.convolve(np.nan_to_num(bx), kernel, mode="same")
+    full = np.convolve((~ball_missing).astype(float), kernel, mode="same") > 0.999
+    ok = seen & full & ~np.isnan(resid)
+    print("residuo de posicion del balon frente a media movil de 9 frames: std={:.2f} m".format(
+        float(np.std(resid[ok]))))
     print("speed jugadores no-NaN={:.3f} speed balon no-NaN={:.3f}".format(
         np.mean(~np.isnan(match.players_speed)[visible]) if visible.any() else 0.0,
         np.mean(~np.isnan(match.ball_speed)[~ball_missing]) if (~ball_missing).any() else 0.0))
