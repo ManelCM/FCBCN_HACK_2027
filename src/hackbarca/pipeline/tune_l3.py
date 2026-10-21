@@ -45,6 +45,31 @@ def load_bench(use_tags: bool = True, version: int = 1):
     return games
 
 
+def random_degrade(rng):
+    """Variante del simulador alrededor de la calibrada (aleatorizacion del dominio, E015)."""
+    from dataclasses import replace
+    return replace(
+        BENCH_DEGRADE,
+        ball_smooth_sigma=float(rng.uniform(4, 14)),
+        ball_corr_noise=float(rng.uniform(0.2, 1.2)),
+        ball_corr_tau=float(rng.uniform(25, 100)),
+        gap_median=float(BENCH_DEGRADE.gap_median * rng.uniform(0.7, 1.4)),
+        ball_drop_rate=float(rng.uniform(0.35, 0.5)),
+        dead_ball_visible=float(rng.uniform(0.4, 0.7)),
+    )
+
+
+def augmented_games(n_extra: int, version: int, seed: int = 100):
+    """Por partido, `n_extra` degradaciones adicionales con parametros sorteados (solo entrenar)."""
+    rng = np.random.default_rng(seed)
+    extra = {}
+    for i, game in enumerate(BENCH_GAMES):
+        match, gt = load_metrica_bench(game)
+        extra[i] = [(features_for(degrade(match, random_degrade(rng), seed=seed + 10 * i + k),
+                                  None, version=version), gt) for k in range(n_extra)]
+    return extra
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--trials", type=int, default=40)
@@ -54,6 +79,8 @@ def main(argv=None) -> int:
     parser.add_argument("--num-leaves", type=int, default=None)
     parser.add_argument("--min-leaf", type=int, default=None)
     parser.add_argument("--rounds", type=int, default=None)
+    parser.add_argument("--augment", type=int, default=0,
+                        help="degradaciones extra por partido de entrenamiento (aleatorizacion del dominio)")
     args = parser.parse_args(argv)
 
     from hackbarca.models import l3
@@ -67,10 +94,12 @@ def main(argv=None) -> int:
     games = load_bench(use_tags=not args.no_tags, version=args.features)
     gts = [gt for _, gt in games]
     runs = [pm.valid_runs(gt) for gt in gts]
+    extra = augmented_games(args.augment, args.features) if args.augment else {}
     oof = []
     for g in range(len(games)):
         others = [o for o in range(len(games)) if o != g]
-        model = train([games[o][0] for o in others], [gts[o] for o in others])
+        train_sets = [games[o] for o in others] + [e for o in others for e in extra.get(o, [])]
+        model = train([df for df, _ in train_sets], [gt for _, gt in train_sets])
         oof.append(predict_proba(model, games[g][0]))
         if g == 0:
             imp = sorted(zip(model.feature_importance("gain"), model.feature_name()), reverse=True)
@@ -80,6 +109,8 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_nl{}_ml{}_r{}.npz".format(args.num_leaves, args.min_leaf, args.rounds))
     if args.features != 1:
         name = name.replace(".npz", "_f{}.npz".format(args.features))
+    if args.augment:
+        name = name.replace(".npz", "_aug{}.npz".format(args.augment))
     np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
                         **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
 

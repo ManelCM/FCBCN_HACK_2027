@@ -16,6 +16,12 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
+vision = [
+    "ultralytics>=8.3",
+    "opencv-python>=4.10",
+    "torch>=2.5",
+    "torchvision>=0.20",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -26,3 +32,13 @@ packages = ["src/hackbarca"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# Vision (Frente A): solo para quien ejecuta el detector en local con GPU. La entrega no lo usa.
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu124", group = "vision" }
+torchvision = { index = "pytorch-cu124", group = "vision" }
