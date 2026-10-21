@@ -32,11 +32,38 @@ git clone --recursive https://github.com/ManelCM/FCBCN_HACK_2027.git C:/dev/hack
 6. [docs/decisiones/](docs/decisiones/): registro de decisiones (ADR). **Toda decisión importante está aquí.**
 7. [docs/LOG.md](docs/LOG.md): bitácora del equipo (qué hizo cada persona y cuándo).
 
+## Cómo se genera la entrega
+
+Un solo comando, determinista, que lee los datos del reto (lo ejecuta una persona, ADR-0004):
+
+```bash
+uv sync
+uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA"
+```
+
+Genera `submissions/La MasIA.csv` (199.319 filas, validado) e imprime su sha256. El modelo está
+versionado en `src/hackbarca/models/artifacts/` (ADR-0007). Reserva: `--model baseline`.
+
+Comprobación de humo con la GT pública de 5 min (no sirve para elegir modelos):
+
+```bash
+cd external/more-than-a-hack-2027/evaluation
+uv run python run_evaluation.py --results ../../../submissions --out ../../../submissions/reports --gt public --no-detail
+```
+
+Banco externo (no usa datos del reto): `uv run python -m hackbarca.pipeline.tune_l3 --features 3 --no-tags`.
+Estado y números en [docs/experimentos.md](docs/experimentos.md); plan en [docs/03_plan_ganar.md](docs/03_plan_ganar.md).
+
 ## Estructura
 
 ```
 data/          # Datos del reto. NO se versionan (ver ADR-0002). Solo data/README.md
 docs/          # Documentación, investigación, decisiones y bitácora
 notebooks/     # Exploración. Lo que funcione se pasa a src/
-src/           # Código reutilizable (carga, features, modelos, evaluación)
+src/hackbarca/ # io (carga, banco externo, broadcast), features, models (L1, L3), decode (Viterbi),
+               # eval, pipeline (comandos), vision (detector de balón; grupo opcional 'vision')
+tests/         # pytest con datos sintéticos (uv run pytest)
+external/      # repo oficial del reto (submódulo)
+external_data/ # datos abiertos descargados (Metrica, DFL). No se versionan
+submissions/   # CSV generados. No se versionan
 ```
