@@ -32,3 +32,6 @@ desktop.ini
 
 # Datos abiertos externos (DFL/IDSSE, Metrica sample): se descargan, no se versionan
 /external_data/
+
+# Pesos de modelos preentrenados (se descargan solos)
+*.pt
