@@ -35,11 +35,11 @@ def sample_decode(rng) -> DecodeParams:
     )
 
 
-def load_bench(use_tags: bool = True, version: int = 1):
+def load_bench(use_tags: bool = True, version: int = 1, params=None):
     games = []
     for i, game in enumerate(BENCH_GAMES):
         match, gt = load_metrica_bench(game)
-        degraded = degrade(match, BENCH_DEGRADE, seed=i)
+        degraded = degrade(match, params or BENCH_DEGRADE, seed=i)
         windows = simulate_set_piece_windows(metrica_events(game), seed=i) if use_tags else None
         games.append((features_for(degraded, windows, version=version), gt))
     return games
@@ -81,6 +81,9 @@ def main(argv=None) -> int:
     parser.add_argument("--rounds", type=int, default=None)
     parser.add_argument("--augment", type=int, default=0,
                         help="degradaciones extra por partido de entrenamiento (aleatorizacion del dominio)")
+    parser.add_argument("--stack", action="store_true", help="segunda capa con contexto temporal (E018)")
+    parser.add_argument("--eval-shift", action="store_true",
+                        help="robustez: el partido retenido se degrada con la calibracion alternativa del balon")
     args = parser.parse_args(argv)
 
     from hackbarca.models import l3
@@ -92,6 +95,12 @@ def main(argv=None) -> int:
         l3.N_ROUNDS = args.rounds
 
     games = load_bench(use_tags=not args.no_tags, version=args.features)
+    if args.eval_shift:
+        from dataclasses import replace
+        shifted = replace(BENCH_DEGRADE, ball_smooth_sigma=6.0, ball_corr_noise=0.3, ball_corr_tau=25.0)
+        eval_games = load_bench(use_tags=not args.no_tags, version=args.features, params=shifted)
+    else:
+        eval_games = games
     gts = [gt for _, gt in games]
     runs = [pm.valid_runs(gt) for gt in gts]
     extra = augmented_games(args.augment, args.features) if args.augment else {}
@@ -99,8 +108,14 @@ def main(argv=None) -> int:
     for g in range(len(games)):
         others = [o for o in range(len(games)) if o != g]
         train_sets = [games[o] for o in others] + [e for o in others for e in extra.get(o, [])]
-        model = train([df for df, _ in train_sets], [gt for _, gt in train_sets])
-        oof.append(predict_proba(model, games[g][0]))
+        if args.stack:
+            from hackbarca.models.l3 import predict_stacked, train_stacked
+            models = train_stacked([df for df, _ in train_sets], [gt for _, gt in train_sets])
+            oof.append(predict_stacked(models, eval_games[g][0]))
+            model = models[1]
+        else:
+            model = train([df for df, _ in train_sets], [gt for _, gt in train_sets])
+            oof.append(predict_proba(model, eval_games[g][0]))
         if g == 0:
             imp = sorted(zip(model.feature_importance("gain"), model.feature_name()), reverse=True)
             print("importancia (gain) top 15: " + ", ".join(n for _, n in imp[:15]))
@@ -111,6 +126,10 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_f{}.npz".format(args.features))
     if args.augment:
         name = name.replace(".npz", "_aug{}.npz".format(args.augment))
+    if args.eval_shift:
+        name = name.replace(".npz", "_shift.npz")
+    if args.stack:
+        name = name.replace(".npz", "_stack.npz")
     np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
                         **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
 

@@ -72,3 +72,51 @@ def decode(proba: np.ndarray, runs, params: DecodeParams = DecodeParams()) -> np
 
 def features_for(match: MatchTracking, windows=None, halftime_frame=None, version: int = 1) -> pd.DataFrame:
     return frame_features(ensure_period(match, halftime_frame), windows, version=version)
+
+
+# --- Apilado (E018): segunda capa con contexto temporal largo de las probabilidades ---
+CTX_WINDOWS = (25, 50, 125, 250)
+
+
+def _window_mean(x: np.ndarray, lo: int, hi: int) -> np.ndarray:
+    """Media de x en [t+lo, t+hi] (recortado a los bordes)."""
+    n = len(x)
+    cs = np.concatenate(([0.0], np.cumsum(x)))
+    idx = np.arange(n)
+    a, b = np.clip(idx + lo, 0, n), np.clip(idx + hi + 1, 0, n)
+    return (cs[b] - cs[a]) / np.maximum(b - a, 1)
+
+
+def context_features(proba: np.ndarray) -> pd.DataFrame:
+    """Probabilidades de la capa 1 resumidas hacia atras, centradas y hacia delante."""
+    f = {}
+    for k, name in ((0, "h"), (1, "a"), (2, "d")):
+        p = proba[:, k]
+        f["p1_" + name] = p
+        for w in CTX_WINDOWS:
+            f["ctxc%d_%s" % (w, name)] = _window_mean(p, -w, w)
+            f["ctxb%d_%s" % (w, name)] = _window_mean(p, -w, -1)
+            f["ctxf%d_%s" % (w, name)] = _window_mean(p, 1, w)
+    return pd.DataFrame(f)
+
+
+def _stack_input(df: pd.DataFrame, proba: np.ndarray) -> pd.DataFrame:
+    return pd.concat([df.reset_index(drop=True), context_features(proba)], axis=1)
+
+
+def train_stacked(features: list[pd.DataFrame], labels: list[np.ndarray]):
+    """(capa1, capa2). La capa 2 se entrena con probabilidades de capa 1 fuera de muestra
+    (cada partido de entrenamiento predicho por un modelo entrenado con los demas)."""
+    inner = []
+    for i in range(len(features)):
+        rest = [j for j in range(len(features)) if j != i]
+        m = train([features[j] for j in rest], [labels[j] for j in rest])
+        inner.append(_stack_input(features[i], predict_proba(m, features[i])))
+    stage2 = train(inner, labels)
+    stage1 = train(features, labels)
+    return stage1, stage2
+
+
+def predict_stacked(models, df: pd.DataFrame) -> np.ndarray:
+    stage1, stage2 = models
+    return predict_proba(stage2, _stack_input(df, predict_proba(stage1, df)))
