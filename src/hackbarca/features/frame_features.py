@@ -275,7 +275,7 @@ def frame_features(match: MatchTracking, windows=None, max_gap: int = 10,
         f.update(_v2_features(match, bx, by, known, dist, team_near, relative=version >= 3))
     if version >= 4:
         f.update(_v4_features(match, f))
-    return pd.DataFrame(f)
+    return pd.DataFrame(f).astype(np.float32)  # la mitad de memoria; LightGBM bina igual
 
 
 SIGNED = ("near_sign", "gap_before_sign", "gap_after_sign") + tuple(

@@ -11,6 +11,21 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-21 (tarde) — Manel (con agente)
+- Hecho:
+  - **Plan para ganar** aprobado (`docs/03_plan_ganar.md`), con tres frentes: A visión, B banco y C modelo. Protocolo de selección pre-registrado (ADR-0008).
+  - Frente A, código listo y probado con sintéticos: alineador del broadcast (`io/broadcast_align.py` + `pipeline/broadcast_report.py`) y detector de balón en vídeo (`vision/ball_detector.py` + `vision/ball_track.py`, grupo `vision` con torch CUDA). ADR-0010.
+  - Frente C: features v2 (toques, receptor, presión) → **cuarentena**. El ATD real tiene el balón filtrado y apenas detecta toques (E012/E013). Banco **v2.1** con el balón filtrado como el ATD y features **v3** con el umbral de toque relativo al partido: L3 sube de 0,465 a **0,519** en v2.1 (E014, ADR-0009). v4 (movimiento colectivo) rechazado (E015). Aleatorización del dominio sin mejora dentro del banco (E016).
+  - Apilado con contexto temporal (capa 2) implementado; evaluación en curso.
+  - Una evaluación se cortó por falta de memoria: Opera ocupaba 15,6 GB. Las features pasan a float32.
+- Pendiente:
+  - Resultados de robustez (`--eval-shift`) y del apilado → elegir el modelo y regenerar el artefacto y `La MasIA.csv` (hoy usa v2, en cuarentena).
+  - **Enviar a la organización** las preguntas Q2, Q4 y Q5 (borrador en `docs/00_reto.md`).
+  - Persona A: broadcast `atd.txt` (parte `-009`) → `broadcast_report`; después `ball_detector`.
+  - Persona B: descargar DFL a mano → banco v3.
+- Bloqueos / preguntas para el equipo:
+  - Revisar y aprobar los ADR 0006-0010 y abrir la PR de `plan-ganar`.
+
 ## 2026-10-21 — Manel (con agente)
 - Hecho:
   - Humo de L3 en datos reales (E011): 0,5875 en los 5 min públicos (L1 0,4686, baseline 0,3256).
