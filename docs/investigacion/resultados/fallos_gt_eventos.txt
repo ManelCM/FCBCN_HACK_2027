@@ -1,0 +1,125 @@
+== 1. Nota (oof_l3_notags_f3_stack.npz; decodificacion DecodeParams(temperature=1.0, switch=20.0, to_dead=10.0, from_dead=10.0); GT por eventos)
+spellF1 0.5422  posesiones predichas 738 / GT 1138
+  IoU 0.3: precision 0.820  recall 0.532  F1 0.645
+  IoU 0.5: precision 0.710  recall 0.460  F1 0.559
+  IoU 0.7: precision 0.528  recall 0.343  F1 0.416
+
+== 2. Posesiones GT perdidas a IoU 0,5: 614 de 1138 (54.0%)
+  equipo contrario                                303 (49.3% de las perdidas)  duracion mediana   1.8 s
+  tapada por D                                     42 ( 6.8% de las perdidas)  duracion mediana   3.2 s
+  fusionada: paron no detectado                     5 ( 0.8% de las perdidas)  duracion mediana   3.4 s
+  fusionada: posesion rival corta no detectada    140 (22.8% de las perdidas)  duracion mediana   3.3 s
+  fusionada: ambos                                 88 (14.3% de las perdidas)  duracion mediana   2.1 s
+  partida en trozos                                11 ( 1.8% de las perdidas)  duracion mediana  31.8 s
+  fronteras desplazadas o recortadas               25 ( 4.1% de las perdidas)  duracion mediana   3.7 s
+  consumida por otra                                0 ( 0.0% de las perdidas)  duracion mediana   0.0 s
+  posesiones predichas sobrantes (falsos positivos):
+    solapa una real pero mal ajustada                     134
+    equipo inexistente (sin GT del mismo equipo debajo)    53
+    trozo corto (<3 s) de una posesion real                27
+
+== 3. Contexto de las posesiones GT (encontradas a IoU 0,5)
+
+  por duracion
+    <3 s                                      408 posesiones  encontradas 10.5%  perdidas  365
+    3-10 s                                    357 posesiones  encontradas 50.7%  perdidas  176
+    10-30 s                                   268 posesiones  encontradas 78.0%  perdidas   59
+    >30 s                                     105 posesiones  encontradas 86.7%  perdidas   14
+
+  por % de la posesion en hueco largo de balon
+    0 %                                       778 posesiones  encontradas 46.1%  perdidas  419
+    1-50 %                                    109 posesiones  encontradas 78.9%  perdidas   23
+    >50 %                                     251 posesiones  encontradas 31.5%  perdidas  172
+
+  por como empieza
+    robo: intercepcion                        428 posesiones  encontradas 38.8%  perdidas  262
+    robo: balon suelto                        264 posesiones  encontradas 46.6%  perdidas  141
+    reanudacion: saque de banda               110 posesiones  encontradas 64.5%  perdidas   39
+    reanudacion: falta                         92 posesiones  encontradas 79.3%  perdidas   19
+    robo: entrada                              77 posesiones  encontradas 31.2%  perdidas   53
+    robo: tras duelo                           63 posesiones  encontradas 31.7%  perdidas   43
+    reanudacion: corner                        26 posesiones  encontradas 38.5%  perdidas   16
+    robo: parada o bloqueo                     26 posesiones  encontradas 50.0%  perdidas   13
+    reanudacion: saque de centro               18 posesiones  encontradas 88.9%  perdidas    2
+    robo: otro (ball lost)                     17 posesiones  encontradas  5.9%  perdidas   16
+    robo: otro (pass)                          11 posesiones  encontradas 36.4%  perdidas    7
+    robo: otro (shot)                           2 posesiones  encontradas 50.0%  perdidas    1
+    robo: otro (carry)                          2 posesiones  encontradas 100.0%  perdidas    0
+    reanudacion: saque de puerta                1 posesiones  encontradas  0.0%  perdidas    1
+    reanudacion: penalti                        1 posesiones  encontradas  0.0%  perdidas    1
+
+  por como acaba
+    perdida: pase interceptado                403 posesiones  encontradas 51.9%  perdidas  194
+    perdida: otra                             184 posesiones  encontradas 45.1%  perdidas  101
+    paron: balon fuera                        133 posesiones  encontradas 36.8%  perdidas   84
+    perdida: duelo                             87 posesiones  encontradas 41.4%  perdidas   51
+    perdida: robo                              76 posesiones  encontradas 36.8%  perdidas   48
+    paron: falta                               74 posesiones  encontradas 55.4%  perdidas   33
+    perdida: tiro sin paron                    54 posesiones  encontradas 61.1%  perdidas   21
+    perdida: sin evento                        37 posesiones  encontradas 37.8%  perdidas   23
+    perdida: cabezazo                          34 posesiones  encontradas 29.4%  perdidas   24
+    paron: otro                                21 posesiones  encontradas 38.1%  perdidas   13
+    perdida: despeje                           16 posesiones  encontradas 12.5%  perdidas   14
+    paron: tiro                                13 posesiones  encontradas 61.5%  perdidas    5
+    fin de parte                                6 posesiones  encontradas 50.0%  perdidas    3
+
+  por numero de pases propios
+    0                                         453 posesiones  encontradas 18.1%  perdidas  371
+    1-2                                       329 posesiones  encontradas 46.5%  perdidas  176
+    3-5                                       195 posesiones  encontradas 74.4%  perdidas   50
+    6+                                        161 posesiones  encontradas 89.4%  perdidas   17
+
+  por zona donde empieza (x relativa del balon limpio)
+    tercio 1                                  292 posesiones  encontradas 42.1%  perdidas  169
+    tercio 2                                  465 posesiones  encontradas 50.8%  perdidas  229
+    tercio 3                                  381 posesiones  encontradas 43.3%  perdidas  216
+
+  perdidas por duracion x causa:
+    <3 s     equipo contrar 216 | tapada por D 20 | fusionada 2 | fusionada 64 | fusionada 51 | partida en tro 1 | fronteras desp 11
+    3-10 s   equipo contrar 80 | tapada por D 17 | fusionada 3 | fusionada 47 | fusionada 19 | fronteras desp 10
+    10-30 s  equipo contrar 6 | tapada por D 1 | fusionada 27 | fusionada 18 | partida en tro 4 | fronteras desp 3
+    >30 s    equipo contrar 1 | tapada por D 4 | fusionada 2 | partida en tro 6 | fronteras desp 1
+
+== 4. Fronteras (transiciones GT con una predicha del mismo tipo cerca)
+  cambio de equipo (H<->A)   n= 891  a <=0,5 s 21.8%  <=1 s 30.4%  <=2 s 40.3%  desfase mediano +1 fr  error medio 15.9 fr  falsas  108
+  paron (H/A->D)             n= 241  a <=0,5 s 41.9%  <=1 s 44.8%  <=2 s 48.5%  desfase mediano +1 fr  error medio 6.2 fr  falsas  170
+  reanudacion (D->H/A)       n= 241  a <=0,5 s 42.7%  <=1 s 56.0%  <=2 s 73.4%  desfase mediano +0 fr  error medio 14.0 fr  falsas  109
+
+== 5. Frame a frame
+  balon visible        61.1% de los frames  acierto 0.912
+     GT H -> pred H/A/D 0.91 0.08 0.01 | GT A -> 0.09 0.91 0.00 | GT D -> 0.04 0.04 0.92
+  hueco corto (<=4 s)   0.9% de los frames  acierto 0.896
+     GT H -> pred H/A/D 0.85 0.10 0.06 | GT A -> 0.07 0.76 0.17 | GT D -> 0.04 0.00 0.96
+  hueco largo (>4 s)   38.1% de los frames  acierto 0.777
+     GT H -> pred H/A/D 0.66 0.12 0.22 | GT A -> 0.13 0.64 0.22 | GT D -> 0.06 0.07 0.87
+  fase: en vuelo (dentro de un pase)     frames   99036  acierto 0.910
+  fase: cerca de un duelo (+-0,5 s)      frames    9890  acierto 0.686
+  fase: resto del juego vivo             frames  188094  acierto 0.827
+
+  senal 'jugador mas cercano = poseedor' (juego vivo con balon visible):
+    balon degradado  acierta 0.700  | modelo cuando el mas cercano acierta 0.947, cuando falla 0.827
+    balon limpio     acierta 0.798  | modelo cuando el mas cercano acierta 0.907, cuando falla 0.774
+
+  calibracion (probabilidad maxima de la capa final vs acierto del argmax):
+    p en [0.33, 0.50):  0.8% de los frames  acierto 0.407
+    p en [0.50, 0.70):  7.6% de los frames  acierto 0.521
+    p en [0.70, 0.90): 11.3% de los frames  acierto 0.665
+    p en [0.90, 1.00): 80.3% de los frames  acierto 0.921
+
+== 6. Oraculos: spellF1 si arreglaramos solo esto (base 0.5422)
+  huecos largos perfectos (balon fusionado ideal)            0.7073  (+0.1651)
+  la mitad de los huecos largos perfectos                    0.6263  (+0.0841)
+  huecos cortos perfectos                                    0.5419  (-0.0003)
+  D perfecto (frames D)                                      0.5788  (+0.0366)
+  equipo perfecto (frames vivos)                             0.9472  (+0.4050)
+  posesiones cortas (<3 s) perfectas                         0.7761  (+0.2339)
+  frames en vuelo perfectos                                  0.5492  (+0.0070)
+  causa: equipo contrario                                    0.8546  (+0.3124)
+  causa: tapada por D                                        0.5729  (+0.0307)
+  causa: fusionada: paron no detectado                       0.5473  (+0.0050)
+  causa: fusionada: posesion rival corta no detectada        0.7337  (+0.1914)
+  causa: fusionada: ambos                                    0.6747  (+0.1325)
+  causa: partida en trozos                                   0.5538  (+0.0116)
+  causa: fronteras desplazadas o recortadas                  0.5519  (+0.0097)
+
+resumen en external_data\failure_analysis.json

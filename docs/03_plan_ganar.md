@@ -9,7 +9,7 @@
 
 **Dónde estamos**
 - Modelo vigente: **L3 apilado** (ADR-0011): 0,542 en el banco v2.1 con la GT por eventos; 0,558 con el ATD simulado de otra forma.
-- **Hallazgo del 22 oct** (`docs/investigacion/02_analisis_fallos.md`): la GT del banco no seguía la definición de posesión «controlada» del reto. Con la regla corregida (ADR-0012, T = 1,5 s), el mismo modelo sin reentrenar saca **0,628**. E021 mide el reentrenado.
+- **Hallazgo del 22 oct** (`docs/investigacion/02_analisis_fallos.md`): la GT del banco no seguía la definición de posesión «controlada» del reto. Con la regla corregida (ADR-0012, T = 1,5 s), el mismo modelo saca **0,6245**. Reentrenar con ella no aporta (E021), así que el cambio es de medida. **Desde ahora se evalúa con `--controlled 1.5`.** Estimación orientativa en el reto: ~0,55-0,60.
 - El `La MasIA.csv` de reserva sale aún del modelo en cuarentena (features v2). Hay que entrenar el artefacto apilado (`train_l3_final --stack`, ADR-0011) y regenerarlo.
 
 **Dónde fallamos (GT controlada)**
@@ -22,8 +22,8 @@
 **Prioridades, en orden**
 | # | tarea | quién | ataca | estado |
 |---|---|---|---|---|
-| 1 | E021: reentrenar el apilado con la GT controlada (T = 1; 1,5; 2) y aceptar o rechazar ADR-0012 | agente | la definición | en curso |
-| 2 | Entrenar el artefacto final y regenerar `La MasIA.csv` | agente + persona | reserva válida | pendiente (tras E021) |
+| 1 | ~~E021: reentrenar con la GT controlada~~ → no aporta; la GT controlada queda para evaluar (ADR-0012). Falta medir con T = 1 y 2 | agente | la medida | hecho |
+| 2 | Entrenar el artefacto final (apilado, ADR-0011, sin cambios) y regenerar `La MasIA.csv` | agente + persona | reserva válida | **siguiente** |
 | 3 | Señales de **cambio de posesión**: reacción colectiva (bloques que se abren o cierran, avance invertido), sentido del balón respecto a los equipos, modelo por segmento candidato | agente | robos no vistos (79 %) | por hacer |
 | 4 | **Balón fusionado**: detector entero + `broadcast atd.txt` → puerta de cobertura → simular en el banco | persona A + agente | huecos (+0,08) | bloqueado por la descarga y la ejecución |
 | 5 | **Detector de balón parado dentro de los huecos** por la colocación (jugadores quietos, barrera, córner, portero, banda) | agente | D en huecos (+0,04) | por hacer |

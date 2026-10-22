@@ -1,6 +1,6 @@
 # 0012 — GT del banco con posesión «controlada» (un robo cuenta si dura ≥ 1,5 s)
 
-- **Estado**: Propuesta (pendiente de E021: reentrenar con la GT nueva)
+- **Estado**: Propuesta (E021 hecho: la GT controlada se usa para evaluar; entrenar con ella no aporta)
 - **Fecha**: 2026-10-22
 - **Autor/a**: Manel (con agente)
 - **Revisado por**: ☐ ☐
@@ -40,8 +40,11 @@ que el reto no considera posesiones.
 
 ## Decisión (propuesta)
 Opción 2 con **T = 1,5 s** (`hackbarca.io.external.controlled_possession`, opción `--controlled
-1.5` en `tune_l3` y en `failure_analysis`). Al llegar DFL, se contrasta su distribución de
-duraciones con la del banco controlado.
+1.5` en `tune_l3` y en `failure_analysis`) **como verdad de evaluación del banco**. Toda
+comparación de modelos (ADR-0008) se hace con ella.
+
+**El entrenamiento sigue con la GT por eventos**: entrenar con la controlada no aporta (E021). Al
+llegar DFL, se contrasta su distribución de duraciones con la del banco controlado.
 
 ## Justificación
 | T | posesiones | media | < 3 s | spellF1 del modelo actual (sin reentrenar) |
@@ -56,8 +59,16 @@ duraciones con la del banco controlado.
 - No se usa el spellF1 de los 5 min públicos para nada (se respeta ADR-0008): solo la forma de su
   distribución de duraciones, que es lo que `CHALLENGE.md` dice que hay que mirar para entender la
   definición.
-- Pendiente E021: reentrenar el apilado y reajustar Viterbi con la GT controlada, y comparar con el
-  modelo actual re-decodificado.
+- **E021** (evaluando con la GT controlada y ajustando Viterbi dejando un partido fuera):
+
+  | modelo | agregado | por partido |
+  |---|---|---|
+  | apilado actual | **0,6245** | 0,646 / 0,592 / 0,634 |
+  | reentrenado con la GT controlada | 0,6225 | 0,635 / 0,588 / 0,642 |
+
+  No pasa ADR-0008. El cambio es de medida, no de modelo.
+- **Calibración**: con la GT controlada, el baseline en el banco mantiene el orden de las variantes
+  del reto y queda ~0,04 más fácil (s50: 0,280 frente a 0,243). No hace falta recalibrar.
 
 ## Consecuencias
 - **Todo número anterior (E001-E019) se midió con la GT por eventos** y no se compara con los

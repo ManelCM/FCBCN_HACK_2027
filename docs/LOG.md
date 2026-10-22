@@ -20,8 +20,10 @@ Formato: la entrada más nueva va **arriba**.
   - Fallos que quedan: no vemos la mitad de los robos (79 % de las pérdidas), huecos largos (acierto 0,78), duelos, aéreos y despejes, infrasegmentación.
   - Idea del audio del broadcast (silbato y comentarios) → **ADR-0013** (propuesta, bloqueada hasta saber si hay audio) y preguntas **Q6/Q7** en `docs/00_reto.md`.
   - `docs/03_plan_ganar.md`: nueva sección «Estado y prioridades» con la tabla de tareas por persona.
+  - **E021**: reentrenar con la GT controlada **no aporta** (0,6225 frente a 0,6245 del modelo actual con Viterbi reajustado). El cambio es de medida: el modelo vigente se queda y se evalúa con `--controlled 1.5`. Calibración revisada: con el baseline, el banco queda ~0,04 más fácil que el reto, así que la estimación orientativa en el reto es ~0,55-0,60.
+  - El análisis queda explicado paso a paso en `docs/investigacion/02_analisis_fallos.md`, con las salidas completas en `docs/investigacion/resultados/`.
 - Pendiente:
-  - E021: apilado reentrenado con la GT controlada (lanzado) y robustez con T = 1 y 2 s. Después, aceptar o rechazar ADR-0012.
+  - Medir el modelo vigente con T = 1 y 2 s (robustez de ADR-0012).
   - Entrenar el artefacto final y regenerar `La MasIA.csv` (el actual sale del modelo en cuarentena).
   - Señales de cambio de posesión y detector de balón parado dentro de los huecos.
 - Bloqueos (personas):

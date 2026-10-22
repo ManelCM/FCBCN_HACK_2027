@@ -140,7 +140,8 @@ en cuarentena (features v2).
 - v4 (empuje de bloque): +0,009 en 2/3 partidos.
 - Aleatorización del dominio sobre el apilado: 0,550, pero no mejora los 3 partidos.
 
-**Estimación en el reto**: ~0,45-0,50 con la GT por eventos, frente al 0,243 del baseline. Es muy
+**Estimación en el reto**: con la GT controlada, el banco queda ~0,04 más fácil que el reto
+(medido con el baseline), así que esperamos **~0,55-0,60**, frente al 0,243 del baseline. Es muy
 incierta (±0,05).
 
 ## 6. Dónde y por qué fallamos (análisis del 22 oct)
@@ -150,7 +151,10 @@ Detalle completo en `docs/investigacion/02_analisis_fallos.md`.
 0. **La GT del banco medía otra definición.** Contaba cada robo de 1 s, y el reto solo cuenta la
    posesión controlada. Con la regla «un robo cuenta si dura ≥ 1,5 s» (ADR-0012), el banco
    reproduce la GT pública (13,7 s de media y 17,5 % < 3 s, frente a 14,2 s y 17,6 %), y **el
-   mismo modelo pasa de 0,542 a 0,628**. E021 mide el reentrenado.
+   mismo modelo pasa de 0,542 a 0,628** (0,6245 con Viterbi reajustado dejando un partido fuera).
+   Reentrenar con la nueva definición **no aporta** (E021: 0,6225): el cambio es de medida. **El
+   modelo era mejor de lo que creíamos; el examen estaba mal.** Desde ahora se evalúa con la GT
+   controlada.
 1. **No vemos la mitad de los robos.** El 49 % de los cambios H↔A tienen una frontera predicha a
    ≤ 2 s. Un robo perdido cuesta 2-3 posesiones (la suya y las dos vecinas fusionadas): el **79 %
    de las pérdidas**.
@@ -182,7 +186,7 @@ Un dato útil: incluso con el balón perfecto, el jugador más cercano es del eq
 
 | mejora | ataca | ganancia orientativa |
 |---|---|---|
-| GT controlada + reentrenar (ADR-0012) | la definición | ya +0,086 sin reentrenar |
+| GT controlada para evaluar (ADR-0012) | la medida | hecho: el examen pasa de 0,542 a 0,625; reentrenar no aporta (E021) |
 | Señales de cambio de posesión | robos no vistos (79 %) | alta, por medir |
 | Balón fusionado (ADR-0010) | huecos | +0,05 a +0,10 |
 | Detector de balón parado en huecos | D en huecos | hasta +0,04 |
