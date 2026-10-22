@@ -118,3 +118,16 @@ def test_degrade_is_deterministic_and_anonymous():
     assert np.isnan(a.ball_x).mean() > np.isnan(match.ball_x).mean()
     # cada slot solo pertenece a un equipo y nunca tiene dos tracklets a la vez (una columna)
     assert set(np.unique(a.team_of_track)) == {HOME, AWAY}
+
+
+def test_controlled_possession_absorbs_uncontrolled_steals():
+    from hackbarca.io.external import controlled_possession
+    H, A, D = GT_H, GT_A, GT_D
+    gt = np.array([H] * 10 + [A] * 2 + [H] * 5 + [D] * 3 + [A] * 2 + [H] * 8 + [A] * 6, dtype=np.int8)
+    out = controlled_possession(gt, 4)
+    # robo de 2 frames sin control -> sigue H; tras D el poseedor vale aunque dure poco
+    assert (out[:17] == H).all()
+    assert (out[17:20] == D).all()
+    assert (out[20:22] == A).all()
+    assert (out[22:30] == H).all() and (out[30:] == A).all()
+    assert np.array_equal(controlled_possession(gt, 0), gt)

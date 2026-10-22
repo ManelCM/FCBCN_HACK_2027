@@ -141,6 +141,28 @@ def gt_from_events(events: pd.DataFrame, n_frames: int) -> np.ndarray:
     return codes
 
 
+def controlled_possession(gt: np.ndarray, min_frames: int) -> np.ndarray:
+    """GT con la regla de posesion "controlada" de CHALLENGE.md.
+
+    Un robo solo cambia la posesion si el nuevo equipo la conserva al menos `min_frames`; si no,
+    esos frames siguen siendo del equipo anterior (un toque, un desvio o un duelo sin control no
+    cuentan). Tras un D la posesion vale siempre: al reanudar hay un poseedor claro. Los eventos de
+    Metrica marcan cada recuperacion, asi que sin esto el banco tiene el doble de posesiones <3 s
+    que la GT publica (E020).
+    """
+    out = gt.copy()
+    edges = np.flatnonzero(np.diff(gt) != 0) + 1
+    bounds = np.concatenate(([0], edges, [len(gt)]))
+    prev = None  # etiqueta vigente de la posesion abierta
+    for a, b in zip(bounds[:-1], bounds[1:]):
+        code = gt[a]
+        if code in (GT_H, GT_A) and prev in (GT_H, GT_A) and code != prev and b - a < min_frames:
+            out[a:b] = prev  # robo sin control: sigue la posesion anterior
+            continue
+        prev = code
+    return out
+
+
 def load_metrica_bench(game: str, cache_dir: str = METRICA_CACHE):
     """(MatchTracking, gt_codes) de un partido de Metrica sample-data, con cache .npz."""
     cache = os.path.join(cache_dir, "bench_game{}.npz".format(game))

@@ -17,7 +17,7 @@ import numpy as np
 
 from hackbarca.eval.bench import pm, pooled
 from hackbarca.io.degrade import degrade
-from hackbarca.io.external import load_metrica_bench, metrica_events
+from hackbarca.io.external import controlled_possession, load_metrica_bench, metrica_events
 from hackbarca.io.smart_tagging import simulate_set_piece_windows
 from hackbarca.models.l3 import DecodeParams, decode, features_for, predict_proba, train
 from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES
@@ -84,6 +84,10 @@ def main(argv=None) -> int:
     parser.add_argument("--stack", action="store_true", help="segunda capa con contexto temporal (E018)")
     parser.add_argument("--eval-shift", action="store_true",
                         help="robustez: el partido retenido se degrada con la calibracion alternativa del balon")
+    parser.add_argument("--controlled", type=float, default=0.0,
+                        help="GT con posesion controlada: segundos minimos para que un robo cuente (E020)")
+    parser.add_argument("--from-oof", default=None,
+                        help="no entrena: re-decodifica los OOF guardados (external_data/<fichero>)")
     args = parser.parse_args(argv)
 
     from hackbarca.models import l3
@@ -94,7 +98,13 @@ def main(argv=None) -> int:
     if args.rounds:
         l3.N_ROUNDS = args.rounds
 
-    games = load_bench(use_tags=not args.no_tags, version=args.features)
+    if args.from_oof:
+        games = [(None, load_metrica_bench(game)[1]) for game in BENCH_GAMES]
+    else:
+        games = load_bench(use_tags=not args.no_tags, version=args.features)
+    if args.controlled:
+        frames = int(round(args.controlled * 25))
+        games = [(df, controlled_possession(gt, frames)) for df, gt in games]
     if args.eval_shift:
         from dataclasses import replace
         shifted = replace(BENCH_DEGRADE, ball_smooth_sigma=6.0, ball_corr_noise=0.3, ball_corr_tau=25.0)
@@ -105,7 +115,10 @@ def main(argv=None) -> int:
     runs = [pm.valid_runs(gt) for gt in gts]
     extra = augmented_games(args.augment, args.features) if args.augment else {}
     oof = []
-    for g in range(len(games)):
+    if args.from_oof:
+        blob = np.load(os.path.join(_REPO_ROOT, "external_data", args.from_oof))
+        oof = [blob["p%d" % i] for i in range(len(games))]
+    for g in range(len(games) if not args.from_oof else 0):
         others = [o for o in range(len(games)) if o != g]
         train_sets = [games[o] for o in others] + [e for o in others for e in extra.get(o, [])]
         if args.stack:
@@ -130,8 +143,11 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_shift.npz")
     if args.stack:
         name = name.replace(".npz", "_stack.npz")
-    np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
-                        **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
+    if args.controlled:
+        name = name.replace(".npz", "_ctl{:g}.npz".format(args.controlled))
+    if not args.from_oof:
+        np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
+                            **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
 
     argmax = [np.argmax(p, 1).astype(np.int8) for p in oof]
     r = pooled(gts, argmax)
