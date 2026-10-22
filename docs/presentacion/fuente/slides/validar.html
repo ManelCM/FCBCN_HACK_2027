@@ -1,0 +1,27 @@
+<section id="validar" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">Qué validamos exactamente</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:60px;font-weight:600;line-height:1.1;color:#0F1B2D">Tres preguntas distintas, tres comprobaciones distintas</h2>
+<div style="display:flex;gap:28px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#FCFBF8;padding:30px;border-top:10px solid #2F6FD0;border-radius:12px">
+<p style="font-family:'Oswald', Arial, sans-serif;font-size:56px;font-weight:600;color:#2F6FD0;line-height:1.0">1</p>
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">¿El pipeline está bien?</h3>
+<p style="font-size:24px;color:#3D4757;line-height:1.4"><b>Cómo:</b> el baseline oficial con nuestro código debe dar lo publicado en los 5 min públicos</p>
+<p style="font-size:24px;color:#1F4E9A;line-height:1.4;font-weight:700">✓ 0,3256 = 0,3256</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#FCFBF8;padding:30px;border-top:10px solid #E07A2F;border-radius:12px">
+<p style="font-family:'Oswald', Arial, sans-serif;font-size:56px;font-weight:600;color:#B5541A;line-height:1.0">2</p>
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">¿El banco se parece al reto?</h3>
+<p style="font-size:24px;color:#3D4757;line-height:1.4"><b>Cómo:</b> mismos agregados en el ATD y en el banco (balón ausente, huecos, ruido del balón) + orden de los baselines</p>
+<p style="font-size:24px;color:#9A4613;line-height:1.4;font-weight:700">✓ 0,42 / 0,41 sin balón · mismo orden · posesiones de 13,7 s frente a 14,2 s</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#0F1B2D;padding:30px;border-top:10px solid #F0954A;border-radius:12px">
+<p style="font-family:'Oswald', Arial, sans-serif;font-size:56px;font-weight:600;color:#F0954A;line-height:1.0">3</p>
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#F5F3EE">¿Qué modelo es mejor?</h3>
+<p style="font-size:24px;color:#D7DEE8;line-height:1.4"><b>Cómo:</b> en el banco, entrenar con 2 partidos y puntuar el 3.º, rotando; aceptar solo si mejora ≥ 0,01 en todos</p>
+<p style="font-size:24px;color:#F0954A;line-height:1.4;font-weight:700">L3 apilado: 0,625 (GT controlada)</p>
+</div>
+</div>
+<p style="font-size:26px;color:#3D4757">Y una cuarta, de robustez: ¿aguanta el modelo si el ATD se parece algo menos al banco? Se prueba con una calibración alternativa del balón.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6A7280">ADR-0006 · 0008 · 0009 · E005 · E013 · E017</p>
+<aside>Separar las preguntas evita el error típico: elegir el modelo por los 5 min públicos. Esos 5 minutos solo responden a la primera pregunta.</aside>
+</section>

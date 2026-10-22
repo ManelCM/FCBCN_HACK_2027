@@ -1,0 +1,21 @@
+<section id="historia2" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:104px 128px 150px;display:flex;flex-direction:column;gap:22px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">Historia · experimentos 2/2</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:56px;font-weight:600;line-height:1.1;color:#0F1B2D">Afinar, descubrir dos errores de medida y corregirlos</h2>
+<table style="font-size:21px;color:#1B2433;font-family:'Public Sans', Arial, sans-serif">
+<tr><th style="width:8%;text-align:left">Exp.</th><th style="width:30%;text-align:left">Qué probamos</th><th style="width:30%;text-align:left">Por qué</th><th style="width:32%;text-align:left">Resultado → decisión</th></tr>
+<tr><td>E009</td><td>Análisis de errores</td><td>¿Dónde se pierden los puntos?</td><td>En el equipo, no en el D ni en el retraso</td></tr>
+<tr style="background:#ECE8DE"><td>E010</td><td>Capacidad del modelo</td><td>¿Sobreajusta?</td><td>Más capacidad, mejor → 127 hojas (0,502)</td></tr>
+<tr><td>E011</td><td>Humo de L3 en datos reales</td><td>Comprobar en el partido real</td><td>0,588 vs 0,326 del baseline ✓</td></tr>
+<tr style="background:#ECE8DE"><td>E012</td><td>Features de toque v2</td><td>Ver quién toca el balón</td><td>+0,083 en banco… <b>falso</b>: cuarentena</td></tr>
+<tr><td>E013</td><td>Medir el balón real</td><td>¿Por qué v2 infra-segmenta?</td><td>Balón filtrado → banco v2.1</td></tr>
+<tr style="background:#ECE8DE"><td>E014</td><td>v1/v2/v3 en banco v2.1</td><td>Comparar con el balón realista</td><td><b>v3 0,519</b> vs v1 0,465 → candidata</td></tr>
+<tr><td>E015–16</td><td>v4 colectivo; aleatorizar dominio</td><td>Señal en huecos; robustez</td><td>+0,009 / +0,003 → no pasan</td></tr>
+<tr style="background:#ECE8DE"><td>E017</td><td>Robustez con otra calibración</td><td>¿Y si el ATD es algo distinto?</td><td>Aleatorizado <b>0,536 vs 0,518</b> (+0,019)</td></tr>
+<tr><td>E018</td><td>Apilado: 2.ª capa con contexto</td><td>Ver 1–10 s antes y después</td><td><b>0,542 vs 0,513</b>, 3/3 ✓ → modelo final</td></tr>
+<tr style="background:#ECE8DE"><td>E019</td><td>Apilado + aleatorizar</td><td>¿Suman?</td><td>0,550 pero no 3/3 → no; apilado robusto solo (0,558)</td></tr>
+<tr><td>E020</td><td>Análisis a fondo de fallos</td><td>¿Dónde y por qué fallamos?</td><td>La GT medía otra definición; robos no vistos = 79 %</td></tr>
+<tr style="background:#ECE8DE"><td>E021</td><td>Reentrenar con la GT controlada</td><td>¿Aprende la definición?</td><td>0,6225 vs 0,6245 → no; era la medida</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6A7280">E012–E013 y E020: antes de fiarse del banco, comprobar que mide lo mismo que el reto</p>
+<aside>E017: el modelo entrenado con varias degradaciones aguanta mejor un cambio de dominio, sobre todo en el partido más difícil (de 0,488 a 0,530). Pendiente de decidir si se adopta.</aside>
+</section>

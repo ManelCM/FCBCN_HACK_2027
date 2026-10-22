@@ -200,6 +200,7 @@ entrar.
 ## 8. Dónde está cada cosa
 
 - **Plan y prioridades vigentes**: `docs/03_plan_ganar.md` (sección «Estado y prioridades»).
+- **Presentación del equipo** (36 diapositivas, PDF/PPTX y fuente): `docs/presentacion/`.
 - **Decisiones**: `docs/decisiones/` (ADR 0001-0013, todas en *Propuesta* a falta de revisión).
 - **Experimentos**: `docs/experimentos.md`. **Diario**: `docs/LOG.md`.
 - **Reto y preguntas abiertas**: `docs/00_reto.md` (Q1-Q7). **Datos**: `docs/datos.md`.

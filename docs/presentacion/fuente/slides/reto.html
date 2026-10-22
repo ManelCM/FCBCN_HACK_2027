@@ -1,0 +1,26 @@
+<section id="reto" data-transition="fade" style="display:flex; flex-direction:column; gap:48px; padding:128px 128px 160px; background:#f5f3ee">
+  <p style="font-family:'Public Sans', Arial, sans-serif; font-size:24px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#b5541a">02 · El reto</p>
+  <h2 style="font-family:Oswald, Arial, sans-serif; font-size:72px; font-weight:600; line-height:1.1; color:#0f1b2d">Un partido, 199.319 frames: ¿de quién es el balón?</h2>
+  <div style="display:flex; flex-direction:row; gap:24px; align-items:center">
+    <div style="display:flex; flex-direction:column; gap:16px; flex:1; padding:32px; background:#fcfbf8; border:2px solid #d9d4c7; border-radius:16px">
+      <h3 style="font-family:Oswald, Arial, sans-serif; font-size:40px; font-weight:600; color:#0f1b2d">Entrada</h3>
+      <p style="font-family:'Public Sans', Arial, sans-serif; font-size:28px; line-height:1.35; color:#3d4757">Tracking automático (ATD) de Barça–Athletic: 46 slots sin identidad + balón</p>
+      <p style="font-family:'Public Sans', Arial, sans-serif; font-size:28px; line-height:1.35; color:#3d4757">Vídeo táctico, homografía, Smart Tagging y una 2ª cámara (broadcast)</p>
+    </div>
+    <x-shape kind="arrow-right" style="width:72px; height:36px; background:#2f6fd0"></x-shape>
+    <div style="display:flex; flex-direction:column; gap:16px; flex:1; padding:32px; background:#0f1b2d; border-radius:16px">
+      <h3 style="font-family:Oswald, Arial, sans-serif; font-size:40px; font-weight:600; color:#f0954a">Nuestro sistema</h3>
+      <p style="font-family:'Public Sans', Arial, sans-serif; font-size:28px; line-height:1.35; color:#d7dee8">Features por frame + clasificador + decodificación de posesiones</p>
+      <p style="font-family:'Public Sans', Arial, sans-serif; font-size:28px; line-height:1.35; color:#d7dee8">Corre en local; nada de los datos sale de la máquina</p>
+    </div>
+    <x-shape kind="arrow-right" style="width:72px; height:36px; background:#2f6fd0"></x-shape>
+    <div style="display:flex; flex-direction:column; gap:16px; flex:1; padding:32px; background:#fcfbf8; border:2px solid #d9d4c7; border-radius:16px">
+      <h3 style="font-family:Oswald, Arial, sans-serif; font-size:40px; font-weight:600; color:#0f1b2d">Salida</h3>
+      <p style="font-family:'Public Sans', Arial, sans-serif; font-size:28px; line-height:1.35; color:#3d4757">CSV con una etiqueta por frame:</p>
+      <p style="font-family:'Public Sans', Arial, sans-serif; font-size:28px; line-height:1.35; color:#3d4757"><b>H</b> Barça · <b>A</b> Athletic · <b>D</b> balón muerto · <b>X</b> sin respuesta</p>
+    </div>
+  </div>
+  <p style="font-family:'Public Sans', Arial, sans-serif; font-size:32px; line-height:1.4; color:#3d4757">La GT sale <b>mecánicamente</b> del tracking corregido de Metrica. El nuestro es el automático: con ruido, tracks rotos y <b>sin balón en el 41 % de los frames evaluados</b>.</p>
+  <p style="position:absolute; bottom:64px; left:128px; width:1664px; font-family:'Public Sans', Arial, sans-serif; font-size:24px; color:#6a7280">La MasIA · Fase 1 · 03</p>
+  <aside>El trabajo consiste en imitar el criterio de dueño del balón y balón muerto del tracking corregido a partir del tracking automático, que tiene ruido y huecos.</aside>
+</section>

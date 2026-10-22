@@ -1,0 +1,48 @@
+<section id="arquitectura" data-transition="fade" data-section="Arquitectura del pipeline, resultados y dónde está el margen" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">07 · Arquitectura</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:64px;font-weight:600;line-height:1.1;color:#0F1B2D">De tracking crudo a posesiones, en un solo comando</h2>
+<p style="font-size:24px;color:#6A7280;font-weight:700;letter-spacing:2px;text-transform:uppercase">Camino principal (en producción)</p>
+<div style="display:flex;align-items:center;gap:14px">
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#FCFBF8;padding:22px;border:2px solid #D9D4C7;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:30px;font-weight:600;color:#0F1B2D">ATD táctico</h3>
+<p style="font-size:24px;color:#3D4757">jugadores + balón</p>
+</div>
+<x-shape kind="arrow-right" style="width:44px;height:22px;background:#2F6FD0"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#FCFBF8;padding:22px;border:2px solid #D9D4C7;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:30px;font-weight:600;color:#0F1B2D">load_match</h3>
+<p style="font-size:24px;color:#3D4757">metros, 0-indexado</p>
+</div>
+<x-shape kind="arrow-right" style="width:44px;height:22px;background:#2F6FD0"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#FCFBF8;padding:22px;border:2px solid #D9D4C7;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:30px;font-weight:600;color:#0F1B2D">Features v3</h3>
+<p style="font-size:24px;color:#3D4757">65 por frame: proximidad, toques, colectivas</p>
+</div>
+<x-shape kind="arrow-right" style="width:44px;height:22px;background:#2F6FD0"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#0F1B2D;padding:22px;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:30px;font-weight:600;color:#F0954A">LightGBM</h3>
+<p style="font-size:24px;color:#D7DEE8">P(H, A, D), simétrico</p>
+</div>
+<x-shape kind="arrow-right" style="width:44px;height:22px;background:#2F6FD0"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#0F1B2D;padding:22px;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:30px;font-weight:600;color:#F0954A">Viterbi</h3>
+<p style="font-size:24px;color:#D7DEE8">posesiones sin parpadeo</p>
+</div>
+<x-shape kind="arrow-right" style="width:44px;height:22px;background:#2F6FD0"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px;background:#FCFBF8;padding:22px;border:2px solid #E07A2F;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:30px;font-weight:600;color:#0F1B2D">La MasIA.csv</h3>
+<p style="font-size:24px;color:#3D4757">validado + sha256</p>
+</div>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#E6EEFA;padding:28px;border-radius:16px">
+<p style="font-size:24px;color:#1F4E9A;font-weight:700;letter-spacing:2px;text-transform:uppercase">Entrenamiento (sin datos del reto)</p>
+<p style="font-size:26px;color:#1B2433;line-height:1.4">Banco Metrica degradado → features → LightGBM + búsqueda de decodificación → <b>modelo versionado</b> en <b>artifacts/</b> (gzip determinista)</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#FBEBDD;padding:28px;border-radius:16px">
+<p style="font-size:24px;color:#9A4613;font-weight:700;letter-spacing:2px;text-transform:uppercase">Fusión del balón (en construcción)</p>
+<p style="font-size:26px;color:#1B2433;line-height:1.4">ATD broadcast <b>alineado</b> por planos + detector YOLO local en el vídeo → <b>balón donde falta</b> → features</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA" · 08</p>
+<aside>Todo vive en src/hackbarca: io, features, models, decode, eval, pipeline y vision. El modelo se entrena solo con datos abiertos y se versiona para que la entrega sea reproducible sin reentrenar.</aside>
+</section>

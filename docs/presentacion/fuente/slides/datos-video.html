@@ -1,0 +1,38 @@
+<section id="datos-video" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">Los datos · 2. Vídeo táctico + homografía</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:60px;font-weight:600;line-height:1.1;color:#0F1B2D">Si el tracker pierde el balón, buscarlo en la imagen</h2>
+<div style="display:flex;align-items:center;gap:20px">
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:26px;border:2px solid #D9D4C7;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:32px;font-weight:600;color:#0F1B2D">Frame sin balón</h3>
+<p style="font-size:24px;color:#3D4757">solo los frames de hueco evaluados</p>
+</div>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#2F6FD0"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:26px;border:2px solid #D9D4C7;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:32px;font-weight:600;color:#0F1B2D">YOLO local</h3>
+<p style="font-size:24px;color:#3D4757">pesos abiertos, mosaicos de 640 px (el balón es pequeño)</p>
+</div>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#2F6FD0"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:26px;border:2px solid #D9D4C7;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:32px;font-weight:600;color:#0F1B2D">Homografía</h3>
+<p style="font-size:24px;color:#3D4757">píxel → metros del campo</p>
+</div>
+<x-shape kind="arrow-right" style="width:48px;height:24px;background:#2F6FD0"></x-shape>
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;background:#0F1B2D;padding:26px;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:32px;font-weight:600;color:#F0954A">Filtro temporal</h3>
+<p style="font-size:24px;color:#D7DEE8">Viterbi: descarta saltos imposibles</p>
+</div>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FBEBDD;padding:28px;border-radius:16px">
+<p style="font-size:24px;color:#9A4613;font-weight:700;letter-spacing:2px;text-transform:uppercase">Por qué vale la pena</p>
+<p style="font-size:26px;color:#1B2433;line-height:1.4">En los huecos el acierto cae de 0,89 a 0,74. Cada hueco que rellenamos vuelve a la zona buena.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#E6EEFA;padding:28px;border-radius:16px">
+<p style="font-size:24px;color:#1F4E9A;font-weight:700;letter-spacing:2px;text-transform:uppercase">Cómo sabremos si funciona</p>
+<p style="font-size:26px;color:#1B2433;line-height:1.4">Se prueba también en frames donde el ATD sí ve el balón: % detectado y error en metros.</p>
+</div>
+</div>
+<p style="font-size:26px;color:#3D4757">Estado: código listo y probado con sintéticos; falta ejecutarlo en la GPU (RTX 3060). Nada se etiqueta a mano.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6A7280">src/hackbarca/vision/ · ADR-0010</p>
+<aside>La homografía táctica es válida en el 100 % de los frames. El detector solo se ejecuta donde falta el balón, para ahorrar tiempo de GPU.</aside>
+</section>

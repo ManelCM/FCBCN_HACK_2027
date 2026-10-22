@@ -1,0 +1,27 @@
+<section id="resultados" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:104px 128px 150px;display:flex;flex-direction:column;gap:20px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">08 · Resultados</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:64px;font-weight:600;line-height:1.1;color:#0F1B2D">De 0,30 a 0,62 de spellF1 en el banco</h2>
+<p style="font-size:24px;color:#6A7280;font-weight:700;letter-spacing:2px;text-transform:uppercase">Banco v2 · dejando un partido fuera</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:24px"><p style="width:300px;font-size:26px;color:#3D4757">Baseline oficial</p><div style="width:500px;height:40px;background:#B9B3A6;border-radius:6px"></div><p style="font-size:26px;font-weight:700;color:#3D4757">0,300</p></div>
+<div style="display:flex;align-items:center;gap:24px"><p style="width:300px;font-size:26px;color:#3D4757">L1 · reglas + Viterbi</p><div style="width:543px;height:40px;background:#8FB2E8;border-radius:6px"></div><p style="font-size:26px;font-weight:700;color:#3D4757">0,326</p></div>
+<div style="display:flex;align-items:center;gap:24px"><p style="width:300px;font-size:26px;color:#3D4757">L3 · LightGBM v1</p><div style="width:837px;height:40px;background:#2F6FD0;border-radius:6px"></div><p style="font-size:26px;font-weight:700;color:#3D4757">0,502</p></div>
+</div>
+<p style="font-size:24px;color:#6A7280;font-weight:700;letter-spacing:2px;text-transform:uppercase">Banco v2.1 · balón filtrado como el real (más difícil)</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:24px"><p style="width:300px;font-size:26px;color:#3D4757">L3 · features v1</p><div style="width:775px;height:40px;background:#2F6FD0;border-radius:6px"></div><p style="font-size:26px;font-weight:700;color:#3D4757">0,465</p></div>
+<div style="display:flex;align-items:center;gap:24px"><p style="width:300px;font-size:26px;color:#3D4757">L3 · features v3</p><div style="width:865px;height:40px;background:#F0B27F;border-radius:6px"></div><p style="font-size:26px;font-weight:700;color:#3D4757">0,519</p></div>
+<div style="display:flex;align-items:center;gap:24px"><p style="width:300px;font-size:26px;color:#0F1B2D;font-weight:700">L3 v3 + apilado</p><div style="width:903px;height:40px;background:#E07A2F;border-radius:6px"></div><p style="font-size:26px;font-weight:700;color:#0F1B2D">0,542 · elegido</p></div>
+</div>
+<p style="font-size:24px;color:#6A7280;font-weight:700;letter-spacing:2px;text-transform:uppercase">Banco v2.1 con la GT controlada · la definición del reto (ADR-0012)</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:24px"><p style="width:300px;font-size:26px;color:#3D4757">Baseline oficial s50</p><div style="width:467px;height:40px;background:#B9B3A6;border-radius:6px"></div><p style="font-size:26px;font-weight:700;color:#3D4757">0,280</p></div>
+<div style="display:flex;align-items:center;gap:24px"><p style="width:300px;font-size:26px;color:#0F1B2D;font-weight:700">L3 apilado</p><div style="width:1040px;height:40px;background:#E07A2F;border-radius:6px"></div><p style="font-size:26px;font-weight:700;color:#0F1B2D">0,625</p></div>
+</div>
+<div style="display:flex;gap:24px;align-items:center;background:#0F1B2D;padding:24px 32px;border-radius:12px">
+<p style="font-size:26px;color:#F0954A;font-weight:700">Humo en datos reales · 5 min públicos</p>
+<p style="font-size:26px;color:#D7DEE8">baseline 0,326 · L1 0,469 · L3 0,588 (17 posesiones: no decide nada)</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">E008 · E010 · E011 · E014 · E018 · E021 · ruido del banco ≈ ±0,02 · 09</p>
+<aside>Los números de bancos distintos no se comparan entre sí: v2.1 es más difícil porque reproduce el balón filtrado del ATD real. Dentro de cada banco, el orden es claro y por encima del ruido. La GT controlada es la misma predicción medida con la definición de posesión del reto: desde el 22 de octubre se evalúa siempre así.</aside>
+</section>
