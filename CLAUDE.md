@@ -15,6 +15,7 @@ Repo oficial: https://github.com/metrica-sports/more-than-a-hack-2027. Resumen e
 
 ## Antes de hacer nada
 
+0. Si llegas nuevo al proyecto, lee primero **`docs/01_contexto_completo.md`** (todo el contexto desde cero) y la sección «Estado y prioridades» de `docs/03_plan_ganar.md`.
 1. `git pull` y lee `docs/LOG.md` (últimas entradas) y `docs/decisiones/` (ADRs en estado *Aceptada* o *Propuesta*).
 2. Revisa los commits nuevos de los compañeros: `git log --oneline -20` y `git diff <tu_último_commit_visto>..origin/main`. Si algo choca con una decisión aceptada, avisa (issue o comentario en la PR); no lo "arregles" en silencio.
 3. Si tu tarea depende de algo que aún no se sabe (formato de datos, métrica...), mira la sección "Preguntas abiertas" de `docs/00_reto.md`.

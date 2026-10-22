@@ -3,6 +3,35 @@
 > Aprobado el 2026-10-21. Reparto: A = visión y fusión del balón, B = banco v3 y protocolo, C = modelo. El agente escribe el código de los tres frentes; las piezas que tocan datos reales las ejecuta una persona (ADR-0004).
 
 
+## Estado y prioridades (actualizado 2026-10-22)
+
+> Esta sección manda sobre el calendario de abajo, que es el plan original del 21 oct.
+
+**Dónde estamos**
+- Modelo vigente: **L3 apilado** (ADR-0011): 0,542 en el banco v2.1 con la GT por eventos; 0,558 con el ATD simulado de otra forma.
+- **Hallazgo del 22 oct** (`docs/investigacion/02_analisis_fallos.md`): la GT del banco no seguía la definición de posesión «controlada» del reto. Con la regla corregida (ADR-0012, T = 1,5 s), el mismo modelo sin reentrenar saca **0,628**. E021 mide el reentrenado.
+- El `La MasIA.csv` de reserva sale aún del modelo en cuarentena (features v2). Hay que entrenar el artefacto apilado (`train_l3_final --stack`, ADR-0011) y regenerarlo.
+
+**Dónde fallamos (GT controlada)**
+1. **No vemos la mitad de los robos.** Solo el 49 % de los cambios H↔A tienen una frontera predicha a ≤ 2 s. Cada robo perdido cuesta 2-3 posesiones, y es el **79 % de las pérdidas**.
+2. **Huecos largos de balón** (38 % de los frames): acierto 0,78, y el juego vivo se predice D el 22 %. Oráculo: +0,158 con el balón ideal, +0,081 con la mitad de los huecos.
+3. Duelos, aéreos y despejes (0,70 de acierto cerca de un duelo; despejes encontrados el 12,5 %).
+4. Infrasegmentación general (738 posesiones predichas frente a 868 reales).
+- **No son el problema**: el retraso de las fronteras (0-1 frame), los huecos cortos y partir posesiones largas.
+
+**Prioridades, en orden**
+| # | tarea | quién | ataca | estado |
+|---|---|---|---|---|
+| 1 | E021: reentrenar el apilado con la GT controlada (T = 1; 1,5; 2) y aceptar o rechazar ADR-0012 | agente | la definición | en curso |
+| 2 | Entrenar el artefacto final y regenerar `La MasIA.csv` | agente + persona | reserva válida | pendiente (tras E021) |
+| 3 | Señales de **cambio de posesión**: reacción colectiva (bloques que se abren o cierran, avance invertido), sentido del balón respecto a los equipos, modelo por segmento candidato | agente | robos no vistos (79 %) | por hacer |
+| 4 | **Balón fusionado**: detector entero + `broadcast atd.txt` → puerta de cobertura → simular en el banco | persona A + agente | huecos (+0,08) | bloqueado por la descarga y la ejecución |
+| 5 | **Detector de balón parado dentro de los huecos** por la colocación (jugadores quietos, barrera, córner, portero, banda) | agente | D en huecos (+0,04) | por hacer |
+| 6 | DFL a mano → banco de 10 partidos; contrastar sus duraciones con la GT controlada | persona B | ruido y definición | pendiente |
+| 7 | HSMM con duración mínima ~1,5 s | agente | infrasegmentación | por hacer |
+| 8 | Audio del broadcast (ADR-0013): primero comprobar si hay audio | persona | D y equipo en huecos | bloqueado |
+| 9 | Enviar las preguntas Q4, Q6 (y Q2, Q5) | persona | reglas | pendiente |
+
 ## Contexto
 - **Estado (21 oct):** L3 (LightGBM + Viterbi) saca 0,502 de spellF1 en el banco externo v2, frente a 0,300 del baseline, y 0,588 en los 5 min públicos (comprobación). El baseline oficial da 0,243 en el partido completo real. El banco es ~0,05 más fácil que el reto, así que estimamos ~0,40-0,45 en el reto. Seguramente basta para el top 20; para ganar, no.
 - **Dónde se pierde** (E009): con el equipo perfecto pasaríamos a 0,87; con el D perfecto, solo a 0,58. En el 41 % del partido falta el balón (134 huecos largos), y ahí el acierto cae de 0,89 a 0,74. Además estamos limitados por datos: solo 3 partidos de entrenamiento y la calidad aún sube con más capacidad (E010).

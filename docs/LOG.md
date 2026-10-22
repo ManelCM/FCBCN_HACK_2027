@@ -11,6 +11,24 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-22 — Manel (con agente)
+- Hecho:
+  - **Explicación completa del proyecto desde cero** → `docs/01_contexto_completo.md` (reto, datos, validación, modelo, resultados, fallos, futuro). Es el punto de entrada para compañeros y agentes nuevos.
+  - Mañana: E017 (robustez con aleatorización), E018 (**apilado aceptado, 0,542**), E019 (la aleatorización no pasa el protocolo sobre el apilado; apilado desplazado 0,558). **ADR-0011**: modelo final = L3 apilado. `train_l3_final --stack` y `make_submission` ya soportan las dos capas (commit `1ab9dc2`).
+  - **Análisis a fondo de fallos (E020)** → `docs/investigacion/02_analisis_fallos.md`, script `pipeline/failure_analysis.py`.
+  - **Hallazgo**: la GT del banco contaba cada robo de 1 s, y el reto solo cuenta la posesión **controlada** (CHALLENGE.md). Con «un robo cuenta si dura ≥ 1,5 s» el banco reproduce la GT pública (13,7 s y 17,5 % < 3 s, frente a 14,2 s y 17,6 %), y el mismo modelo pasa de 0,542 a **0,628**. **ADR-0012** (propuesta), `external.controlled_possession`, `tune_l3 --controlled` y `--from-oof`.
+  - Fallos que quedan: no vemos la mitad de los robos (79 % de las pérdidas), huecos largos (acierto 0,78), duelos, aéreos y despejes, infrasegmentación.
+  - Idea del audio del broadcast (silbato y comentarios) → **ADR-0013** (propuesta, bloqueada hasta saber si hay audio) y preguntas **Q6/Q7** en `docs/00_reto.md`.
+  - `docs/03_plan_ganar.md`: nueva sección «Estado y prioridades» con la tabla de tareas por persona.
+- Pendiente:
+  - E021: apilado reentrenado con la GT controlada (lanzado) y robustez con T = 1 y 2 s. Después, aceptar o rechazar ADR-0012.
+  - Entrenar el artefacto final y regenerar `La MasIA.csv` (el actual sale del modelo en cuarentena).
+  - Señales de cambio de posesión y detector de balón parado dentro de los huecos.
+- Bloqueos (personas):
+  - `broadcast atd.txt` (parte -009) y ejecutar el detector de balón entero (no estaba corriendo).
+  - Bajar DFL a mano. Comprobar si `broadcast.mp4` tiene audio (`ffprobe`, ADR-0013).
+  - Enviar Q4/Q6 (y Q2/Q5). Revisar los ADR 0001-0013.
+
 ## 2026-10-21 (tarde) — Manel (con agente)
 - Hecho:
   - **Plan para ganar** aprobado (`docs/03_plan_ganar.md`), con tres frentes: A visión, B banco y C modelo. Protocolo de selección pre-registrado (ADR-0008).
