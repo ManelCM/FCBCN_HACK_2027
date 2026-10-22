@@ -90,8 +90,11 @@ def _window_mean(x: np.ndarray, lo: int, hi: int) -> np.ndarray:
     return (cs[b] - cs[a]) / np.maximum(b - a, 1)
 
 
-def context_features(proba: np.ndarray) -> pd.DataFrame:
-    """Probabilidades de la capa 1 resumidas hacia atras, centradas y hacia delante."""
+def context_features(proba: np.ndarray, change: bool = False) -> pd.DataFrame:
+    """Probabilidades de la capa 1 resumidas hacia atras, centradas y hacia delante.
+
+    change (features v5, E027): ademas, despues menos antes, una senal explicita de "aqui cambia".
+    """
     f = {}
     for k, name in ((0, "h"), (1, "a"), (2, "d")):
         p = proba[:, k]
@@ -100,21 +103,29 @@ def context_features(proba: np.ndarray) -> pd.DataFrame:
             f["ctxc%d_%s" % (w, name)] = _window_mean(p, -w, w)
             f["ctxb%d_%s" % (w, name)] = _window_mean(p, -w, -1)
             f["ctxf%d_%s" % (w, name)] = _window_mean(p, 1, w)
+            if change:
+                f["ctxchg%d_%s" % (w, name)] = f["ctxf%d_%s" % (w, name)] - f["ctxb%d_%s" % (w, name)]
     return pd.DataFrame(f)
 
 
 def _stack_input(df: pd.DataFrame, proba: np.ndarray) -> pd.DataFrame:
-    return pd.concat([df.reset_index(drop=True), context_features(proba)], axis=1)
+    change = "ball_prog_chg25" in df.columns  # features v5
+    return pd.concat([df.reset_index(drop=True), context_features(proba, change)], axis=1)
 
 
-def train_stacked(features: list[pd.DataFrame], labels: list[np.ndarray]):
+INNER_FOLDS = 3  # con <= 3 partidos equivale a dejar uno fuera (E018); con 10 evita 10 modelos
+
+
+def train_stacked(features: list[pd.DataFrame], labels: list[np.ndarray], inner_folds: int = INNER_FOLDS):
     """(capa1, capa2). La capa 2 se entrena con probabilidades de capa 1 fuera de muestra
-    (cada partido de entrenamiento predicho por un modelo entrenado con los demas)."""
-    inner = []
-    for i in range(len(features)):
-        rest = [j for j in range(len(features)) if j != i]
+    (cada grupo de partidos predicho por un modelo entrenado con los demas)."""
+    n = len(features)
+    inner = [None] * n
+    for group in np.array_split(np.arange(n), min(inner_folds, n)):
+        rest = [j for j in range(n) if j not in group]
         m = train([features[j] for j in rest], [labels[j] for j in rest])
-        inner.append(_stack_input(features[i], predict_proba(m, features[i])))
+        for i in group:
+            inner[i] = _stack_input(features[i], predict_proba(m, features[i]))
     stage2 = train(inner, labels)
     stage1 = train(features, labels)
     return stage1, stage2

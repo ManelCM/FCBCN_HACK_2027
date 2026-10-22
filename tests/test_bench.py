@@ -131,3 +131,79 @@ def test_controlled_possession_absorbs_uncontrolled_steals():
     assert (out[20:22] == A).all()
     assert (out[22:30] == H).all() and (out[30:] == A).all()
     assert np.array_equal(controlled_possession(gt, 0), gt)
+
+
+def _fake_dfl_dataset():
+    """TrackingDataset minimo con la forma que da kloppy para DFL: dos partes, flags por frame."""
+    from types import SimpleNamespace as NS
+    home, away = NS(players=[NS(player_id="h1")]), NS(players=[NS(player_id="a1")])
+    p1, p2 = NS(id=1), NS(id=2)
+    rows = [  # (parte, estado, duenio)
+        (p1, "BallState.ALIVE", home), (p1, "BallState.ALIVE", away), (p1, "BallState.DEAD", away),
+        (p2, "BallState.ALIVE", away), (p2, "BallState.ALIVE", home),
+    ]
+    records = [NS(period=p, ball_state=s, ball_owning_team=o) for p, s, o in rows]
+    df = pd.DataFrame({"ball_x": [0.5] * 5, "ball_y": [0.5] * 5, "h1_x": [0.1] * 5, "h1_y": [0.2] * 5,
+                       "a1_x": [0.9] * 5, "a1_y": [0.8] * 5})
+    meta = NS(teams=[home, away], frame_rate=25.0)
+    return NS(records=records, metadata=meta, to_df=lambda engine=None: df)
+
+
+def test_dfl_to_bench_gt_from_tracking_flags_and_halves():
+    from hackbarca.io.external import dfl_to_bench
+    match, gt = dfl_to_bench(_fake_dfl_dataset())
+    # una fila X entre partes para que possession_metrics no las una
+    assert gt.tolist() == [GT_H, GT_A, GT_D, GT_X, GT_A, GT_H]
+    assert match.n_frames == 6 and match.period.tolist() == [1, 1, 1, 0, 2, 2]
+    assert np.isnan(match.ball_x[2]) and np.isnan(match.ball_x[3])  # sin balon en D (como Metrica)
+    assert np.isclose(match.ball_x[0], 52.5) and np.isclose(match.players_x[0, 0], 10.5)
+    assert match.team_of_track.tolist() == [HOME, AWAY]
+
+
+def test_bench_v3_names_dispatch():
+    from hackbarca.io.external import is_dfl
+    from hackbarca.pipeline.bench_config import BENCH_GAMES_V3
+    assert len(BENCH_GAMES_V3) == 10
+    assert [is_dfl(g) for g in BENCH_GAMES_V3] == [False] * 3 + [True] * 7
+
+
+def test_v5_change_features_see_a_turnover():
+    from hackbarca.features.frame_features import frame_features, swap_teams
+    n = 600
+    t = np.arange(n)
+    team = np.repeat(np.array([HOME, AWAY], dtype=np.int8), 11)
+    px = np.empty((n, 22))
+    px[:, :11] = 30.0 + np.where(t >= 300, (t - 300) * 0.05, 0.0)[:, None]  # el local se adelanta
+    px[:, 11:] = 70.0
+    py = np.tile(np.linspace(5, 63, 11), 2)[None, :].repeat(n, 0)
+    ball_x = np.where(t < 300, 40 + 0.08 * t, 64 - 0.08 * (t - 300))       # el balon da la vuelta
+    m = MatchTracking(n_frames=n, fps=25, pitch_length=105.0, pitch_width=68.0, team_of_track=team,
+                      players_x=px, players_y=py, players_speed=np.full_like(px, np.nan),
+                      ball_x=ball_x, ball_y=np.full(n, 34.0), ball_speed=np.full(n, np.nan))
+    df = frame_features(m, version=5)
+    assert df["ball_prog_chg25"].iloc[300] < -3     # el local atacaba (+x) y el balon va hacia atras
+    assert df["block_chg75_h"].iloc[300] > 1 and abs(df["block_chg75_a"].iloc[300]) < 1e-6
+    swapped = swap_teams(df)
+    np.testing.assert_allclose(swapped["ball_prog_chg25"], -df["ball_prog_chg25"], equal_nan=True)
+    np.testing.assert_allclose(swap_teams(swapped).to_numpy(), df.to_numpy(), equal_nan=True)
+
+
+def test_layout_features_see_a_static_corner():
+    from hackbarca.features.frame_features import frame_features, swap_teams
+    n = 300
+    team = np.repeat(np.array([HOME, AWAY], dtype=np.int8), 11)
+    rng = np.random.default_rng(3)
+    px = np.empty((n, 22))
+    py = np.empty((n, 22))
+    px[:, :] = rng.uniform(90, 104, 22)[None, :]          # todos en el area derecha, quietos
+    py[:, :] = rng.uniform(20, 48, 22)[None, :]
+    px[:, 0], py[:, 0] = 105.0, 0.3                        # el que saca el corner, en la banda
+    m = MatchTracking(n_frames=n, fps=25, pitch_length=105.0, pitch_width=68.0, team_of_track=team,
+                      players_x=px, players_y=py, players_speed=np.full_like(px, np.nan),
+                      ball_x=np.full(n, np.nan), ball_y=np.full(n, np.nan), ball_speed=np.full(n, np.nan))
+    df = frame_features(m, version=7)
+    mid = n // 2
+    assert df["frac_still"].iloc[mid] == 1.0
+    assert df["box_r"].iloc[mid] >= 15 and df["box_l"].iloc[mid] == 0
+    assert df["touch_min"].iloc[mid] < 0.5
+    np.testing.assert_allclose(swap_teams(swap_teams(df)).to_numpy(), df.to_numpy(), equal_nan=True)

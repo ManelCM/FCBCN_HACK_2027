@@ -13,6 +13,9 @@ dependencies = [
 ]
 
 [dependency-groups]
+audio = [
+    "imageio-ffmpeg==0.5.1",
+]
 dev = [
     "pytest>=8.0",
 ]

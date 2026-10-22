@@ -189,7 +189,49 @@ def _v4_features(match: MatchTracking, f: dict) -> dict:
     return out
 
 
+def _span_mean(values: np.ndarray, lo: int, hi: int) -> np.ndarray:
+    """Media de values en [t+lo, t+hi] ignorando NaN (recortado a los bordes)."""
+    ok = ~np.isnan(values)
+    cs = np.concatenate(([0.0], np.cumsum(np.where(ok, values, 0.0))))
+    cn = np.concatenate(([0], np.cumsum(ok)))
+    idx = np.arange(len(values))
+    a, b = np.clip(idx + lo, 0, len(values)), np.clip(idx + hi + 1, 0, len(values))
+    count = cn[b] - cn[a]
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(count > 0, (cs[b] - cs[a]) / count, np.nan)
+
+
+CHANGE_WINDOWS = (25, 75)  # 1 s y 3 s: antes frente a despues de cada frame
+
+
+def _v5_features(match: MatchTracking, f: dict, bx: np.ndarray) -> dict:
+    """Senales de cambio de posesion (E027): sentido del balon y reaccion colectiva antes/despues.
+
+    Un robo invierte hacia que porteria avanza el balon y cambia el comportamiento de 22
+    jugadores (un bloque se adelanta y se abre, el otro repliega y se cierra), aunque falte el
+    balon. Se mide la diferencia entre la ventana posterior y la anterior a cada frame.
+    """
+    n, fps = match.n_frames, match.fps
+    out = {}
+    # avance del balon visto desde el local: + si va hacia la porteria que ataca el local
+    vx = np.full(n, np.nan)
+    vx[2:-2] = (bx[4:] - bx[:-4]) * (fps / 4)
+    prog = vx * _attack_sign(match, HOME)
+    for w in CHANGE_WINDOWS:
+        before, after = _span_mean(prog, -w, -1), _span_mean(prog, 1, w)
+        out["ball_prog_b%d" % w] = before
+        out["ball_prog_f%d" % w] = after
+        out["ball_prog_chg%d" % w] = after - before
+    for name in ("h", "a"):
+        for base in ("block", "front", "spread_x", "spread_y"):
+            series = f["%s_%s" % (base, name)]
+            for w in CHANGE_WINDOWS:
+                out["%s_chg%d_%s" % (base, w, name)] = _span_mean(series, 1, w) - _span_mean(series, -w, -1)
+    return out
+
+
 SIGNED_V2 = ("last_touch_sign", "next_touch_sign") + tuple("touch_sign_m%d" % w for w in WINDOWS[:2])
+SIGNED_V5 = tuple("ball_prog_%s%d" % (k, w) for k in ("b", "f", "chg") for w in CHANGE_WINDOWS)
 
 
 def frame_features(match: MatchTracking, windows=None, max_gap: int = 10,
@@ -273,9 +315,63 @@ def frame_features(match: MatchTracking, windows=None, max_gap: int = 10,
     f["tag_from_log"] = np.log1p(from_tag)
     if version >= 2:
         f.update(_v2_features(match, bx, by, known, dist, team_near, relative=version >= 3))
-    if version >= 4:
+    if version == 4:  # rechazado (E015); v5 no lo incluye
         f.update(_v4_features(match, f))
+    if version in (5, 6):
+        f.update(_v5_features(match, f, bx))
+    if version in (6, 7):  # 6 = v5 + colocacion; 7 = v3 + colocacion
+        f.update(_layout_features(match))
     return pd.DataFrame(f).astype(np.float32)  # la mitad de memoria; LightGBM bina igual
+
+
+BOX_DEPTH, BOX_HALF = 16.5, 20.16    # area grande (m)
+SIX_DEPTH, SIX_HALF = 5.5, 9.16      # area pequena
+STILL = 1.0                          # m/s: jugador casi parado
+
+
+def _layout_features(match: MatchTracking) -> dict:
+    """Colocacion tipica de balon parado, sin balon (E029): sirve dentro de los huecos del ATD.
+
+    Jugadores quietos, gente amontonada en un area (corner, falta lateral), alguien pegado a la
+    banda (saque de banda), alguien en el area pequena (saque de puerta), barrera (grupo compacto)
+    y la formacion del saque de centro (cada equipo en su campo y alguien en el centro).
+    """
+    n, fps = match.n_frames, match.fps
+    length, width = match.pitch_length, match.pitch_width
+    px, py = match.players_x, match.players_y
+    seen = ~np.isnan(px)
+    h = fps // 2
+    v = np.full(px.shape, np.nan)
+    v[h:-h] = np.hypot(px[2 * h:] - px[:-2 * h], py[2 * h:] - py[:-2 * h]) * fps / (2 * h)
+    out = {}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        still = np.where(np.isnan(v), np.nan, v < STILL)
+        out["frac_still"] = np.nanmean(still, axis=1)
+        central = np.abs(py - width / 2)
+        out["box_l"] = ((px < BOX_DEPTH) & (central < BOX_HALF)).sum(1).astype(float)
+        out["box_r"] = ((px > length - BOX_DEPTH) & (central < BOX_HALF)).sum(1).astype(float)
+        out["six_n"] = (((px < SIX_DEPTH) | (px > length - SIX_DEPTH)) & (central < SIX_HALF)).sum(1).astype(float)
+        touch = np.minimum(py, width - py)
+        out["touch_min"] = np.nanmin(np.where(seen, touch, np.inf), axis=1)
+        out["touch_min"][~np.isfinite(out["touch_min"])] = np.nan
+        out["center_d"] = np.nanmin(np.hypot(px - length / 2, py - width / 2), axis=1)
+        for team, name in ((HOME, "h"), (AWAY, "a")):
+            cols = match.team_of_track == team
+            sign = _attack_sign(match, team)
+            own = (px[:, cols] - length / 2) * sign[:, None] < 0
+            out["own_half_" + name] = own.sum(1) / np.maximum(seen[:, cols].sum(1), 1)
+    # barrera / grupo compacto: maximo de jugadores a < 2 m de uno mismo
+    cluster = np.zeros(n)
+    for a in range(0, n, 8192):
+        x, y = px[a:a + 8192], py[a:a + 8192]
+        d = np.hypot(x[:, :, None] - x[:, None, :], y[:, :, None] - y[:, None, :])
+        cluster[a:a + len(x)] = np.nanmax(np.where(np.isnan(d), 0, d < 2.0).sum(-1), axis=1, initial=0)
+    out["cluster_max"] = cluster  # (n_seen se quito: duplica visible_players y desajustaba, E029)
+    for key in ("frac_still", "cluster_max", "box_l", "box_r", "touch_min"):
+        for w in (25, 75):
+            out["%s_m%d" % (key, w)] = _centered_mean(out[key], w)
+    return out
 
 
 SIGNED = ("near_sign", "gap_before_sign", "gap_after_sign") + tuple(
@@ -290,7 +386,7 @@ def swap_teams(df: pd.DataFrame) -> pd.DataFrame:
         if col.endswith("_h"):
             other = col[:-2] + "_a"
             out[col], out[other] = df[other], df[col]
-    for col in SIGNED + NEGATED + SIGNED_V2:
+    for col in SIGNED + NEGATED + SIGNED_V2 + SIGNED_V5:
         if col in df.columns:
             out[col] = -df[col]
     return out

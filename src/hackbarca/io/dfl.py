@@ -45,7 +45,45 @@ def download_dfl(match_id: str, cache_dir: str = DEFAULT_CACHE) -> dict[str, str
     return paths
 
 
+# Nombre con que figshare sirve cada fichero, p. ej.
+# DFL_02_01_matchinformation_DFL-COM-000001_DFL-MAT-J03WMX.xml -> meta
+_NAME_KEYS = {"matchinformation": "meta", "events": "event", "positions": "tracking"}
+
+
+def collect_downloads(src_dir: str, cache_dir: str = DEFAULT_CACHE) -> list[tuple[str, str]]:
+    """Mueve los XML de DFL bajados con un navegador a external_data/dfl/<id>/<tipo>.xml."""
+    moved = []
+    for name in sorted(os.listdir(src_dir)):
+        if not (name.startswith("DFL_") and name.endswith(".xml")):
+            continue
+        match = next((m for m in DFL_MATCHES if name.endswith("DFL-MAT-{}.xml".format(m))), None)
+        kind = next((k for key, k in _NAME_KEYS.items() if key in name), None)
+        if match is None or kind is None:
+            continue
+        target = dfl_paths(match, cache_dir)[kind]
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.move(os.path.join(src_dir, name), target)
+        moved.append((match, kind))
+    return moved
+
+
+def missing_files(cache_dir: str = DEFAULT_CACHE) -> list[tuple[str, str]]:
+    return [(m, k) for m in DFL_MATCHES for k, p in dfl_paths(m, cache_dir).items()
+            if not os.path.exists(p)]
+
+
 if __name__ == "__main__":
-    for match in DFL_MATCHES:
-        download_dfl(match)
-        print("ok", match)
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--from-downloads", default=None,
+                        help="carpeta donde el navegador dejo los XML (figshare bloquea urllib)")
+    args = parser.parse_args()
+    if args.from_downloads:
+        for match, kind in collect_downloads(args.from_downloads):
+            print("movido", match, kind)
+        print("faltan:", missing_files() or "nada")
+    else:
+        for match in DFL_MATCHES:
+            download_dfl(match)
+            print("ok", match)

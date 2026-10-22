@@ -17,10 +17,13 @@ import numpy as np
 
 from hackbarca.eval.bench import pm, pooled
 from hackbarca.io.degrade import degrade
-from hackbarca.io.external import controlled_possession, load_metrica_bench, metrica_events
+from hackbarca.io.external import (controlled_possession, is_dfl, load_bench_game,
+                                   load_metrica_bench, metrica_events)
 from hackbarca.io.smart_tagging import simulate_set_piece_windows
-from hackbarca.models.l3 import DecodeParams, decode, features_for, predict_proba, train
-from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES
+from hackbarca.models.l3 import DecodeParams, decode, features_for
+from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES, BENCH_GAMES_V3
+
+BENCHES = {"v2": BENCH_GAMES, "v3": BENCH_GAMES_V3}
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
@@ -35,14 +38,29 @@ def sample_decode(rng) -> DecodeParams:
     )
 
 
-def load_bench(use_tags: bool = True, version: int = 1, params=None):
+def load_bench(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES):
     games = []
-    for i, game in enumerate(BENCH_GAMES):
-        match, gt = load_metrica_bench(game)
+    for i, game in enumerate(names):
+        match, gt = load_bench_game(game)
         degraded = degrade(match, params or BENCH_DEGRADE, seed=i)
-        windows = simulate_set_piece_windows(metrica_events(game), seed=i) if use_tags else None
+        # el Smart Tagging simulado sale de los eventos de Metrica; DFL va siempre sin etiquetas
+        windows = (simulate_set_piece_windows(metrica_events(game), seed=i)
+                   if use_tags and not is_dfl(game) else None)
         games.append((features_for(degraded, windows, version=version), gt))
     return games
+
+
+def _fit_predict(job):
+    """Un pliegue: entrena con train_sets y da las probabilidades del partido retenido."""
+    train_sets, eval_df, stack, lgb_params, n_rounds = job
+    from hackbarca.models import l3
+    l3.LGB_PARAMS.update(lgb_params)
+    l3.N_ROUNDS = n_rounds
+    if stack:
+        models = l3.train_stacked([df for df, _ in train_sets], [gt for _, gt in train_sets])
+        return l3.predict_stacked(models, eval_df), models[1]
+    model = l3.train([df for df, _ in train_sets], [gt for _, gt in train_sets])
+    return l3.predict_proba(model, eval_df), model
 
 
 def random_degrade(rng):
@@ -86,9 +104,17 @@ def main(argv=None) -> int:
                         help="robustez: el partido retenido se degrada con la calibracion alternativa del balon")
     parser.add_argument("--controlled", type=float, default=0.0,
                         help="GT con posesion controlada: segundos minimos para que un robo cuente (E020)")
+    parser.add_argument("--controlled-dfl", type=float, default=None,
+                        help="T para los partidos DFL (por defecto el de --controlled); 2 s cuadra con la GT publica")
+    parser.add_argument("--train-gt", choices=("controlled", "raw"), default="controlled",
+                        help="con --controlled, entrenar tambien con la GT controlada (E021b) o con la original")
     parser.add_argument("--from-oof", default=None,
                         help="no entrena: re-decodifica los OOF guardados (external_data/<fichero>)")
+    parser.add_argument("--bench", choices=sorted(BENCHES), default="v2",
+                        help="v2: 3 Metrica; v3: 3 Metrica + 7 DFL")
+    parser.add_argument("--jobs", type=int, default=1, help="pliegues en paralelo (4 hilos cada uno)")
     args = parser.parse_args(argv)
+    names = BENCHES[args.bench]
 
     from hackbarca.models import l3
     if args.num_leaves:
@@ -99,16 +125,21 @@ def main(argv=None) -> int:
         l3.N_ROUNDS = args.rounds
 
     if args.from_oof:
-        games = [(None, load_metrica_bench(game)[1]) for game in BENCH_GAMES]
+        games = [(None, load_bench_game(game)[1]) for game in names]
     else:
-        games = load_bench(use_tags=not args.no_tags, version=args.features)
+        games = load_bench(use_tags=not args.no_tags, version=args.features, names=names)
+    train_games = games
     if args.controlled:
-        frames = int(round(args.controlled * 25))
-        games = [(df, controlled_possession(gt, frames)) for df, gt in games]
+        def t_of(game):
+            t = args.controlled_dfl if (is_dfl(game) and args.controlled_dfl is not None) else args.controlled
+            return int(round(t * 25))
+        games = [(df, controlled_possession(gt, t_of(n))) for (df, gt), n in zip(games, names)]
+        if args.train_gt == "controlled":
+            train_games = games
     if args.eval_shift:
         from dataclasses import replace
         shifted = replace(BENCH_DEGRADE, ball_smooth_sigma=6.0, ball_corr_noise=0.3, ball_corr_tau=25.0)
-        eval_games = load_bench(use_tags=not args.no_tags, version=args.features, params=shifted)
+        eval_games = load_bench(use_tags=not args.no_tags, version=args.features, params=shifted, names=names)
     else:
         eval_games = games
     gts = [gt for _, gt in games]
@@ -118,21 +149,25 @@ def main(argv=None) -> int:
     if args.from_oof:
         blob = np.load(os.path.join(_REPO_ROOT, "external_data", args.from_oof))
         oof = [blob["p%d" % i] for i in range(len(games))]
+    jobs = []
     for g in range(len(games) if not args.from_oof else 0):
         others = [o for o in range(len(games)) if o != g]
-        train_sets = [games[o] for o in others] + [e for o in others for e in extra.get(o, [])]
-        if args.stack:
-            from hackbarca.models.l3 import predict_stacked, train_stacked
-            models = train_stacked([df for df, _ in train_sets], [gt for _, gt in train_sets])
-            oof.append(predict_stacked(models, eval_games[g][0]))
-            model = models[1]
+        train_sets = [train_games[o] for o in others] + [e for o in others for e in extra.get(o, [])]
+        jobs.append((train_sets, eval_games[g][0], args.stack, dict(l3.LGB_PARAMS), l3.N_ROUNDS))
+    if jobs:
+        if args.jobs > 1:
+            from concurrent.futures import ProcessPoolExecutor
+            with ProcessPoolExecutor(max_workers=args.jobs) as pool:
+                results = list(pool.map(_fit_predict, jobs))
         else:
-            model = train([df for df, _ in train_sets], [gt for _, gt in train_sets])
-            oof.append(predict_proba(model, eval_games[g][0]))
-        if g == 0:
-            imp = sorted(zip(model.feature_importance("gain"), model.feature_name()), reverse=True)
-            print("importancia (gain) top 15: " + ", ".join(n for _, n in imp[:15]))
+            results = [_fit_predict(job) for job in jobs]
+        oof = [p for p, _ in results]
+        model = results[0][1]
+        imp = sorted(zip(model.feature_importance("gain"), model.feature_name()), reverse=True)
+        print("importancia (gain) top 15: " + ", ".join(n for _, n in imp[:15]))
     name = "oof_l3_notags.npz" if args.no_tags else "oof_l3.npz"
+    if args.bench != "v2":
+        name = name.replace(".npz", "_{}.npz".format(args.bench))
     if args.num_leaves or args.min_leaf or args.rounds:
         name = name.replace(".npz", "_nl{}_ml{}_r{}.npz".format(args.num_leaves, args.min_leaf, args.rounds))
     if args.features != 1:
@@ -145,6 +180,10 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_stack.npz")
     if args.controlled:
         name = name.replace(".npz", "_ctl{:g}.npz".format(args.controlled))
+        if args.controlled_dfl is not None:
+            name = name.replace(".npz", "_dfl{:g}.npz".format(args.controlled_dfl))
+        if args.train_gt == "raw":
+            name = name.replace(".npz", "_trainraw.npz")
     if not args.from_oof:
         np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
                             **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
@@ -167,12 +206,12 @@ def main(argv=None) -> int:
         others = [o for o in range(len(games)) if o != g]
         best = int(np.argmax(scores[:, others].mean(1)))
         held.append(preds[best, g])
-        print("retenido game {}: spellF1={:.4f} {}".format(BENCH_GAMES[g], scores[best, g], asdict(trials[best])))
+        print("retenido game {}: spellF1={:.4f} {}".format(names[g], scores[best, g], asdict(trials[best])))
     r = pooled(gts, held)
     print("L3 LOGO agregado: spellF1={:.4f} macroF1={:.4f} poss={} (gt {})".format(
         r["spell_f1_mean"], r["macro_f1"], r["n_pred_spells"], r["n_gt_spells"]))
     best_all = int(np.argmax(scores.mean(1)))
-    print("mejor decodificacion en los 3: {} media={:.4f}".format(asdict(trials[best_all]), scores[best_all].mean()))
+    print("mejor decodificacion en todos: {} media={:.4f}".format(asdict(trials[best_all]), scores[best_all].mean()))
     return 0
 
 

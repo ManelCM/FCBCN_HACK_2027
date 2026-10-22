@@ -351,6 +351,57 @@ def category_masks(games, spells, cats):
 
 # ----------------------------------------------------------------------------- main
 
+LONG_PASS = 30.0   # m
+SWITCH_DY = 25.0   # m de desplazamiento lateral para llamarlo cambio de juego
+AFTER = 25         # frames tras la recepcion o la perdida en que se mide si ya acertamos el equipo
+
+
+def pass_kind(ev) -> str | None:
+    """Tipo de envio de un evento PASS (completado) o BALL LOST (perdido), por longitud."""
+    if ev["type"] not in ("PASS", "BALL LOST") or not np.isfinite([ev["sx"], ev["ex"]]).all():
+        return None
+    outcome = "completado" if ev["type"] == "PASS" else "perdido"
+    if ev["type"] == "BALL LOST" and "CLEARANCE" in str(ev["subtype"]):
+        return "despeje"
+    length = np.hypot(ev["ex"] - ev["sx"], ev["ey"] - ev["sy"])
+    if length >= LONG_PASS:
+        kind = "cambio de juego" if abs(ev["ey"] - ev["sy"]) >= SWITCH_DY else "balon largo"
+    else:
+        kind = "medio (15-30 m)" if length >= 15 else "corto (< 15 m)"
+    return "{} {}".format(kind, outcome)
+
+
+def pass_length_report(games) -> dict:
+    """Acierto durante el vuelo y en el segundo siguiente, por tipo de envio (cambios de juego,
+    balones largos, despejes). Solo frames con la GT viva."""
+    stats = {}
+    for g in games:
+        gt, pred = g["gt"], g["pred"]
+        alive = (gt == H) | (gt == A)
+        for _, ev in g["events"].iterrows():
+            kind = pass_kind(ev)
+            start, end = int(ev["start"]), int(ev["end"])
+            if kind is None or end <= start:
+                continue
+            s = stats.setdefault(kind, dict(n=0, fly_ok=0, fly=0, after_ok=0, after=0))
+            s["n"] += 1
+            fly = slice(start + 1, end)
+            after = slice(end, end + AFTER)
+            s["fly_ok"] += int(np.sum((pred[fly] == gt[fly]) & alive[fly]))
+            s["fly"] += int(np.sum(alive[fly]))
+            s["after_ok"] += int(np.sum((pred[after] == gt[after]) & alive[after]))
+            s["after"] += int(np.sum(alive[after]))
+    out = {}
+    for kind in sorted(stats, key=lambda k: -stats[k]["n"]):
+        s = stats[kind]
+        fly = s["fly_ok"] / max(s["fly"], 1)
+        after = s["after_ok"] / max(s["after"], 1)
+        print("  {:<34} n={:5d}  acierto en vuelo {:.3f}  en el segundo siguiente {:.3f}".format(
+            kind, s["n"], fly, after))
+        out[kind] = dict(n=s["n"], in_flight=fly, next_second=after)
+    return out
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--oof", default="oof_l3_notags_f3_stack.npz")
@@ -546,6 +597,10 @@ def main(argv=None) -> int:
         v = oracle(games, masks)
         print("  {:<58} {:.4f}  ({:+.4f})".format(name, v, v - base["mean_f1"]))
         report["oracles"][name] = v
+
+    # 7. pases por longitud
+    print("\n== 7. Pases por longitud (acierto frame a frame con el juego vivo)")
+    report["passes"] = pass_length_report(games)
 
     suffix = "_controlled%g" % args.controlled if args.controlled else ""
     path = os.path.join(_REPO_ROOT, "external_data", "failure_analysis%s.json" % suffix)

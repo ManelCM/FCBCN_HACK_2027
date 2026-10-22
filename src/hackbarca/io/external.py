@@ -64,8 +64,14 @@ def from_kloppy(dataset, pitch=PITCH) -> MatchTracking:
     )
 
 
+def _coord(point, axis: str) -> float:
+    value = (point or {}).get(axis)
+    return float(value) if value is not None else np.nan
+
+
 def metrica_events(game: str, cache_dir: str = METRICA_CACHE) -> pd.DataFrame:
-    """Eventos normalizados: team (HOME/AWAY), type, subtype, period, start, end (0-indexados)."""
+    """Eventos normalizados: team (HOME/AWAY), type, subtype, period, start, end (0-indexados) y
+    posicion de inicio y fin en metros (sx, sy, ex, ey; NaN si el evento no la trae)."""
     path = os.path.join(cache_dir, METRICA_FILES[game][0])
     if path.endswith(".csv"):
         raw = pd.read_csv(path)
@@ -74,6 +80,8 @@ def metrica_events(game: str, cache_dir: str = METRICA_CACHE) -> pd.DataFrame:
             "type": raw["Type"], "subtype": raw["Subtype"].fillna(""),
             "period": raw["Period"],
             "start": raw["Start Frame"] - 1, "end": raw["End Frame"] - 1,
+            "sx": raw["Start X"] * PITCH[0], "sy": raw["Start Y"] * PITCH[1],
+            "ex": raw["End X"] * PITCH[0], "ey": raw["End Y"] * PITCH[1],
         })
     else:
         with open(path) as handle:
@@ -93,6 +101,10 @@ def metrica_events(game: str, cache_dir: str = METRICA_CACHE) -> pd.DataFrame:
             "period": [e["period"] for e in data],
             "start": [e["start"]["frame"] - 1 for e in data],
             "end": [(e["end"]["frame"] or e["start"]["frame"]) - 1 for e in data],
+            "sx": [_coord(e["start"], "x") * PITCH[0] for e in data],
+            "sy": [_coord(e["start"], "y") * PITCH[1] for e in data],
+            "ex": [_coord(e["end"], "x") * PITCH[0] for e in data],
+            "ey": [_coord(e["end"], "y") * PITCH[1] for e in data],
         })
     # Algunos eventos instantaneos traen End Frame = 0 en el CSV
     events["end"] = np.maximum(events["end"], events["start"])
@@ -177,6 +189,10 @@ def load_metrica_bench(game: str, cache_dir: str = METRICA_CACHE):
         match = from_kloppy(dataset)
         gt = gt_from_events(metrica_events(game, cache_dir), match.n_frames)
         np.savez_compressed(cache, gt=gt, **{k: v for k, v in vars(match).items()})
+    return _load_cache(cache)
+
+
+def _load_cache(cache: str):
     blob = np.load(cache)
     fields = {k: blob[k] for k in blob.files if k != "gt"}
     for scalar in ("n_frames", "fps"):
@@ -184,3 +200,91 @@ def load_metrica_bench(game: str, cache_dir: str = METRICA_CACHE):
     for scalar in ("pitch_length", "pitch_width"):
         fields[scalar] = float(fields[scalar])
     return MatchTracking(**fields), blob["gt"]
+
+
+def gt_from_tracking(states, owners, home) -> np.ndarray:
+    """GT H/A/D por frame a partir de los flags del tracking corregido, como la del reto.
+
+    CHALLENGE.md: "a frame is D where the corrected tracking marks the ball dead, and otherwise
+    takes the team the tracking names as owning it". `states` son "alive"/"dead" y `owners` el
+    equipo duenio de cada frame (el objeto Team de kloppy o None).
+    """
+    dead = np.array([str(s).lower().endswith("dead") for s in states])
+    is_home = np.array([o is home for o in owners])
+    return np.where(dead, GT_D, np.where(is_home, GT_H, GT_A)).astype(np.int8)
+
+
+def dfl_to_bench(dataset, pitch=PITCH):
+    """(MatchTracking, gt) de un TrackingDataset de DFL cargado con coordinates="metrica".
+
+    Los frame_id de DFL saltan entre partes (10000.., 100000..), asi que las filas se compactan y
+    entre partes se deja un frame X para que possession_metrics las trate por separado. El balon
+    se borra en los frames muertos para imitar el tracking limpio de Metrica, en el que falta en
+    el 91-99 % de los D: asi `degrade` (calibrado sobre Metrica) se aplica igual.
+    """
+    records = dataset.records
+    period = np.array([r.period.id for r in records])
+    breaks = np.concatenate(([0], np.cumsum(np.diff(period) != 0)))
+    index = np.arange(len(records)) + breaks  # un hueco de 1 frame en cada cambio de parte
+    n = int(index[-1]) + 1
+    home = dataset.metadata.teams[0]
+    gt = np.full(n, GT_X, dtype=np.int8)
+    gt[index] = gt_from_tracking([r.ball_state for r in records],
+                                 [r.ball_owning_team for r in records], home)
+
+    df = dataset.to_df(engine="pandas")
+    players, teams = [], []
+    for team in dataset.metadata.teams:
+        for player in team.players:
+            if "{}_x".format(player.player_id) in df.columns:
+                players.append(player.player_id)
+                teams.append(HOME if team is home else AWAY)
+    length, width = pitch
+
+    def full(values, scale):
+        out = np.full((n,) + values.shape[1:], np.nan)
+        out[index] = values * scale
+        return out
+
+    ball_x = full(df["ball_x"].to_numpy(float), length)
+    ball_y = full(df["ball_y"].to_numpy(float), width)
+    ball_x[gt == GT_D] = np.nan
+    ball_y[gt == GT_D] = np.nan
+    px = full(df[["{}_x".format(p) for p in players]].to_numpy(float), length)
+    period_full = np.zeros(n, dtype=np.int8)
+    period_full[index] = period
+    match = MatchTracking(
+        n_frames=n, fps=int(round(dataset.metadata.frame_rate)),
+        pitch_length=length, pitch_width=width,
+        team_of_track=np.array(teams, dtype=np.int8),
+        players_x=px, players_y=full(df[["{}_y".format(p) for p in players]].to_numpy(float), width),
+        players_speed=np.full_like(px, np.nan),
+        ball_x=ball_x, ball_y=ball_y, ball_speed=np.full(n, np.nan), period=period_full)
+    return match, gt
+
+
+def is_dfl(game: str) -> bool:
+    return game.startswith("J03")
+
+
+def load_bench_game(game: str):
+    """(MatchTracking, gt) de un partido del banco: "1".."3" Metrica, "J03..." DFL."""
+    return load_dfl_bench(game) if is_dfl(game) else load_metrica_bench(game)
+
+
+def load_dfl_bench(match_id: str, cache_dir: str | None = None):
+    """(MatchTracking, gt_codes) de un partido DFL/IDSSE con la GT de su tracking, con cache .npz."""
+    from hackbarca.io.dfl import DEFAULT_CACHE as DFL_CACHE
+    from hackbarca.io.dfl import dfl_paths
+
+    cache_dir = cache_dir or DFL_CACHE
+    cache = os.path.join(cache_dir, "bench_{}.npz".format(match_id))
+    if not os.path.exists(cache):
+        from kloppy import sportec
+
+        paths = dfl_paths(match_id, cache_dir)
+        dataset = sportec.load_tracking(meta_data=paths["meta"], raw_data=paths["tracking"],
+                                        coordinates="metrica", only_alive=False)
+        match, gt = dfl_to_bench(dataset)
+        np.savez_compressed(cache, gt=gt, **{k: v for k, v in vars(match).items()})
+    return _load_cache(cache)

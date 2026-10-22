@@ -5,6 +5,9 @@ from dataclasses import replace
 from hackbarca.io.degrade import DegradeParams
 
 BENCH_GAMES = ("1", "2", "3")
+# v3 (banco de 10): Metrica + DFL/IDSSE, cuya GT sale de los flags de su tracking (gt_from_tracking)
+DFL_GAMES = ("J03WMX", "J03WN1", "J03WPY", "J03WOH", "J03WQQ", "J03WOY", "J03WR9")
+BENCH_GAMES_V3 = BENCH_GAMES + DFL_GAMES
 
 # v1 (E002-E004): rejilla contra los 8 numeros publicados del baseline. Huecos de balon cortos
 # (mediana 50 frames), muy distintos del ATD real (mediana 268, atd_stats E005).
