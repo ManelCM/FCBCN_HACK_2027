@@ -10,6 +10,7 @@ Guarda los OOF en external_data/oof_l3.npz para el analisis de errores (T8).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 from dataclasses import asdict
 
@@ -38,21 +39,71 @@ def sample_decode(rng) -> DecodeParams:
     )
 
 
-def load_bench(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES):
-    games = []
+FEATURE_CACHE = os.path.join(_REPO_ROOT, "external_data", "features")
+# el codigo del que dependen las features entra en la clave: si cambia, la cache se invalida sola
+_FEATURE_CODE = ("features/frame_features.py", "io/degrade.py", "models/l1.py")
+
+
+def _code_hash() -> str:
+    src = os.path.join(_REPO_ROOT, "src", "hackbarca")
+    digest = hashlib.sha1()
+    for rel in _FEATURE_CODE:
+        with open(os.path.join(src, rel), "rb") as handle:
+            digest.update(handle.read().replace(b"\r\n", b"\n"))
+    return digest.hexdigest()
+
+
+def feature_path(game: str, index: int, version: int, use_tags: bool, params) -> str:
+    """Fichero de cache de las features de un partido degradado (semilla = posicion en el banco)."""
+    key = hashlib.sha1(repr((game, index, version, use_tags, asdict(params), _code_hash())).encode())
+    return os.path.join(FEATURE_CACHE, "{}_v{}_{}.npz".format(game, version, key.hexdigest()[:12]))
+
+
+def read_features(path: str):
+    import pandas as pd
+    blob = np.load(path)
+    return pd.DataFrame(blob["values"], columns=[str(c) for c in blob["columns"]])
+
+
+def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES):
+    """[(ruta de features en cache, gt)] por partido; calcula y guarda solo lo que falte."""
+    params = params or BENCH_DEGRADE
+    os.makedirs(FEATURE_CACHE, exist_ok=True)
+    out = []
     for i, game in enumerate(names):
         match, gt = load_bench_game(game)
-        degraded = degrade(match, params or BENCH_DEGRADE, seed=i)
-        # el Smart Tagging simulado sale de los eventos de Metrica; DFL va siempre sin etiquetas
-        windows = (simulate_set_piece_windows(metrica_events(game), seed=i)
-                   if use_tags and not is_dfl(game) else None)
-        games.append((features_for(degraded, windows, version=version), gt))
-    return games
+        path = feature_path(game, i, version, use_tags, params)
+        if not os.path.exists(path):
+            degraded = degrade(match, params, seed=i)
+            # el Smart Tagging simulado sale de los eventos de Metrica; DFL va siempre sin etiquetas
+            windows = (simulate_set_piece_windows(metrica_events(game), seed=i)
+                       if use_tags and not is_dfl(game) else None)
+            df = features_for(degraded, windows, version=version)
+            tmp = path[:-4] + ".tmp.npz"  # escritura atomica: un proceso cortado no deja cache rota
+            np.savez(tmp, columns=np.array(df.columns, dtype=str), values=df.to_numpy(np.float32))
+            os.replace(tmp, path)
+        out.append((path, gt))
+    return out
+
+
+def load_bench(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES):
+    return [(read_features(path), gt)
+            for path, gt in bench_feature_paths(use_tags, version, params, names)]
+
+
+def _materialize(item):
+    return read_features(item) if isinstance(item, str) else item
 
 
 def _fit_predict(job):
-    """Un pliegue: entrena con train_sets y da las probabilidades del partido retenido."""
-    train_sets, eval_df, stack, lgb_params, n_rounds = job
+    """Un pliegue: entrena con train_sets y da las probabilidades del partido retenido.
+
+    Los partidos llegan como rutas de la cache (o DataFrames si son degradaciones extra): asi un
+    worker no recibe copias de todo el banco y solo carga lo que usa.
+    """
+    items, eval_item, stack, lgb_params, n_rounds = job
+    train_sets = [(_materialize(x), gt) for x, gt in items]
+    eval_df = _materialize(eval_item)
     from hackbarca.models import l3
     l3.LGB_PARAMS.update(lgb_params)
     l3.N_ROUNDS = n_rounds
@@ -127,7 +178,8 @@ def main(argv=None) -> int:
     if args.from_oof:
         games = [(None, load_bench_game(game)[1]) for game in names]
     else:
-        games = load_bench(use_tags=not args.no_tags, version=args.features, names=names)
+        # rutas de la cache, no DataFrames: el proceso principal no guarda las features en memoria
+        games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, names=names)
     train_games = games
     if args.controlled:
         def t_of(game):
@@ -139,7 +191,8 @@ def main(argv=None) -> int:
     if args.eval_shift:
         from dataclasses import replace
         shifted = replace(BENCH_DEGRADE, ball_smooth_sigma=6.0, ball_corr_noise=0.3, ball_corr_tau=25.0)
-        eval_games = load_bench(use_tags=not args.no_tags, version=args.features, params=shifted, names=names)
+        eval_games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, params=shifted,
+                                         names=names)
     else:
         eval_games = games
     gts = [gt for _, gt in games]

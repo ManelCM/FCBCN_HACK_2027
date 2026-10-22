@@ -207,3 +207,18 @@ def test_layout_features_see_a_static_corner():
     assert df["box_r"].iloc[mid] >= 15 and df["box_l"].iloc[mid] == 0
     assert df["touch_min"].iloc[mid] < 0.5
     np.testing.assert_allclose(swap_teams(swap_teams(df)).to_numpy(), df.to_numpy(), equal_nan=True)
+
+
+def test_feature_cache_roundtrip_and_key(tmp_path):
+    from hackbarca.features.frame_features import frame_features
+    from hackbarca.pipeline.bench_config import BENCH_DEGRADE
+    from hackbarca.pipeline.tune_l3 import feature_path, read_features
+    df = frame_features(_synthetic_match(n=400), version=3)
+    path = str(tmp_path / "g.npz")
+    np.savez(path, columns=np.array(df.columns, dtype=str), values=df.to_numpy(np.float32))
+    back = read_features(path)
+    assert list(back.columns) == list(df.columns)
+    np.testing.assert_array_equal(back.to_numpy(), df.to_numpy(np.float32))
+    a = feature_path("1", 0, 3, False, BENCH_DEGRADE)
+    assert a == feature_path("1", 0, 3, False, BENCH_DEGRADE)
+    assert a != feature_path("1", 0, 5, False, BENCH_DEGRADE) != feature_path("1", 1, 3, False, BENCH_DEGRADE)
