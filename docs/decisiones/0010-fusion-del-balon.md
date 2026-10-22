@@ -1,6 +1,9 @@
 # 0010 — Fusión del balón: tracking broadcast alineado + detector en vídeo, y cómo se reproduce
 
-- **Estado**: Propuesta (pendiente de la respuesta de la organización a Q4)
+- **Estado**: Propuesta. **Las dos fuentes, tal como están, no pasan su puerta (22 oct)**:
+  broadcast alineado → 7,5 % de los huecos (E023); detector YOLO COCO → 24 % a < 2 m incluso en
+  tramos donde el ATD ve el balón (E025). Queda abierta una variante sin probar: detector
+  reentrenado con pseudoetiquetas del propio ATD.
 - **Fecha**: 2026-10-21
 - **Autor/a**: Manel (con agente)
 - **Revisado por**: ☐ ☐

@@ -1,6 +1,10 @@
 # 0013 — Audio del broadcast (silbato y comentarios) como señal experimental
 
-- **Estado**: Propuesta (bloqueada: falta saber si `broadcast.mp4` tiene audio)
+- **Estado**: Propuesta. **Desbloqueada (22 oct)**: `broadcast.mp4` tiene audio real de televisión
+  (−26 dB de media); el del táctico está mudo (−60 dB). La grabación del broadcast es continua en
+  cada parte (E026: el 99 % de los frames emparejados a ±2 frames de un único desfase), así que
+  todo el audio se lleva al timeline táctico con un desfase por parte. Falta saber si hay
+  comentarista (que lo escuche una persona) y la respuesta a Q6.
 - **Fecha**: 2026-10-22
 - **Autor/a**: Manel (con agente)
 - **Revisado por**: ☐ ☐

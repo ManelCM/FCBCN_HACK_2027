@@ -69,6 +69,46 @@ def _runs(frames: np.ndarray):
     return np.split(frames, cuts)
 
 
+SIM_GAP = 250  # frames (10 s), del orden de la mediana de los huecos largos del ATD (268)
+
+
+def _sim_windows(ball_seen: np.ndarray, n: int, length: int = SIM_GAP):
+    """N tramos [a, b) repartidos por el partido con el balon visible en el ATD en todo el tramo."""
+    edges = np.diff(np.concatenate(([0], ball_seen.astype(np.int8), [0])))
+    starts = [a for a, b in zip(np.flatnonzero(edges == 1), np.flatnonzero(edges == -1))
+              if b - a >= length]
+    if not starts:
+        return []
+    picks = np.unique(np.linspace(0, len(starts) - 1, n).round().astype(int))
+    return [(starts[i], starts[i] + length) for i in picks]
+
+
+def _report_sim_gaps(windows, cands, match) -> None:
+    """Agregados del detector en huecos simulados, con el balon del ATD como referencia."""
+    top_err, any_err, path_err, covered = [], [], [], []
+    for a, b in windows:
+        frames = np.arange(a, b)
+        ref = np.column_stack([match.ball_x[frames], match.ball_y[frames]])
+        for f, (rx, ry) in zip(frames, ref):
+            c = cands.get(int(f), np.zeros((0, 3)))
+            d = np.hypot(c[:, 0] - rx, c[:, 1] - ry) if len(c) else np.array([np.inf])
+            any_err.append(d.min())
+            top_err.append(d[np.argmax(c[:, 2])] if len(c) else np.inf)
+        path = link_candidates([cands.get(int(f), np.zeros((0, 3))) for f in frames], match.fps)
+        ok = ~np.isnan(path[:, 0])
+        covered.append(ok)
+        path_err.append(np.where(ok, np.hypot(path[:, 0] - ref[:, 0], path[:, 1] - ref[:, 1]), np.inf))
+    top_err, any_err = np.array(top_err), np.array(any_err)
+    path_err, covered = np.concatenate(path_err), np.concatenate(covered)
+    print("huecos simulados: {} tramos de {} frames".format(len(windows), SIM_GAP))
+    print("  algun candidato a < 2 m: {:.3f}   el de mas confianza a < 2 m: {:.3f}".format(
+        float(np.mean(any_err < 2)), float(np.mean(top_err < 2))))
+    print("  tras enlazar: cobertura {:.3f}  a < 2 m (sobre todos los frames) {:.3f}  "
+          "error mediano en los cubiertos {:.2f} m".format(
+              float(covered.mean()), float(np.mean(path_err < 2)),
+              float(np.median(path_err[covered])) if covered.any() else float("nan")))
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--weights", default="yolov8s.pt")
@@ -76,6 +116,11 @@ def main(argv=None) -> int:
     parser.add_argument("--validate-every", type=int, default=25,
                         help="ademas, 1 de cada N frames con balon en el ATD para medir el acuerdo")
     parser.add_argument("--limit", type=int, default=0, help="procesar solo N frames (prueba)")
+    parser.add_argument("--validate-only", action="store_true",
+                        help="solo los frames de validacion, repartidos por todo el partido (sin huecos)")
+    parser.add_argument("--sim-gaps", type=int, default=0,
+                        help="diagnostico: N tramos de 10 s CON balon en el ATD tratados como huecos "
+                             "(deteccion + enlace) y comparados con el ATD; no guarda nada")
     args = parser.parse_args(argv)
 
     import cv2
@@ -98,7 +143,14 @@ def main(argv=None) -> int:
     missing = np.isnan(match.ball_x)
     gap_frames = np.flatnonzero(graded & missing)
     check_frames = np.flatnonzero(graded & ~missing)[::args.validate_every]
+    if args.validate_only:
+        gap_frames = gap_frames[:0]
+    windows = _sim_windows(graded & ~missing, args.sim_gaps) if args.sim_gaps else []
+    if args.sim_gaps:
+        gap_frames, check_frames = gap_frames[:0], check_frames[:0]
     wanted = np.union1d(gap_frames, check_frames)
+    if windows:
+        wanted = np.union1d(wanted, np.concatenate([np.arange(a, b) for a, b in windows]))
     if args.limit:
         wanted = wanted[:args.limit]
     wanted_set = set(wanted.tolist())
@@ -119,6 +171,11 @@ def main(argv=None) -> int:
         frame += 1
         if frame % 10000 == 0:
             print("frame {} ({:.0f}s)".format(frame, time.time() - started), flush=True)
+
+    if windows:
+        _report_sim_gaps(windows, cands, match)
+        print("({:.0f}s)".format(time.time() - started))
+        return 0
 
     # huecos: trayectoria enlazada por tramos consecutivos
     xs, ys, fs = [], [], []

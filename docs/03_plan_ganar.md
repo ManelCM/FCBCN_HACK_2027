@@ -10,7 +10,8 @@
 **Dónde estamos**
 - Modelo vigente: **L3 apilado** (ADR-0011): 0,542 en el banco v2.1 con la GT por eventos; 0,558 con el ATD simulado de otra forma.
 - **Hallazgo del 22 oct** (`docs/investigacion/02_analisis_fallos.md`): la GT del banco no seguía la definición de posesión «controlada» del reto. Con la regla corregida (ADR-0012, T = 1,5 s), el mismo modelo saca **0,6245**. Reentrenar con ella no aporta (E021), así que el cambio es de medida. **Desde ahora se evalúa con `--controlled 1.5`.** Estimación orientativa en el reto: ~0,55-0,60.
-- El `La MasIA.csv` de reserva sale aún del modelo en cuarentena (features v2). Hay que entrenar el artefacto apilado (`train_l3_final --stack`, ADR-0011) y regenerarlo.
+- **`La MasIA.csv` ya sale del modelo final** (E022-E024): artefacto apilado con Viterbi 1/20/10/10 (confirmado con la GT controlada), entrenamiento determinista bit a bit, sha256 del CSV `252716b03d614399`, 322 posesiones. Humo en los 5 min públicos 0,513 (ruido del bootstrap ±0,38: no decide nada).
+- **Rellenar los huecos con otras fuentes de balón no funciona tal cual** (22 oct): el broadcast alineado cubre el 7,5 % de los huecos (E023) y el detector YOLO genérico acierta el 24 % incluso donde el ATD ve el balón (E025). Los huecos hay que atacarlos sin balón: colocación de los jugadores (#5) y **audio del broadcast**, que sí tiene sonido y se alinea con un desfase por parte (E026).
 
 **Dónde fallamos (GT controlada)**
 1. **No vemos la mitad de los robos.** Solo el 49 % de los cambios H↔A tienen una frontera predicha a ≤ 2 s. Cada robo perdido cuesta 2-3 posesiones, y es el **79 % de las pérdidas**.
@@ -23,14 +24,15 @@
 | # | tarea | quién | ataca | estado |
 |---|---|---|---|---|
 | 1 | ~~E021: reentrenar con la GT controlada~~ → no aporta; la GT controlada queda para evaluar (ADR-0012). Falta medir con T = 1 y 2 | agente | la medida | hecho |
-| 2 | Entrenar el artefacto final (apilado, ADR-0011, sin cambios) y regenerar `La MasIA.csv` | agente + persona | reserva válida | **siguiente** |
-| 3 | Señales de **cambio de posesión**: reacción colectiva (bloques que se abren o cierran, avance invertido), sentido del balón respecto a los equipos, modelo por segmento candidato | agente | robos no vistos (79 %) | por hacer |
-| 4 | **Balón fusionado**: detector entero + `broadcast atd.txt` → puerta de cobertura → simular en el banco | persona A + agente | huecos (+0,08) | bloqueado por la descarga y la ejecución |
-| 5 | **Detector de balón parado dentro de los huecos** por la colocación (jugadores quietos, barrera, córner, portero, banda) | agente | D en huecos (+0,04) | por hacer |
-| 6 | DFL a mano → banco de 10 partidos; contrastar sus duraciones con la GT controlada | persona B | ruido y definición | pendiente |
+| 2 | ~~Entrenar el artefacto final y regenerar `La MasIA.csv`~~ (E022, E024: determinista) | agente | reserva válida | hecho |
+| 3 | Señales de **cambio de posesión**: reacción colectiva (bloques que se abren o cierran, avance invertido), sentido del balón respecto a los equipos, modelo por segmento candidato | agente | robos no vistos (79 %) | **siguiente** |
+| 4 | ~~Balón fusionado~~ → **no pasa la puerta** tal cual (broadcast 7,5 %, E023; YOLO COCO 24 %, E025). Variante abierta de baja prioridad: detector reentrenado con pseudoetiquetas del ATD | agente | huecos | descartado tal cual |
+| 5 | **Detector de balón parado dentro de los huecos** por la colocación (jugadores quietos, barrera, córner, portero, banda) | agente | D en huecos (+0,04) | por hacer (sube: es la vía principal para los huecos) |
+| 6 | DFL → banco de 10 partidos; contrastar sus duraciones con la GT controlada. Figshare bloquea la descarga automática: con el navegador (`/chrome`) o a mano | persona B o agente con navegador | ruido y definición | pendiente |
 | 7 | HSMM con duración mínima ~1,5 s | agente | infrasegmentación | por hacer |
-| 8 | Audio del broadcast (ADR-0013): primero comprobar si hay audio | persona | D y equipo en huecos | bloqueado |
-| 9 | Enviar las preguntas Q4, Q6 (y Q2, Q5) | persona | reglas | pendiente |
+| 8 | Audio del broadcast (ADR-0013): **hay audio y se alinea** (E026). Siguiente paso: detector de silbato y comprobar con la GT pública si cae en los paso a D; que una persona escuche si hay comentarista | agente + persona | D en huecos | desbloqueado |
+| 9 | Enviar las preguntas Q4, Q6 (y Q2, Q5). Texto listo en `docs/00_reto.md` (el conector de Gmail no tiene permiso de borradores) | persona | reglas | pendiente |
+| 10 | Medir el modelo vigente con T = 1 y T = 2 s (robustez de ADR-0012) y el acierto por longitud de pase (cambios de juego, balones largos, despejes) | agente | la medida | por hacer |
 
 ## Contexto
 - **Estado (21 oct):** L3 (LightGBM + Viterbi) saca 0,502 de spellF1 en el banco externo v2, frente a 0,300 del baseline, y 0,588 en los 5 min públicos (comprobación). El baseline oficial da 0,243 en el partido completo real. El banco es ~0,05 más fácil que el reto, así que estimamos ~0,40-0,45 en el reto. Seguramente basta para el top 20; para ganar, no.

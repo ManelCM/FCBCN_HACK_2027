@@ -23,6 +23,9 @@ externo calibrado v2, más el humo de los 5 min públicos para comprobar que el 
   depender de que LightGBM entrene bit a bit igual en otra máquina. Se regenera con
   `train_l3_final` (determinista: dos entrenamientos dan el mismo sha256; tras E010 el artefacto
   es el de 127 hojas; tras E012 usa features v2, sha256 `1ae6793a…`, gzip determinista).
+  **Corrección (E024, 22 oct):** el entrenamiento solo era determinista con la máquina en reposo;
+  con carga, LightGBM elegía otro método de histograma. Arreglado con `force_col_wise=True` y un
+  test. El artefacto vigente es el apilado de ADR-0011 (capa 1 `8e44cc9d…`, capa 2 `80137a05…`).
 - Reserva: el baseline s50 (`--model baseline`).
 
 ## Justificación

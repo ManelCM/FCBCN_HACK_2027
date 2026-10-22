@@ -11,6 +11,20 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-22 (tarde) — Manel (con agente)
+- Hecho (rama `artefacto-apilado`):
+  - **Datos del reto completos**: broadcast `atd.txt` y `broadcast.mp4` movidos de Descargas a `data/broadcast/` y comprobados (164.488 registros contiguos; vídeo 6.579,5 s). El táctico tiene una pista de audio muda; **el broadcast tiene audio real**. Solo falta DFL. `docs/datos.md` actualizado.
+  - **Artefacto final** (ADR-0011): el Viterbi reajustado con la GT controlada vuelve a elegir 1/20/10/10 (E022). Se descubrió que el entrenamiento **no era determinista** con la máquina cargada; arreglado con `force_col_wise` + test (E024). El banco no cambia (0,5422 eventos / 0,6245 controlada). **`La MasIA.csv` regenerado**: sha256 `252716b03d614399`, 322 posesiones, idéntico en dos ejecuciones. Humo en los 5 min públicos: 0,513 (ruido del bootstrap 0,38).
+  - **Balón fusionado descartado tal cual**: el broadcast alineado rellena el 7,5 % de los huecos (E023) y el detector YOLO genérico acierta el 24 % incluso donde el ATD ve el balón (E025; nuevas opciones `--validate-only` y `--sim-gaps`).
+  - **El audio del broadcast se puede usar en todo el partido**: el desfase broadcast-táctico es constante en cada parte (E026). ADR-0013 desbloqueado.
+  - El agente ejecutó con autorización de Manel los scripts de solo agregados sobre los datos reales, a través de `scripts/run_aggregate.sh`. Ese script solo muestra la salida si el script acaba bien; si falla, la deja en `data/derived/logs/` para una persona. El clasificador de Claude Code impidió al agente modificar el ADR-0004: **el equipo debe decidir si esta práctica se recoge en ese ADR**.
+  - El conector de Gmail no tiene permiso de borradores: el email con Q2/Q4/Q5/Q6 está redactado en `docs/00_reto.md` y lo envía una persona.
+- Pendiente:
+  - Señales de cambio de posesión (prioridad 3), detector de balón parado en huecos (5), silbato (8), T = 1/2 s y acierto por longitud de pase (10).
+- Bloqueos (personas):
+  - DFL: `/chrome` para que lo baje el agente, o a mano.
+  - Enviar el email; escuchar si el broadcast tiene comentarista; decidir sobre el ADR-0004.
+
 ## 2026-10-22 — Manel (con agente)
 - Hecho:
   - **Explicación completa del proyecto desde cero** → `docs/01_contexto_completo.md` (reto, datos, validación, modelo, resultados, fallos, futuro). Es el punto de entrada para compañeros y agentes nuevos.

@@ -56,8 +56,8 @@
 | fuente | qué es | estado | uso hoy |
 |---|---|---|---|
 | **ATD táctico** | posición (m) y velocidad de jugadores y balón por frame, sin identidades (46 slots) | ✅ | base de todo |
-| **Vídeo táctico** | 1080p con homografía válida en el 100 % de los frames | ✅ | detector de balón listo, sin ejecutar entero |
-| **Broadcast** | cámara de tele con su ATD; no sincronizada, con cortes y repeticiones | falta `atd.txt` (parte -009) | alineación programada |
+| **Vídeo táctico** | 1080p con homografía válida en el 100 % de los frames; su pista de audio está muda | ✅ | detector YOLO genérico probado: **no sirve** (24 % a < 2 m, E025) |
+| **Broadcast** | cámara de tele con su ATD; no sincronizada, con cortes y repeticiones; **audio real** | ✅ completo | como balón, no sirve (7,5 % de los huecos, E023); **su audio se alinea** con un desfase por parte (E026) → silbato (ADR-0013) |
 | **Smart Tagging** | eventos automáticos (balones parados…) | ✅ | descartado: +0,008, dentro del ruido (ADR-0007) |
 | **GT pública 5 min** | 17 posesiones | ✅ | solo prueba de humo; **nunca elige modelos** |
 | **Metrica (externo)** | 3 partidos públicos con tracking y eventos | ✅ | entrenar y validar (el «banco») |
@@ -70,9 +70,9 @@
 - Con el balón parado los jugadores corren menos (0,97 frente a 1,62 m/s), y eso ayuda a detectar
   D.
 
-**Cómo se combina todo** (ADR-0010): balón fusionado con prioridad ATD → broadcast alineado →
-detector en el vídeo, con una columna que indica la fuente. **Todavía no está conectado al
-modelo.**
+**Rellenar el balón con otras fuentes** (ADR-0010) se probó el 22 oct y **no pasa la puerta tal
+cual**: el broadcast pierde el balón en las mismas jugadas que el táctico, y el detector genérico
+no ve un balón tan pequeño. Los huecos se atacan sin balón: colocación de los jugadores y audio.
 
 ## 3. Cómo validamos sin leaderboard
 
@@ -112,8 +112,9 @@ modelo.**
 6. **Formato**: X fuera de las partes, validador oficial, sha256. La entrega no reentrena: el
    modelo va versionado.
 
-**Pendiente**: el artefacto apilado no está entrenado todavía. El CSV de reserva sale de un modelo
-en cuarentena (features v2).
+**Artefacto vigente** (E024, 22 oct): capa 1 `8e44cc9d…`, capa 2 `80137a05…`. El entrenamiento es
+determinista bit a bit (`force_col_wise`) y `La MasIA.csv` sale de él: sha256 `252716b03d614399`,
+322 posesiones.
 
 ## 5. Resultados y qué aportó cada pieza
 
@@ -173,8 +174,8 @@ Un dato útil: incluso con el balón perfecto, el jugador más cercano es del eq
 ## 7. El modelo futuro
 
 ```
- ATD + broadcast alineado + detector de vídeo ─► BALÓN FUSIONADO (+ fuente)
- audio (silbato, comentarios; experimental)  ─► señales de D y de equipo
+ ATD (el balón fusionado no pasó la puerta: E023, E025)
+ audio del broadcast alineado (silbato; experimental) ─► señales de D
                     ▼
  features + señales de CAMBIO DE POSESIÓN + detector de balón parado en huecos
                     ▼
@@ -188,11 +189,11 @@ Un dato útil: incluso con el balón perfecto, el jugador más cercano es del eq
 |---|---|---|
 | GT controlada para evaluar (ADR-0012) | la medida | hecho: el examen pasa de 0,542 a 0,625; reentrenar no aporta (E021) |
 | Señales de cambio de posesión | robos no vistos (79 %) | alta, por medir |
-| Balón fusionado (ADR-0010) | huecos | +0,05 a +0,10 |
+| Balón fusionado (ADR-0010) | huecos | **no pasa la puerta tal cual** (broadcast 7,5 % de los huecos; YOLO genérico 24 %). Abierto: detector con pseudoetiquetas del ATD |
 | Detector de balón parado en huecos | D en huecos | hasta +0,04 |
 | DFL (10 partidos) | ruido y datos | +0,02 a +0,04 |
 | HSMM | infrasegmentación | +0,01 a +0,03 |
-| Audio del broadcast (ADR-0013) | D y equipo en huecos | no medible en el banco |
+| Audio del broadcast (ADR-0013) | D en huecos | hay audio y se alinea (E026); no medible en el banco, se contrasta con la GT pública |
 
 Las ganancias no se suman: varias atacan lo mismo. Cada pieza pasa la regla anti-suerte antes de
 entrar.

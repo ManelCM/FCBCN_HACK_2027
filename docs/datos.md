@@ -30,21 +30,24 @@ Solo nombres y tamaños. Los zips pasan la comprobación CRC.
 | tactical `atd.xml`, `atd.txt`, `homography.csv`, `smart_tagging.xml` | ✅ en `data/tactical/` → **tenemos todo lo imprescindible** |
 | Alineación oficial (`check_alignment_raw`) | ✅ 199.319 registros = 199.319 frames, contiguos |
 | broadcast `atd.xml`, `homography.csv` | ✅ en `data/broadcast/` |
-| broadcast `atd.txt` | ❌ falta (parte `-009` del zip de Drive). Opcional |
-| `tactical.mp4` | ⏳ descargando. Opcional para el modelo, útil para depurar a ojo (solo personas) |
-| `broadcast.mp4` | ❌ descarga parada. Opcional |
+| broadcast `atd.txt` | ✅ (22 oct) movido de Descargas. `check_alignment_raw(source="broadcast")`: 164.488 registros contiguos, `agrees: True` |
+| `tactical.mp4` | ✅ 02:12:52,76 = 199.319 frames a 25 fps, 1080p. Trae pista de audio, pero **muda** (−59 a −61 dB de media) |
+| `broadcast.mp4` | ✅ (22 oct) movido de Descargas y renombrado (llegó como `-001.mp4`). 01:49:39,52 = 164.488 frames. **Audio real** de televisión (−26 dB de media, picos de −3 dB): sirve para ADR-0013 |
 
-Comprobación: `python external/more-than-a-hack-2027/starter/load_atd.py` → `OK -- one record per video frame`.
+**Todos los datos del reto están completos** (22 oct). En Descargas quedan dos `.opdownload` (restos de reintentos) que se pueden borrar.
+
+Comprobación: `python external/more-than-a-hack-2027/starter/load_atd.py` → `OK -- one record per video frame`. Duración y pistas del vídeo (solo metadatos): `ffmpeg -hide_banner -i <mp4>` con el binario portátil de `imageio-ffmpeg` (`ffprobe` no está instalado).
 
 ## Derivados y datos externos (actualizado 2026-10-21)
 | Carpeta | Qué hay | ¿Se versiona? |
 |---|---|---|
-| `data/derived/broadcast_alignment.npz` | correspondencia táctico → broadcast (`broadcast_report`) | No (está dentro de `data/`) |
-| `data/derived/video_ball.npz` | balón detectado en los frames de hueco (`vision.ball_detector`) | Pendiente de Q4 (ADR-0010) |
+| `data/derived/broadcast_alignment.npz` | correspondencia táctico → broadcast (`broadcast_report`, generado el 22 oct, E023) | No (está dentro de `data/`) |
+| `data/derived/logs/` | salida de los scripts sobre datos reales cuando fallan: la lee una persona, nunca un agente (ADR-0004) | No |
+| `data/derived/video_ball.npz` | balón detectado en los frames de hueco (`vision.ball_detector`). Hoy solo hay una prueba: el detector genérico no pasa la puerta (E025) | Pendiente de Q4 (ADR-0010) |
 | `external_data/metrica/` | Metrica sample-data, 3 partidos (descarga automática desde GitHub) | No |
 | `external_data/dfl/<id>/` | DFL/IDSSE, 7 partidos. **Figshare bloquea la descarga automática: bajar a mano** `meta.xml`, `event.xml` y `tracking.xml` | No |
 
-Pendiente para el Frente A: **broadcast `atd.txt`** (parte `-009` de Drive), imprescindible para la alineación.
+Lo único que falta es **DFL** (bajar a mano o con el navegador).
 
 ## Lo que sabemos del ATD (solo agregados, E005, E006 y E013)
 - Balón ausente en el 40,7 % de los frames evaluados, en ~134 huecos > 4 s (mediana de 268 frames). En la ventana pública: 6,5 % vivo / 34 % muerto.
@@ -56,3 +59,4 @@ Pendiente para el Frente A: **broadcast `atd.txt`** (parte `-009` de Drive), imp
 - Python 3.11 + `kloppy==3.18.0` + numpy/pandas/lightgbm/sklearn instalan con uv (fijar `pandas<3`).
 - El scorer oficial corre y reproduce la tabla de la ventana pública con los 4 baselines.
 - GPU disponible: RTX 3060 Laptop 6 GB (suficiente para un detector de balón tipo YOLO, si llegamos a ello).
+- Portátil de Manel: 31,4 GB de RAM (E019 se cortó con el navegador ocupando ~16 GB: cerrarlo antes de entrenar con 10 partidos). Grupo `vision` instalado: torch 2.6.0+cu124 con CUDA y ultralytics 8.4.

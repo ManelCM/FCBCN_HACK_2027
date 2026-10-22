@@ -1,10 +1,11 @@
 {
   "decode": {
-    "temperature": 0.22237518445653084,
-    "switch": 4.989489174400692,
-    "to_dead": 3.0376384884501544,
-    "from_dead": 28.953079819964433
+    "temperature": 1.0,
+    "switch": 20.0,
+    "to_dead": 10.0,
+    "from_dead": 10.0
   },
   "use_tags": false,
-  "features": 2
+  "features": 3,
+  "stack": true
 }
