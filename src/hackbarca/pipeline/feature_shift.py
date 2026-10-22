@@ -15,11 +15,10 @@ import argparse
 
 import numpy as np
 
-from hackbarca.io.degrade import degrade
-from hackbarca.io.external import load_bench_game
 from hackbarca.models.l3 import features_for
 from hackbarca.pipeline.atd_stats import GRADED
-from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES_V3
+from hackbarca.pipeline.bench_config import BENCH_GAMES_V3
+from hackbarca.pipeline.tune_l3 import feature_spec
 
 PCTS = (10, 50, 90)
 
@@ -48,7 +47,7 @@ def shift_table(real, bench, columns) -> list[tuple]:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--features", type=int, default=6)
+    parser.add_argument("--features", type=feature_spec, default="touch+ball+players+blocks+structure+restart")
     parser.add_argument("--only-new", action="store_true", help="solo las columnas que no estan en v3")
     args = parser.parse_args(argv)
 
@@ -59,16 +58,13 @@ def main(argv=None) -> int:
     match = load_match()
     real = features_for(match, None, halftime, args.features)
     real = real[_graded_mask(len(real))]
-    bench = []
-    for i, game in enumerate(BENCH_GAMES_V3):
-        m, gt = load_bench_game(game)
-        df = features_for(degrade(m, BENCH_DEGRADE, seed=i), None, version=args.features)
-        bench.append(df[gt != 3])
-    bench = pd.concat(bench, ignore_index=True)
+    from hackbarca.pipeline.tune_l3 import bench_feature_paths, read_features
+    # misma cache que tune_l3: de paso deja listas las features para la evaluacion del banco
+    paths = bench_feature_paths(use_tags=False, version=args.features, names=BENCH_GAMES_V3)
+    bench = pd.concat([read_features(p)[gt != 3] for p, gt in paths], ignore_index=True)
     columns = list(real.columns)
     if args.only_new:
-        base = set(features_for(degrade(*[load_bench_game(BENCH_GAMES_V3[0])[0]], BENCH_DEGRADE, seed=0),
-                                None, version=3).columns)
+        base = set(read_features(bench_feature_paths(False, 3, names=BENCH_GAMES_V3[:1])[0][0]).columns)
         columns = [c for c in columns if c not in base]
     rows = shift_table(real, bench, columns)
     print("{:<26} {:>24} {:>24} {:>8}".format("feature", "reto p10/p50/p90", "banco p10/p50/p90", "desaj."))

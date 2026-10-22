@@ -189,53 +189,33 @@ def _v4_features(match: MatchTracking, f: dict) -> dict:
     return out
 
 
-def _span_mean(values: np.ndarray, lo: int, hi: int) -> np.ndarray:
-    """Media de values en [t+lo, t+hi] ignorando NaN (recortado a los bordes)."""
-    ok = ~np.isnan(values)
-    cs = np.concatenate(([0.0], np.cumsum(np.where(ok, values, 0.0))))
-    cn = np.concatenate(([0], np.cumsum(ok)))
-    idx = np.arange(len(values))
-    a, b = np.clip(idx + lo, 0, len(values)), np.clip(idx + hi + 1, 0, len(values))
-    count = cn[b] - cn[a]
-    with np.errstate(invalid="ignore", divide="ignore"):
-        return np.where(count > 0, (cs[b] - cs[a]) / count, np.nan)
-
-
-CHANGE_WINDOWS = (25, 75)  # 1 s y 3 s: antes frente a despues de cada frame
-
-
-def _v5_features(match: MatchTracking, f: dict, bx: np.ndarray) -> dict:
-    """Senales de cambio de posesion (E027): sentido del balon y reaccion colectiva antes/despues.
-
-    Un robo invierte hacia que porteria avanza el balon y cambia el comportamiento de 22
-    jugadores (un bloque se adelanta y se abre, el otro repliega y se cierra), aunque falte el
-    balon. Se mide la diferencia entre la ventana posterior y la anterior a cada frame.
-    """
-    n, fps = match.n_frames, match.fps
-    out = {}
-    # avance del balon visto desde el local: + si va hacia la porteria que ataca el local
-    vx = np.full(n, np.nan)
-    vx[2:-2] = (bx[4:] - bx[:-4]) * (fps / 4)
-    prog = vx * _attack_sign(match, HOME)
-    for w in CHANGE_WINDOWS:
-        before, after = _span_mean(prog, -w, -1), _span_mean(prog, 1, w)
-        out["ball_prog_b%d" % w] = before
-        out["ball_prog_f%d" % w] = after
-        out["ball_prog_chg%d" % w] = after - before
-    for name in ("h", "a"):
-        for base in ("block", "front", "spread_x", "spread_y"):
-            series = f["%s_%s" % (base, name)]
-            for w in CHANGE_WINDOWS:
-                out["%s_chg%d_%s" % (base, w, name)] = _span_mean(series, 1, w) - _span_mean(series, -w, -1)
-    return out
-
-
 SIGNED_V2 = ("last_touch_sign", "next_touch_sign") + tuple("touch_sign_m%d" % w for w in WINDOWS[:2])
-SIGNED_V5 = tuple("ball_prog_%s%d" % (k, w) for k in ("b", "f", "chg") for w in CHANGE_WINDOWS)
+
+# Familias de features (plan de investigacion). "base" siempre va; "touch" son los toques con umbral
+# relativo al partido, receptor, presion y dispersion (antes v2/v3); el resto vive en tactical.py
+# (balon, jugadores, bloques, estructura) y en _layout_features (reanudacion).
+FAMILIES = ("base", "touch", "ball", "players", "blocks", "structure", "restart")
+# alias de las versiones numeradas antiguas: 3 es el modelo vigente (ADR-0011) y no cambia
+VERSION_GROUPS = {
+    1: ("base",), 2: ("base", "touch_fixed"), 3: ("base", "touch"), 4: ("base", "touch", "v4"),
+}
+
+
+def resolve_groups(version) -> tuple:
+    """Familias de una version: entero antiguo (1-4) o nombres unidos por '+' ("base+touch+ball")."""
+    if isinstance(version, (int, np.integer)):
+        return VERSION_GROUPS[int(version)]
+    names = tuple(str(version).split("+")) if isinstance(version, str) else tuple(version)
+    unknown = set(names) - set(FAMILIES) - {"touch_fixed", "v4"}
+    if unknown:
+        raise ValueError("familias desconocidas: {}".format(sorted(unknown)))
+    return tuple(dict.fromkeys(("base",) + names))
 
 
 def frame_features(match: MatchTracking, windows=None, max_gap: int = 10,
-                   version: int = 1) -> pd.DataFrame:
+                   version=1) -> pd.DataFrame:
+    """Features por frame. `version`: entero antiguo (3 = modelo vigente) o familias unidas por
+    '+', p. ej. "touch+ball+players+blocks+structure+restart" (ver FAMILIES)."""
     n = match.n_frames
     raw_missing = np.isnan(match.ball_x)
     bx, by, _ = interpolate_ball(match, max_gap)
@@ -313,13 +293,25 @@ def frame_features(match: MatchTracking, windows=None, max_gap: int = 10,
     f["tag_in"] = in_tag
     f["tag_to_log"] = np.log1p(to_tag)
     f["tag_from_log"] = np.log1p(from_tag)
-    if version >= 2:
-        f.update(_v2_features(match, bx, by, known, dist, team_near, relative=version >= 3))
-    if version == 4:  # rechazado (E015); v5 no lo incluye
+    groups = resolve_groups(version)
+    if "touch" in groups or "touch_fixed" in groups:
+        f.update(_v2_features(match, bx, by, known, dist, team_near, relative="touch" in groups))
+    if "v4" in groups:  # rechazado (E015); se conserva para reproducirlo
         f.update(_v4_features(match, f))
-    if version in (5, 6):
-        f.update(_v5_features(match, f, bx))
-    if version in (6, 7):  # 6 = v5 + colocacion; 7 = v3 + colocacion
+    if {"ball", "players", "blocks", "structure"} & set(groups):
+        from hackbarca.features import tactical
+        signs = {"h": _attack_sign(match, HOME), "a": _attack_sign(match, AWAY)}
+        if "ball" in groups:
+            f.update(tactical.ball_features(match, bx, by, signs["h"]))
+        if "players" in groups:
+            f.update(tactical.players_features(match, bx, by, signs))
+        if "blocks" in groups or "structure" in groups:
+            desc = tactical.block_descriptors(match, signs)
+            if "blocks" in groups:
+                f.update(tactical.blocks_features(match, desc))
+            if "structure" in groups:
+                f.update(tactical.structure_features(match, bx, desc, signs))
+    if "restart" in groups:
         f.update(_layout_features(match))
     return pd.DataFrame(f).astype(np.float32)  # la mitad de memoria; LightGBM bina igual
 
@@ -386,7 +378,8 @@ def swap_teams(df: pd.DataFrame) -> pd.DataFrame:
         if col.endswith("_h"):
             other = col[:-2] + "_a"
             out[col], out[other] = df[other], df[col]
-    for col in SIGNED + NEGATED + SIGNED_V2 + SIGNED_V5:
+    from hackbarca.features.tactical import SIGNED_BALL
+    for col in SIGNED + NEGATED + SIGNED_V2 + SIGNED_BALL:
         if col in df.columns:
             out[col] = -df[col]
     return out

@@ -180,9 +180,9 @@ def test_v5_change_features_see_a_turnover():
     m = MatchTracking(n_frames=n, fps=25, pitch_length=105.0, pitch_width=68.0, team_of_track=team,
                       players_x=px, players_y=py, players_speed=np.full_like(px, np.nan),
                       ball_x=ball_x, ball_y=np.full(n, 34.0), ball_speed=np.full(n, np.nan))
-    df = frame_features(m, version=5)
+    df = frame_features(m, version="touch+ball+blocks")
     assert df["ball_prog_chg25"].iloc[300] < -3     # el local atacaba (+x) y el balon va hacia atras
-    assert df["block_chg75_h"].iloc[300] > 1 and abs(df["block_chg75_a"].iloc[300]) < 1e-6
+    assert df["blk_back_chg75_h"].iloc[300] > 1 and abs(df["blk_back_chg75_a"].iloc[300]) < 1e-6
     swapped = swap_teams(df)
     np.testing.assert_allclose(swapped["ball_prog_chg25"], -df["ball_prog_chg25"], equal_nan=True)
     np.testing.assert_allclose(swap_teams(swapped).to_numpy(), df.to_numpy(), equal_nan=True)
@@ -201,7 +201,7 @@ def test_layout_features_see_a_static_corner():
     m = MatchTracking(n_frames=n, fps=25, pitch_length=105.0, pitch_width=68.0, team_of_track=team,
                       players_x=px, players_y=py, players_speed=np.full_like(px, np.nan),
                       ball_x=np.full(n, np.nan), ball_y=np.full(n, np.nan), ball_speed=np.full(n, np.nan))
-    df = frame_features(m, version=7)
+    df = frame_features(m, version="touch+restart")
     mid = n // 2
     assert df["frac_still"].iloc[mid] == 1.0
     assert df["box_r"].iloc[mid] >= 15 and df["box_l"].iloc[mid] == 0
@@ -222,3 +222,49 @@ def test_feature_cache_roundtrip_and_key(tmp_path):
     a = feature_path("1", 0, 3, False, BENCH_DEGRADE)
     assert a == feature_path("1", 0, 3, False, BENCH_DEGRADE)
     assert a != feature_path("1", 0, 5, False, BENCH_DEGRADE) != feature_path("1", 1, 3, False, BENCH_DEGRADE)
+
+
+def test_v8_tactical_features_goalkeeper_line_and_sprints():
+    from hackbarca.features.frame_features import frame_features, swap_teams
+    n = 400
+    t = np.arange(n)
+    team = np.repeat(np.array([HOME, AWAY], dtype=np.int8), 11)
+    px = np.empty((n, 22))
+    py = np.tile(np.linspace(5, 63, 11), 2)[None, :].repeat(n, 0)
+    px[:, 0] = np.where(t < 200, 20.0, np.maximum(20.0 - (t - 200) * 0.3, 1.0))  # portero local vuelve a su porteria
+    px[:, 1:5] = 30.0 + np.where(t >= 200, (t - 200) * 0.25, 0.0)[:, None]      # su linea adelanta a 6 m/s
+    px[:, 5:11] = 45.0
+    px[:, 11:] = 70.0
+    px[:, 21] = 100.0                                                            # portero visitante quieto
+    m = MatchTracking(n_frames=n, fps=25, pitch_length=105.0, pitch_width=68.0, team_of_track=team,
+                      players_x=px, players_y=py, players_speed=np.full_like(px, np.nan),
+                      ball_x=np.full(n, 50.0), ball_y=np.full(n, 34.0), ball_speed=np.full(n, np.nan))
+    df = frame_features(m, version="touch+ball+players+blocks+structure+restart")
+    assert df["gk_goal_chg75_h"].iloc[200] < -3          # el portero local se acerca a su linea de gol
+    assert df["blk_back_chg75_h"].iloc[200] > 3 and abs(df["blk_back_chg75_a"].iloc[200]) < 1e-6
+    assert df["sprint_n_h"].iloc[300] >= 4 and df["sprint_n_a"].iloc[300] == 0
+    assert df["ball_still_m25"].iloc[200] == 1.0
+    np.testing.assert_allclose(swap_teams(swap_teams(df)).to_numpy(), df.to_numpy(), equal_nan=True)
+    sw = swap_teams(df)
+    np.testing.assert_allclose(sw["blk_back_chg75_a"], df["blk_back_chg75_h"], equal_nan=True)
+
+
+def test_dynamic_viterbi_switches_where_the_detector_fires():
+    from hackbarca.decode.viterbi import dynamic_transition_costs, transition_costs
+    from hackbarca.models.change import change_targets
+    from hackbarca.models.l3 import DecodeParams, decode
+    n = 200
+    proba = np.full((n, 3), [0.6, 0.35, 0.05])          # el modelo duda: H algo mas probable
+    proba[100:140] = [0.35, 0.6, 0.05]                  # 40 frames de evidencia debil de A
+    runs = [(0, n)]
+    params = DecodeParams(temperature=1.0, switch=12.0, to_dead=10.0, from_dead=10.0)
+    fixed = decode(proba, runs, params)
+    assert (fixed == 0).all()                           # con coste fijo no compensa cambiar
+    p_change = np.full((n, 2), 0.05)
+    p_change[98:103, 0] = p_change[138:143, 0] = 0.99   # el detector ve el robo y la vuelta
+    dyn = decode(proba, runs, DecodeParams(1.0, 12.0, 10.0, 10.0, alpha_switch=1.0), p_change)
+    assert (dyn[105:135] == 1).all() and (dyn[:95] == 0).all() and (dyn[150:] == 0).all()
+    assert np.allclose(dynamic_transition_costs(12, 10, 10, np.full((3, 2), 0.5), 1.0, 1.0)[0],
+                       transition_costs(12, 10, 10))   # p = 0,5 -> coste base
+    team, dead = change_targets(np.array([0] * 20 + [1] * 20 + [2] * 20, dtype=np.int8), near=3)
+    assert team[17:24].all() and not team[:16].any() and dead[37:44].all() and not dead[:30].any()

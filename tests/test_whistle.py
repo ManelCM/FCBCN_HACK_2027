@@ -28,3 +28,14 @@ def test_half_offsets_and_mapping_to_tactical():
     assert [o for _, _, o in offsets] == [50, 120]
     # (400, 405) cae en el descanso del broadcast (entre 350 y 480) y se descarta
     assert to_tactical([(60, 65), (400, 405), (700, 710)], offsets) == [(110, 115), (820, 830)]
+
+
+def test_commentary_word_signals_and_frames():
+    from hackbarca.audio.commentary import to_frames, word_signals
+    words = [(1.0, " Lamine"), (1.4, " Yamal"), (3.0, " Nico"), (3.3, " Williams"), (5.0, " free"),
+             (5.3, " kick"), (7.0, " Corner!"), (8.0, " Simón"), (9.0, " the"), (9.2, " throw-in")]
+    mentions, events = word_signals(words)
+    assert [s for _, s in mentions] == [1, 1, -1, -1, -1]
+    assert events["free_kick"] == [5.0] and events["corner"] == [7.0] and events["throw_in"] == [9.2]
+    frames = to_frames([2.0, 50.0], [(0, 1000, 100)])
+    assert frames.tolist() == [150, -1]

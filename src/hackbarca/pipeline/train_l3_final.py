@@ -15,7 +15,7 @@ import os
 from dataclasses import asdict
 
 from hackbarca.models.l3 import DecodeParams, train, train_stacked
-from hackbarca.pipeline.tune_l3 import BENCHES, load_bench
+from hackbarca.pipeline.tune_l3 import BENCHES, feature_spec, load_bench
 
 ARTIFACTS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                          "models", "artifacts")
@@ -44,7 +44,7 @@ def main(argv=None) -> int:
     parser.add_argument("--to-dead", type=float, required=True)
     parser.add_argument("--from-dead", type=float, required=True)
     parser.add_argument("--no-tags", action="store_true")
-    parser.add_argument("--features", type=int, default=1)
+    parser.add_argument("--features", type=feature_spec, default=1)
     parser.add_argument("--stack", action="store_true", help="dos capas con contexto temporal (E018)")
     parser.add_argument("--bench", choices=sorted(BENCHES), default="v2",
                         help="partidos de entrenamiento: v2 = 3 Metrica; v3 = + 7 DFL")

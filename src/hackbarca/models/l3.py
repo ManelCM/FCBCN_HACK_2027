@@ -12,7 +12,7 @@ import lightgbm as lgb
 import numpy as np
 import pandas as pd
 
-from hackbarca.decode.viterbi import decode_runs, transition_costs
+from hackbarca.decode.viterbi import decode_runs, dynamic_transition_costs, transition_costs
 from hackbarca.features.frame_features import frame_features, swap_teams
 from hackbarca.io.load_match import MatchTracking
 
@@ -34,6 +34,8 @@ class DecodeParams:
     switch: float = 20.0
     to_dead: float = 10.0
     from_dead: float = 10.0
+    alpha_switch: float = 0.0  # E032: cuanto abarata el detector de cambio un H<->A (0 = fijo)
+    alpha_dead: float = 0.0    # idem para entrar o salir de D
 
 
 def ensure_period(match: MatchTracking, halftime_frame: int | None = None) -> MatchTracking:
@@ -68,9 +70,17 @@ def predict_proba(model: lgb.Booster, df: pd.DataFrame) -> np.ndarray:
     return sym / sym.sum(1, keepdims=True)
 
 
-def decode(proba: np.ndarray, runs, params: DecodeParams = DecodeParams()) -> np.ndarray:
+def decode(proba: np.ndarray, runs, params: DecodeParams = DecodeParams(),
+           p_change: np.ndarray | None = None) -> np.ndarray:
+    """Viterbi por tramo. Con `p_change` (detector de cambio, E032) y alphas > 0, el coste de cada
+    transicion varia por frame; sin el, es el Viterbi fijo de siempre."""
     cost = -params.temperature * np.log(proba + 1e-6)
-    return decode_runs(cost, transition_costs(params.switch, params.to_dead, params.from_dead), runs)
+    if p_change is not None and (params.alpha_switch or params.alpha_dead):
+        trans = dynamic_transition_costs(params.switch, params.to_dead, params.from_dead, p_change,
+                                         params.alpha_switch, params.alpha_dead)
+    else:
+        trans = transition_costs(params.switch, params.to_dead, params.from_dead)
+    return decode_runs(cost, trans, runs)
 
 
 def features_for(match: MatchTracking, windows=None, halftime_frame=None, version: int = 1) -> pd.DataFrame:
@@ -109,7 +119,7 @@ def context_features(proba: np.ndarray, change: bool = False) -> pd.DataFrame:
 
 
 def _stack_input(df: pd.DataFrame, proba: np.ndarray) -> pd.DataFrame:
-    change = "ball_prog_chg25" in df.columns  # features v5
+    change = "ball_prog_chg25" in df.columns  # familia "ball": ctxchg en la capa 2
     return pd.concat([df.reset_index(drop=True), context_features(proba, change)], axis=1)
 
 

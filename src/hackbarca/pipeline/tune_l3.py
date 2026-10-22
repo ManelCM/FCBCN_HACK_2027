@@ -30,6 +30,11 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
 
 
+def feature_spec(text: str):
+    """--features: un entero (versiones antiguas) o familias unidas por '+'."""
+    return int(text) if str(text).isdigit() else str(text)
+
+
 def sample_decode(rng) -> DecodeParams:
     return DecodeParams(
         temperature=float(np.exp(rng.uniform(np.log(0.05), np.log(2.0)))),
@@ -41,7 +46,7 @@ def sample_decode(rng) -> DecodeParams:
 
 FEATURE_CACHE = os.path.join(_REPO_ROOT, "external_data", "features")
 # el codigo del que dependen las features entra en la clave: si cambia, la cache se invalida sola
-_FEATURE_CODE = ("features/frame_features.py", "io/degrade.py", "models/l1.py")
+_FEATURE_CODE = ("features/frame_features.py", "features/tactical.py", "io/degrade.py", "models/l1.py")
 
 
 def _code_hash() -> str:
@@ -101,17 +106,22 @@ def _fit_predict(job):
     Los partidos llegan como rutas de la cache (o DataFrames si son degradaciones extra): asi un
     worker no recibe copias de todo el banco y solo carga lo que usa.
     """
-    items, eval_item, stack, lgb_params, n_rounds = job
+    items, eval_item, stack, lgb_params, n_rounds, dynamic = job
     train_sets = [(_materialize(x), gt) for x, gt in items]
     eval_df = _materialize(eval_item)
     from hackbarca.models import l3
     l3.LGB_PARAMS.update(lgb_params)
     l3.N_ROUNDS = n_rounds
+    features, labels = [df for df, _ in train_sets], [gt for _, gt in train_sets]
+    p_change = None
+    if dynamic:  # E032: detector de cambio entrenado con los mismos partidos del pliegue
+        from hackbarca.models.change import predict_change, train_change
+        p_change = predict_change(train_change(features, labels), eval_df)
     if stack:
-        models = l3.train_stacked([df for df, _ in train_sets], [gt for _, gt in train_sets])
-        return l3.predict_stacked(models, eval_df), models[1]
-    model = l3.train([df for df, _ in train_sets], [gt for _, gt in train_sets])
-    return l3.predict_proba(model, eval_df), model
+        models = l3.train_stacked(features, labels)
+        return l3.predict_stacked(models, eval_df), models[1], p_change
+    model = l3.train(features, labels)
+    return l3.predict_proba(model, eval_df), model, p_change
 
 
 def random_degrade(rng):
@@ -144,7 +154,8 @@ def main(argv=None) -> int:
     parser.add_argument("--trials", type=int, default=40)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--no-tags", action="store_true", help="ablation: sin Smart Tagging")
-    parser.add_argument("--features", type=int, default=1, help="version de las features")
+    parser.add_argument("--features", type=feature_spec, default=1,
+                        help="version antigua (3 = vigente) o familias: touch+ball+players+blocks+structure+restart")
     parser.add_argument("--num-leaves", type=int, default=None)
     parser.add_argument("--min-leaf", type=int, default=None)
     parser.add_argument("--rounds", type=int, default=None)
@@ -164,6 +175,8 @@ def main(argv=None) -> int:
     parser.add_argument("--bench", choices=sorted(BENCHES), default="v2",
                         help="v2: 3 Metrica; v3: 3 Metrica + 7 DFL")
     parser.add_argument("--jobs", type=int, default=1, help="pliegues en paralelo (4 hilos cada uno)")
+    parser.add_argument("--dynamic", action="store_true",
+                        help="detector de cambio + Viterbi con coste por frame (E032)")
     args = parser.parse_args(argv)
     names = BENCHES[args.bench]
 
@@ -202,11 +215,14 @@ def main(argv=None) -> int:
     if args.from_oof:
         blob = np.load(os.path.join(_REPO_ROOT, "external_data", args.from_oof))
         oof = [blob["p%d" % i] for i in range(len(games))]
+        changes = [blob["c%d" % i] for i in range(len(games))] if "c0" in blob.files else None
+    else:
+        changes = None
     jobs = []
     for g in range(len(games) if not args.from_oof else 0):
         others = [o for o in range(len(games)) if o != g]
         train_sets = [train_games[o] for o in others] + [e for o in others for e in extra.get(o, [])]
-        jobs.append((train_sets, eval_games[g][0], args.stack, dict(l3.LGB_PARAMS), l3.N_ROUNDS))
+        jobs.append((train_sets, eval_games[g][0], args.stack, dict(l3.LGB_PARAMS), l3.N_ROUNDS, args.dynamic))
     if jobs:
         if args.jobs > 1:
             from concurrent.futures import ProcessPoolExecutor
@@ -214,7 +230,8 @@ def main(argv=None) -> int:
                 results = list(pool.map(_fit_predict, jobs))
         else:
             results = [_fit_predict(job) for job in jobs]
-        oof = [p for p, _ in results]
+        oof = [p for p, _, _ in results]
+        changes = [c for _, _, c in results] if args.dynamic else None
         model = results[0][1]
         imp = sorted(zip(model.feature_importance("gain"), model.feature_name()), reverse=True)
         print("importancia (gain) top 15: " + ", ".join(n for _, n in imp[:15]))
@@ -231,6 +248,8 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_shift.npz")
     if args.stack:
         name = name.replace(".npz", "_stack.npz")
+    if args.dynamic:
+        name = name.replace(".npz", "_dyn.npz")
     if args.controlled:
         name = name.replace(".npz", "_ctl{:g}.npz".format(args.controlled))
         if args.controlled_dfl is not None:
@@ -239,7 +258,8 @@ def main(argv=None) -> int:
             name = name.replace(".npz", "_trainraw.npz")
     if not args.from_oof:
         np.savez_compressed(os.path.join(_REPO_ROOT, "external_data", name),
-                            **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
+                            **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)},
+                            **({"c%d" % i: c for i, c in enumerate(changes)} if changes else {}))
 
     argmax = [np.argmax(p, 1).astype(np.int8) for p in oof]
     r = pooled(gts, argmax)
@@ -248,11 +268,17 @@ def main(argv=None) -> int:
 
     rng = np.random.default_rng(args.seed)
     trials = [DecodeParams()] + [sample_decode(rng) for _ in range(args.trials)]
+    if changes is not None:
+        # mismos trials fijos (comparables con el Viterbi de siempre) + una copia con alphas sorteados
+        from dataclasses import replace
+        rng_dyn = np.random.default_rng(args.seed + 1)
+        trials += [replace(t, alpha_switch=float(rng_dyn.uniform(0, 1.5)),
+                           alpha_dead=float(rng_dyn.uniform(0, 1.5))) for t in list(trials)]
     scores = np.zeros((len(trials), len(games)))
     preds = {}
     for t, params in enumerate(trials):
         for g in range(len(games)):
-            preds[t, g] = decode(oof[g], runs[g], params)
+            preds[t, g] = decode(oof[g], runs[g], params, changes[g] if changes is not None else None)
             scores[t, g] = pm.evaluate(gts[g], preds[t, g])["spell_f1_mean"]
     held = []
     for g in range(len(games)):
