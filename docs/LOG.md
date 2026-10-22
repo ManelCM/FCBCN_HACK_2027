@@ -22,6 +22,8 @@ Formato: la entrada más nueva va **arriba**.
   - `docs/03_plan_ganar.md`: nueva sección «Estado y prioridades» con la tabla de tareas por persona.
   - **E021**: reentrenar con la GT controlada **no aporta** (0,6225 frente a 0,6245 del modelo actual con Viterbi reajustado). El cambio es de medida: el modelo vigente se queda y se evalúa con `--controlled 1.5`. Calibración revisada: con el baseline, el banco queda ~0,04 más fácil que el reto, así que la estimación orientativa en el reto es ~0,55-0,60.
   - El análisis queda explicado paso a paso en `docs/investigacion/02_analisis_fallos.md`, con las salidas completas en `docs/investigacion/resultados/`.
+  - **Presentación** actualizada (36 diapositivas: hallazgo de la definición, por qué perdemos posesiones, causas → soluciones) y subida al repo en `docs/presentacion/` (PDF, PPTX y fuente).
+  - **Git consolidado**: todo el trabajo (T1-T8, plan para ganar, análisis de fallos) está en **una sola rama, `analisis-fallos`**, pendiente de una única PR hacia `main`. Se borraron, en local y en GitHub, las ramas ya contenidas en ella. Para recuperar alguna: `git branch <nombre> <sha>`: t1-entorno-uv `a5b4d90`, t2-load-match `2b103b1`, t3-eval-wrapper `687273d`, t4-baseline-submission `e359826`, docs-log-t1 `38b759a`, t5-banco-externo `be19464`, plan-ganar `1ab9dc2`.
 - Pendiente:
   - Medir el modelo vigente con T = 1 y 2 s (robustez de ADR-0012).
   - Entrenar el artefacto final y regenerar `La MasIA.csv` (el actual sale del modelo en cuarentena).
