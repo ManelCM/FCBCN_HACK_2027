@@ -26,3 +26,33 @@ def test_apply_tags_raises_dead_before_and_inside_window():
     assert np.allclose(out[500:626], 0.4)
     assert np.allclose(out[:400], 0.05) and np.allclose(out[626:], 0.05)
     assert apply_tags(p_dead, [(500, 625)], L1Params()) is p_dead
+
+
+def test_stacked_model_roundtrip(tmp_path):
+    import pandas as pd
+    from hackbarca.models import l3
+    from hackbarca.pipeline.train_l3_final import load_model, save_model
+    rng = np.random.default_rng(0)
+    old = dict(l3.LGB_PARAMS), l3.N_ROUNDS
+    l3.LGB_PARAMS.update(num_leaves=7, min_data_in_leaf=20)
+    l3.N_ROUNDS = 10
+    try:
+        feats, labels = [], []
+        for _ in range(3):
+            n = 3000
+            y = (np.arange(n) // 300) % 3
+            df = pd.DataFrame({"d1_h": rng.normal(y == 0, 1, n), "d1_a": rng.normal(y == 1, 1, n),
+                               "near_sign": rng.normal(0, 1, n)}).astype(np.float32)
+            feats.append(df)
+            labels.append(y.astype(np.int8))
+        models = l3.train_stacked(feats, labels)
+        p = l3.predict_stacked(models, feats[0])
+        save_model(models[0], str(tmp_path / "s1.txt.gz"))
+        save_model(models[1], str(tmp_path / "s2.txt.gz"))
+        loaded = (load_model(str(tmp_path / "s1.txt.gz")), load_model(str(tmp_path / "s2.txt.gz")))
+        np.testing.assert_allclose(l3.predict_stacked(loaded, feats[0]), p)
+        assert p.shape == (3000, 3) and np.allclose(p.sum(1), 1)
+    finally:
+        l3.LGB_PARAMS.clear()
+        l3.LGB_PARAMS.update(old[0])
+        l3.N_ROUNDS = old[1]

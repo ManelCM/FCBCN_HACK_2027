@@ -41,14 +41,18 @@ def predict(model: str, data_dir: str | None) -> np.ndarray:
 
         from hackbarca.io.smart_tagging import set_piece_windows
         from hackbarca.models.l3 import DecodeParams, decode, features_for, predict_proba
-        from hackbarca.pipeline.train_l3_final import DECODE_PATH, load_model
+        from hackbarca.models.l3 import predict_stacked
+        from hackbarca.pipeline.train_l3_final import DECODE_PATH, STAGE2_PATH, load_model
         with open(DECODE_PATH) as handle:
             config = json.load(handle)
         windows = set_piece_windows(data_dir=data_dir) if config["use_tags"] else None
         # descanso entre las dos mitades evaluadas: los equipos cambian de campo
         halftime = (GRADED[0][1] + GRADED[1][0]) // 2
-        proba = predict_proba(load_model(),
-                              features_for(match, windows, halftime, config.get("features", 1)))
+        df = features_for(match, windows, halftime, config.get("features", 1))
+        if config.get("stack"):
+            proba = predict_stacked((load_model(), load_model(STAGE2_PATH)), df)
+        else:
+            proba = predict_proba(load_model(), df)
         return decode(proba, list(GRADED), DecodeParams(**config["decode"]))
     raise ValueError("modelo desconocido: " + model)
 
