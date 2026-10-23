@@ -75,17 +75,37 @@ def team_mentions(words):
             if _norm(w).strip() in HOME_TEAM + AWAY_TEAM]
 
 
-def transcribe(path: str, model_size: str = "large-v3"):
-    """[(tiempo_s, palabra)] del audio, en local con la GPU (DLLs de CUDA de torch)."""
+CHUNK_S = 600  # bloques de 10 min: memoria acotada y progreso guardado (el primer intento se corto)
+
+
+def transcribe(path: str, model_size: str = "large-v3", progress_dir: str | None = None):
+    """[(tiempo_s, palabra)] del audio, en local con la GPU (DLLs de CUDA de torch).
+
+    Por bloques de CHUNK_S segundos; si `progress_dir` existe, cada bloque se guarda al acabar y
+    una ejecucion cortada retoma donde lo dejo."""
     import torch
     os.add_dll_directory(os.path.join(os.path.dirname(torch.__file__), "lib"))
     from faster_whisper import WhisperModel
 
-    from hackbarca.audio.whistle import read_audio
+    from hackbarca.audio.whistle import RATE, read_audio
+    audio = read_audio(path)
     model = WhisperModel(model_size, device="cuda", compute_type="int8_float16")
-    segments, _ = model.transcribe(read_audio(path), language="en", initial_prompt=PROMPT,
-                                   word_timestamps=True, vad_filter=True, beam_size=5)
-    return [(float(w.start), w.word) for seg in segments for w in (seg.words or [])]
+    words = []
+    for k, start in enumerate(range(0, len(audio), CHUNK_S * RATE)):
+        part = os.path.join(progress_dir, "commentary_part%02d.npz" % k) if progress_dir else None
+        if part and os.path.exists(part):
+            blob = np.load(part)
+            words += list(zip(blob["t"].tolist(), blob["w"].tolist()))
+            continue
+        segments, _ = model.transcribe(audio[start:start + CHUNK_S * RATE], language="en",
+                                       initial_prompt=PROMPT, word_timestamps=True, vad_filter=True,
+                                       beam_size=5)
+        chunk = [(start / RATE + float(w.start), w.word) for seg in segments for w in (seg.words or [])]
+        if part:
+            np.savez_compressed(part, t=np.array([t for t, _ in chunk], dtype=float),
+                                w=np.array([w for _, w in chunk], dtype=str))
+        words += chunk
+    return words
 
 
 def to_frames(times_s, offsets, fps: int = 25):
@@ -150,8 +170,10 @@ def main(argv=None) -> int:
     data_dir = os.environ.get("MTAH_DATA_DIR", "data")
     cache = os.path.join(data_dir, "derived", "commentary_words.npz")
     if not os.path.exists(cache):
-        words = transcribe(os.path.join(data_dir, "broadcast", "BAR-ATH_broadcast.mp4"), args.model)
-        np.savez_compressed(cache, t=np.array([t for t, _ in words]), w=np.array([w for _, w in words]))
+        words = transcribe(os.path.join(data_dir, "broadcast", "BAR-ATH_broadcast.mp4"), args.model,
+                           progress_dir=os.path.join(data_dir, "derived"))
+        np.savez_compressed(cache, t=np.array([t for t, _ in words], dtype=float),
+                            w=np.array([w for _, w in words], dtype=str))
     blob = np.load(cache)
     words = list(zip(blob["t"].tolist(), blob["w"].tolist()))
     offsets = half_offsets(np.load(os.path.join(data_dir, "derived", "broadcast_alignment.npz"))[
