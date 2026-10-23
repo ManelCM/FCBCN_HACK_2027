@@ -48,6 +48,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bench", choices=sorted(BENCHES), default="v3")
     parser.add_argument("--epochs", type=int, default=6)
+    parser.add_argument("--tag", default="", help="sufijo del fichero de salida (variantes)")
     args = parser.parse_args(argv)
     from hackbarca.models.seq import predict_seq, train_seq
 
@@ -63,7 +64,7 @@ def main(argv=None) -> int:
         gts.append(load_bench_game(names[g])[1])
         acc = np.mean(np.argmax(p, 1)[gts[-1] != 3] == gts[-1][gts[-1] != 3])
         print("retenido {}: acierto por frame (argmax) {:.3f}".format(names[g], acc), flush=True)
-    out = os.path.join(_REPO_ROOT, "external_data", "oof_seq_{}.npz".format(args.bench))
+    out = os.path.join(_REPO_ROOT, "external_data", "oof_seq_{}{}.npz".format(args.bench, args.tag))
     np.savez_compressed(out, **{"p%d" % i: p for i, p in enumerate(oof)}, **{"gt%d" % i: g for i, g in enumerate(gts)})
     print("guardado", out)
     return 0
