@@ -291,6 +291,18 @@ def main(argv=None) -> int:
         r["spell_f1_mean"], r["macro_f1"], r["n_pred_spells"], r["n_gt_spells"]))
     best_all = int(np.argmax(scores.mean(1)))
     print("mejor decodificacion en todos: {} media={:.4f}".format(asdict(trials[best_all]), scores[best_all].mean()))
+    if changes is not None:
+        # misma seleccion restringida a los trials fijos: el mismo modelo sin el coste dinamico
+        n_static = len(trials) // 2
+        held_static, per_game = [], []
+        for g in range(len(games)):
+            others = [o for o in range(len(games)) if o != g]
+            best = int(np.argmax(scores[:n_static, others].mean(1)))
+            held_static.append(preds[best, g])
+            per_game.append(scores[best, g])
+        r = pooled(gts, held_static)
+        print("SIN coste dinamico: LOGO agregado spellF1={:.4f} poss={} | por partido {}".format(
+            r["spell_f1_mean"], r["n_pred_spells"], " ".join("%.4f" % s for s in per_game)))
     return 0
 
 

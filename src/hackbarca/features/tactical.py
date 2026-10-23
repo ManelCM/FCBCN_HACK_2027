@@ -202,19 +202,46 @@ def block_descriptors(match: MatchTracking, signs: dict) -> dict:
     return desc
 
 
+def _per_period(series: np.ndarray, period, how: str) -> np.ndarray:
+    """Normaliza dentro de cada parte: "z" (z-score) o "median" (divide por la mediana).
+
+    Los niveles de forma (longitud, anchura...) dependen del estilo del partido y de cuantos
+    jugadores ve el tracker: en el ATD real los equipos salen ~5 m mas cortos que en el banco
+    (feature_shift, desajuste 0,3-0,4). Relativos al propio partido significan lo mismo en los dos
+    dominios, igual que el umbral de toques (ADR-0009). Sin etiquetas.
+    """
+    out = np.full(len(series), np.nan)
+    for p in np.unique(period):
+        sel = period == p
+        if how == "z":
+            out[sel] = (series[sel] - np.nanmean(series[sel])) / (np.nanstd(series[sel]) + 1e-6)
+        else:
+            out[sel] = series[sel] / (np.nanmedian(series[sel]) + 1e-6)
+    return out
+
+
+def _period(match: MatchTracking) -> np.ndarray:
+    return match.period if match.period is not None else np.ones(match.n_frames, dtype=np.int8)
+
+
 def blocks_features(match: MatchTracking, desc: dict) -> dict:
     out = {}
+    period = _period(match)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         for name in ("h", "a"):
             d = desc[name]
-            for key in ("length", "width", "area", "stretch", "back", "front", "lines_gap"):
-                _with_changes(out, "blk_" + key, name, d[key])
-            out["blk_lpw_" + name] = _span_mean(d["length"] / np.maximum(d["width"], 1.0), -12, 12)
+            levels = dict(d, lpw=d["length"] / np.maximum(d["width"], 1.0))
+            for key in ("length", "width", "area", "stretch", "back", "front", "lines_gap", "lpw"):
+                _with_changes(out, "blk_" + key, name, levels[key])
+                # el nivel, relativo al partido; los cambios antes/despues ya cuadraban (desaj. < 0,05)
+                out["blk_%s_%s" % (key, name)] = _per_period(out["blk_%s_%s" % (key, name)], period, "z")
         # distancia entre los dos bloques a lo largo del campo, desde cada equipo (+ si va por delante)
         gap_h = desc["h"]["cx"] + desc["a"]["cx"]   # en coordenadas de ataque opuestas: suma = adelanto del local
         _with_changes(out, "blk_ahead", "h", gap_h)
         _with_changes(out, "blk_ahead", "a", -gap_h)
+        out["blk_ahead_h"] = _per_period(out["blk_ahead_h"], period, "z")
+        out["blk_ahead_a"] = -out["blk_ahead_h"]
     return out
 
 
@@ -278,5 +305,6 @@ def structure_features(match: MatchTracking, bx, desc: dict, signs: dict) -> dic
             lag = 3 * fps
             moved = np.full(match.n_frames, np.nan)
             moved[lag:] = np.sqrt(np.nansum((zs[lag:] - zs[:-lag]) ** 2, axis=1))
-            out["shape_moved_" + name] = _span_mean(moved, -12, 12)
+            # relativo a lo que se mueve la forma en ese partido (el ruido del tracker varia)
+            out["shape_moved_" + name] = _per_period(_span_mean(moved, -12, 12), period, "median")
     return out
