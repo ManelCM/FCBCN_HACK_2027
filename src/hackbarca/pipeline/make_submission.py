@@ -53,7 +53,22 @@ def predict(model: str, data_dir: str | None) -> np.ndarray:
             proba = predict_stacked((load_model(), load_model(STAGE2_PATH)), df)
         else:
             proba = predict_proba(load_model(), df)
-        return decode(proba, list(GRADED), DecodeParams(**config["decode"]))
+        if config.get("deep_weight"):
+            # E034: promedio con el modelo profundo; prediccion en numpy con los pesos versionados
+            # (la entrega no necesita torch ni GPU)
+            from hackbarca.models.seq import load_numpy_state, predict_seq_numpy, seq_inputs
+            from hackbarca.pipeline.train_l3_final import SEQ_PATH
+            tokens, mask, glob = seq_inputs(match)
+            w = config["deep_weight"]
+            deep = predict_seq_numpy(load_numpy_state(SEQ_PATH), tokens, mask, glob, match.n_frames)
+            proba = (1 - w) * proba + w * deep
+        params = DecodeParams(**config["decode"])
+        p_change = None
+        if params.alpha_switch or params.alpha_dead:
+            from hackbarca.models.change import predict_change
+            from hackbarca.pipeline.train_l3_final import CHANGE_PATHS
+            p_change = predict_change(tuple(load_model(p) for p in CHANGE_PATHS), df)
+        return decode(proba, list(GRADED), params, p_change)
     raise ValueError("modelo desconocido: " + model)
 
 

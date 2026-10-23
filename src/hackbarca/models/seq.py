@@ -195,3 +195,125 @@ def seq_inputs(match, gt=None, clean=None):
         ball = np.column_stack([clean.ball_x / clean.pitch_length - 0.5, clean.ball_y / clean.pitch_width - 0.5])
         out.append(ball[sl].astype(np.float32))
     return out
+
+
+def save_state(model, path: str) -> None:
+    """Pesos como .npz de arrays (portable, sin pickle; *.pt esta ignorado en git)."""
+    state = {k: v.detach().cpu().numpy() for k, v in model.state_dict().items()}
+    tmp = path[:-4] + ".tmp.npz"
+    np.savez_compressed(tmp, **{k.replace(".", "__"): v for k, v in state.items()})
+    import os
+    os.replace(tmp, path)
+
+
+def load_state(path: str):
+    import torch
+    model = build_model()
+    blob = np.load(path)
+    model.load_state_dict({k.replace("__", "."): torch.from_numpy(blob[k]) for k in blob.files})
+    return model.eval()
+
+
+# ---------------------------------------------------------------- prediccion en numpy (entrega)
+# La entrega no depende de torch: el mismo calculo que SetGRU.forward en eval, con numpy, a partir
+# de los pesos versionados. Mismo resultado en cualquier maquina con las mismas versiones fijadas.
+
+def _np_linear(x, state, name):
+    return x @ state[name + "__weight"].T + state[name + "__bias"]
+
+
+def _np_layernorm(x, state, name, eps=1e-5):
+    mu = x.mean(-1, keepdims=True)
+    var = ((x - mu) ** 2).mean(-1, keepdims=True)
+    return (x - mu) / np.sqrt(var + eps) * state[name + "__weight"] + state[name + "__bias"]
+
+
+def _np_encoder_layer(x, keep, state, prefix, heads=4):
+    """TransformerEncoderLayer (post-norm, ReLU). x (B, K, d); keep (B, K) True = token valido."""
+    b, k, d = x.shape
+    qkv = x @ state[prefix + "self_attn__in_proj_weight"].T + state[prefix + "self_attn__in_proj_bias"]
+    q, kk, v = np.split(qkv, 3, axis=-1)
+    hd = d // heads
+
+    def split(t):
+        return t.reshape(b, k, heads, hd).transpose(0, 2, 1, 3)
+
+    q, kk, v = split(q), split(kk), split(v)
+    scores = q @ kk.transpose(0, 1, 3, 2) / np.sqrt(hd)
+    scores = np.where(keep[:, None, None, :], scores, -np.inf)
+    scores = scores - scores.max(-1, keepdims=True)
+    w = np.exp(scores)
+    w = w / w.sum(-1, keepdims=True)
+    att = (w @ v).transpose(0, 2, 1, 3).reshape(b, k, d)
+    att = _np_linear(att, state, prefix + "self_attn__out_proj")
+    x = _np_layernorm(x + att, state, prefix + "norm1")
+    ff = _np_linear(np.maximum(_np_linear(x, state, prefix + "linear1"), 0), state, prefix + "linear2")
+    return _np_layernorm(x + ff, state, prefix + "norm2")
+
+
+def _np_gru(x, state, suffix):
+    """Una direccion de nn.GRU (puertas r, z, n). x (T, in) -> (T, h)."""
+    wih, whh = state["gru__weight_ih_l0" + suffix], state["gru__weight_hh_l0" + suffix]
+    bih, bhh = state["gru__bias_ih_l0" + suffix], state["gru__bias_hh_l0" + suffix]
+    hsz = whh.shape[1]
+    gx = x @ wih.T + bih
+    h = np.zeros(hsz, dtype=x.dtype)
+    out = np.empty((len(x), hsz), dtype=x.dtype)
+    for t in range(len(x)):
+        gh = whh @ h + bhh
+        r = 1 / (1 + np.exp(-(gx[t, :hsz] + gh[:hsz])))
+        z = 1 / (1 + np.exp(-(gx[t, hsz:2 * hsz] + gh[hsz:2 * hsz])))
+        n = np.tanh(gx[t, 2 * hsz:] + r * gh[2 * hsz:])
+        h = (1 - z) * n + z * h
+        out[t] = h
+    return out
+
+
+def np_forward(state: dict, tokens, mask, glob) -> np.ndarray:
+    """Logits (T, 3) de una ventana (T, K, F) con numpy, en float64."""
+    tokens, glob = tokens.astype(np.float64), glob.astype(np.float64)
+    keep = mask.copy()
+    keep[~keep.any(1), 0] = True
+    x = _np_linear(np.maximum(_np_linear(tokens, state, "embed__0"), 0), state, "embed__2")
+    for layer in range(2):
+        x = _np_encoder_layer(x, keep, state, "attn__layers__%d__" % layer)
+    team = tokens[..., 4]
+    pooled = []
+    for sign in (1.0, -1.0):
+        w = (keep & (team == sign)).astype(np.float64)[..., None]
+        pooled.append((x * w).sum(1) / np.maximum(w.sum(1), 1.0))
+    allm = keep.astype(np.float64)[..., None]
+    pooled.append((x * allm).sum(1) / np.maximum(allm.sum(1), 1.0))
+    pooled.append(_np_linear(glob, state, "glob"))
+    z = np.concatenate(pooled, -1)
+    seq = np.concatenate([_np_gru(z, state, ""), _np_gru(z[::-1], state, "_reverse")[::-1]], -1)
+    return _np_linear(seq, state, "cls")
+
+
+def load_numpy_state(path: str) -> dict:
+    blob = np.load(path)
+    return {k: blob[k].astype(np.float64) for k in blob.files}
+
+
+def predict_seq_numpy(state: dict, tokens, mask, glob, n_full: int) -> np.ndarray:
+    """Como predict_seq pero sin torch: lo que usa la entrega."""
+    def softmax(z):
+        z = z - z.max(-1, keepdims=True)
+        e = np.exp(z)
+        return e / e.sum(-1, keepdims=True)
+
+    n = len(tokens)
+    acc = np.zeros((n, 3))
+    cnt = np.zeros(n)
+    for s in _windows(n):
+        sl = slice(s, s + WINDOW)
+        p = softmax(np_forward(state, tokens[sl], mask[sl], glob[sl]))
+        st, sg, _ = _swap(tokens[sl], glob[sl], np.zeros(1))
+        q = softmax(np_forward(state, st, mask[sl], sg))
+        acc[sl] += (p + q[:, [1, 0, 2]]) / 2
+        cnt[sl] += 1
+    p5 = acc / np.maximum(cnt, 1)[:, None]
+    full = np.repeat(p5, STEP, axis=0)[:n_full]
+    if len(full) < n_full:
+        full = np.vstack([full, np.repeat(full[-1:], n_full - len(full), axis=0)])
+    return full / full.sum(1, keepdims=True)

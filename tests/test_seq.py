@@ -28,3 +28,18 @@ def test_seq_model_trains_and_predicts_deterministically():
     p2 = predict_seq(model, tokens, mask, glob, m.n_frames)
     assert p1.shape == (m.n_frames, 3) and np.allclose(p1.sum(1), 1)
     np.testing.assert_array_equal(p1, p2)
+
+
+def test_numpy_forward_matches_torch(tmp_path):
+    from hackbarca.models.seq import (load_numpy_state, predict_seq, predict_seq_numpy, save_state,
+                                      seq_inputs, train_seq)
+    m = _match(seed=1)
+    gt = np.where(np.arange(m.n_frames) % 400 < 200, 0, 1).astype(np.int8)
+    tokens, mask, glob, y, ball = seq_inputs(m, gt, m)
+    model = train_seq([(tokens, mask, glob, y, ball)], epochs=1, device="cpu")
+    path = str(tmp_path / "seq.npz")
+    save_state(model, path)
+    p_torch = predict_seq(model, tokens, mask, glob, m.n_frames)
+    p_np = predict_seq_numpy(load_numpy_state(path), tokens, mask, glob, m.n_frames)
+    np.testing.assert_allclose(p_np, p_torch, atol=1e-4)
+    np.testing.assert_array_equal(p_np, predict_seq_numpy(load_numpy_state(path), tokens, mask, glob, m.n_frames))

@@ -21,6 +21,8 @@ ARTIFACTS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
                          "models", "artifacts")
 MODEL_PATH = os.path.join(ARTIFACTS, "l3_lgbm.txt.gz")
 STAGE2_PATH = os.path.join(ARTIFACTS, "l3_stage2.txt.gz")  # solo si el modelo esta apilado (E018)
+SEQ_PATH = os.path.join(ARTIFACTS, "seq_state.npz")       # modelo profundo (E034)
+CHANGE_PATHS = (os.path.join(ARTIFACTS, "change_team.txt.gz"), os.path.join(ARTIFACTS, "change_dead.txt.gz"))
 
 
 def save_model(model, path: str = MODEL_PATH) -> None:
@@ -48,6 +50,10 @@ def main(argv=None) -> int:
     parser.add_argument("--stack", action="store_true", help="dos capas con contexto temporal (E018)")
     parser.add_argument("--bench", choices=sorted(BENCHES), default="v2",
                         help="partidos de entrenamiento: v2 = 3 Metrica; v3 = + 7 DFL")
+    parser.add_argument("--deep-weight", type=float, default=0.0,
+                        help="peso del modelo profundo en el promedio con LightGBM (E034); 0 = sin el")
+    parser.add_argument("--alpha-switch", type=float, default=0.0, help="coste de cambio dinamico (E032)")
+    parser.add_argument("--alpha-dead", type=float, default=0.0)
     args = parser.parse_args(argv)
 
     games = load_bench(use_tags=not args.no_tags, version=args.features, names=BENCHES[args.bench])
@@ -61,10 +67,23 @@ def main(argv=None) -> int:
         save_model(train(features, labels))
         if os.path.exists(STAGE2_PATH):
             os.remove(STAGE2_PATH)
-    decode = DecodeParams(args.temperature, args.switch, args.to_dead, args.from_dead)
+    for path in (SEQ_PATH,) + CHANGE_PATHS:   # nada de restos de un artefacto anterior
+        if os.path.exists(path):
+            os.remove(path)
+    if args.alpha_switch or args.alpha_dead:
+        from hackbarca.models.change import train_change
+        for model, path in zip(train_change(features, labels), CHANGE_PATHS):
+            save_model(model, path)
+    if args.deep_weight:
+        from hackbarca.models.seq import save_state, train_seq
+        from hackbarca.pipeline.tune_seq import game_inputs
+        names = BENCHES[args.bench]
+        save_state(train_seq([game_inputs(g, i)[:5] for i, g in enumerate(names)]), SEQ_PATH)
+    decode = DecodeParams(args.temperature, args.switch, args.to_dead, args.from_dead,
+                          args.alpha_switch, args.alpha_dead)
     with open(DECODE_PATH, "w") as handle:
         json.dump({"decode": asdict(decode), "use_tags": not args.no_tags, "features": args.features,
-                   "stack": args.stack, "bench": args.bench},
+                   "stack": args.stack, "bench": args.bench, "deep_weight": args.deep_weight},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)
     return 0
