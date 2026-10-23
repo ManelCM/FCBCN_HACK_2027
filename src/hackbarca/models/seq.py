@@ -156,7 +156,16 @@ def train_seq(games, epochs: int = 6, device: str | None = None):
 def predict_seq(model, tokens, mask, glob, n_full: int) -> np.ndarray:
     """P(H/A/D) a 25 fps (n_full frames) desde entradas a 5 fps, simetrizada; CPU determinista."""
     import torch
-    torch.use_deterministic_algorithms(True)
+    previous = torch.are_deterministic_algorithms_enabled()
+    torch.use_deterministic_algorithms(True)   # solo durante la prediccion (en CPU); se restaura al final
+    try:
+        return _predict(model, tokens, mask, glob, n_full)
+    finally:
+        torch.use_deterministic_algorithms(previous)
+
+
+def _predict(model, tokens, mask, glob, n_full: int) -> np.ndarray:
+    import torch
     n = len(tokens)
     acc = np.zeros((n, 3))
     cnt = np.zeros(n)
