@@ -11,6 +11,19 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-23 — Manel (con agente)
+- Hecho (rama `banco-v3`):
+  - **Plan de investigación** (`docs/04_plan_investigacion.md`): revisión crítica de lo hecho, estado del arte (PathCRF, Ball Radar, Pressing Intensity, contrapresión, compacidad, formaciones, SoccerNet-Echoes) y plan hasta el 14 nov.
+  - **Banco v3 = 3 Metrica + 7 DFL** (descargado con el navegador del portátil). La GT del tracking DFL también necesita la regla controlada (T = 2 s). El simulador calibrado en Metrica deja DFL calibrado sin tocar nada (E027). Referencia: **0,6470** (E030). Entrenar con más partidos ya mejora.
+  - **Features por familias**, pensadas como las mira un entrenador (balón, jugadores, bloques, estructura, reanudación; `features/tactical.py`): **0,7185** (+0,072, 9/10, E035). Niveles de bloque relativos al partido tras ver un desajuste real/banco de 0,3-0,4 (`feature_shift`).
+  - **Modelo profundo** por conjuntos + BiGRU (`models/seq.py`), promediado con LightGBM: 0,6570 sobre la referencia (E034). Predicción en numpy para que la entrega no necesite torch.
+  - Coste de cambio dinámico: sin ganancia (E036). Acierto por longitud de pase: fallan los envíos perdidos, no los cambios de juego (E028). Silbato: sin señal (E029). Comentario en inglés: transcrito en local, parones fiables pero ya detectados; no entra (E033).
+  - Infraestructura: caché de features en disco (las 3 evaluaciones simultáneas se cortaron por memoria), `scripts/run_aggregate.sh`, el portátil se mantiene despierto mientras corren los cálculos (se había suspendido dos veces) y la tapa enchufada ya no suspende.
+- Pendiente:
+  - Combinación familias + modelo profundo; ablación por familias (empezando por «jugadores», que incluye el portero, con desajuste de 0,22); por qué empeora J03WR9.
+  - Artefacto final con los 10 partidos, `make_submission` dos veces con el mismo sha, humo en los 5 min públicos.
+- Bloqueos (personas): enviar el email (Q2/Q4/Q5/Q6), invitar a los compañeros en GitHub y revisar la PR `banco-v3` → `main`, decidir sobre el ADR-0004.
+
 ## 2026-10-22 (tarde) — Manel (con agente)
 - Hecho (rama `artefacto-apilado`):
   - **Datos del reto completos**: broadcast `atd.txt` y `broadcast.mp4` movidos de Descargas a `data/broadcast/` y comprobados (164.488 registros contiguos; vídeo 6.579,5 s). El táctico tiene una pista de audio muda; **el broadcast tiene audio real**. Solo falta DFL. `docs/datos.md` actualizado.
