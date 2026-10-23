@@ -175,6 +175,8 @@ def main(argv=None) -> int:
     parser.add_argument("--bench", choices=sorted(BENCHES), default="v2",
                         help="v2: 3 Metrica; v3: 3 Metrica + 7 DFL")
     parser.add_argument("--jobs", type=int, default=1, help="pliegues en paralelo (4 hilos cada uno)")
+    parser.add_argument("--deep-oof", default=None,
+                        help="OOF del modelo profundo (tune_seq) para promediar con LightGBM (E034)")
     parser.add_argument("--dynamic", action="store_true",
                         help="detector de cambio + Viterbi con coste por frame (E032)")
     args = parser.parse_args(argv)
@@ -267,42 +269,58 @@ def main(argv=None) -> int:
         r["spell_f1_mean"], r["macro_f1"], r["n_pred_spells"]))
 
     rng = np.random.default_rng(args.seed)
-    trials = [DecodeParams()] + [sample_decode(rng) for _ in range(args.trials)]
+    base = [DecodeParams()] + [sample_decode(rng) for _ in range(args.trials)]
+    # candidatos (decodificacion, peso del modelo profundo); los grupos permiten informar de cada
+    # variante con la misma seleccion dejando un partido fuera
+    cands = [(t, 0.0) for t in base]
+    groups = {"fijo": list(range(len(cands)))}
     if changes is not None:
-        # mismos trials fijos (comparables con el Viterbi de siempre) + una copia con alphas sorteados
         from dataclasses import replace
         rng_dyn = np.random.default_rng(args.seed + 1)
-        trials += [replace(t, alpha_switch=float(rng_dyn.uniform(0, 1.5)),
-                           alpha_dead=float(rng_dyn.uniform(0, 1.5))) for t in list(trials)]
-    scores = np.zeros((len(trials), len(games)))
+        start_dyn = len(cands)
+        cands += [(replace(t, alpha_switch=float(rng_dyn.uniform(0, 1.5)),
+                           alpha_dead=float(rng_dyn.uniform(0, 1.5))), 0.0) for t in base]
+        groups["dinamico"] = list(range(start_dyn, len(cands)))
+    deep = None
+    if args.deep_oof:
+        blob_deep = np.load(os.path.join(_REPO_ROOT, "external_data", args.deep_oof))
+        deep = [blob_deep["p%d" % i] for i in range(len(games))]
+        rng_deep = np.random.default_rng(args.seed + 2)
+        start_deep = len(cands)
+        cands += [(t, float(rng_deep.choice([0.25, 0.5, 0.75]))) for t, _ in list(cands)]
+        groups["con modelo profundo"] = list(range(start_deep, len(cands)))
+    scores = np.zeros((len(cands), len(games)))
     preds = {}
-    for t, params in enumerate(trials):
+    for c, (params, w) in enumerate(cands):
         for g in range(len(games)):
-            preds[t, g] = decode(oof[g], runs[g], params, changes[g] if changes is not None else None)
-            scores[t, g] = pm.evaluate(gts[g], preds[t, g])["spell_f1_mean"]
-    held = []
+            proba = oof[g] if not w else (1 - w) * oof[g] + w * deep[g]
+            preds[c, g] = decode(proba, runs[g], params, changes[g] if changes is not None else None)
+            scores[c, g] = pm.evaluate(gts[g], preds[c, g])["spell_f1_mean"]
+
+    def logo(subset):
+        held, per_game, chosen = [], [], []
+        for g in range(len(games)):
+            others = [o for o in range(len(games)) if o != g]
+            best = subset[int(np.argmax(scores[subset][:, others].mean(1)))]
+            held.append(preds[best, g])
+            per_game.append(scores[best, g])
+            chosen.append(best)
+        return pooled(gts, held), per_game, chosen
+
+    r, per_game, chosen = logo(list(range(len(cands))))
     for g in range(len(games)):
-        others = [o for o in range(len(games)) if o != g]
-        best = int(np.argmax(scores[:, others].mean(1)))
-        held.append(preds[best, g])
-        print("retenido game {}: spellF1={:.4f} {}".format(names[g], scores[best, g], asdict(trials[best])))
-    r = pooled(gts, held)
+        params, w = cands[chosen[g]]
+        print("retenido game {}: spellF1={:.4f} {} peso_profundo={}".format(names[g], per_game[g], asdict(params), w))
     print("L3 LOGO agregado: spellF1={:.4f} macroF1={:.4f} poss={} (gt {})".format(
         r["spell_f1_mean"], r["macro_f1"], r["n_pred_spells"], r["n_gt_spells"]))
     best_all = int(np.argmax(scores.mean(1)))
-    print("mejor decodificacion en todos: {} media={:.4f}".format(asdict(trials[best_all]), scores[best_all].mean()))
-    if changes is not None:
-        # misma seleccion restringida a los trials fijos: el mismo modelo sin el coste dinamico
-        n_static = len(trials) // 2
-        held_static, per_game = [], []
-        for g in range(len(games)):
-            others = [o for o in range(len(games)) if o != g]
-            best = int(np.argmax(scores[:n_static, others].mean(1)))
-            held_static.append(preds[best, g])
-            per_game.append(scores[best, g])
-        r = pooled(gts, held_static)
-        print("SIN coste dinamico: LOGO agregado spellF1={:.4f} poss={} | por partido {}".format(
-            r["spell_f1_mean"], r["n_pred_spells"], " ".join("%.4f" % s for s in per_game)))
+    print("mejor decodificacion en todos: {} peso_profundo={} media={:.4f}".format(
+        asdict(cands[best_all][0]), cands[best_all][1], scores[best_all].mean()))
+    if len(groups) > 1 or deep is not None:
+        for label, subset in groups.items():
+            rr, pg, _ = logo(subset)
+            print("solo {}: LOGO agregado spellF1={:.4f} poss={} | por partido {}".format(
+                label, rr["spell_f1_mean"], rr["n_pred_spells"], " ".join("%.4f" % s for s in pg)))
     return 0
 
 
