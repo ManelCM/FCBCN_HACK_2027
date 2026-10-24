@@ -54,9 +54,15 @@ def main(argv=None) -> int:
                         help="peso del modelo profundo en el promedio con LightGBM (E034); 0 = sin el")
     parser.add_argument("--alpha-switch", type=float, default=0.0, help="coste de cambio dinamico (E032)")
     parser.add_argument("--alpha-dead", type=float, default=0.0)
+    parser.add_argument("--video-fill", action="store_true",
+                        help="banco con el relleno de balon por video simulado; la entrega lo aplica (E063)")
     args = parser.parse_args(argv)
 
-    games = load_bench(use_tags=not args.no_tags, version=args.features, names=BENCHES[args.bench])
+    fill = None
+    if args.video_fill:
+        from hackbarca.io.video_fill import VideoFill
+        fill = VideoFill()
+    games = load_bench(use_tags=not args.no_tags, version=args.features, names=BENCHES[args.bench], fill=fill)
     os.makedirs(ARTIFACTS, exist_ok=True)
     features, labels = [df for df, _ in games], [gt for _, gt in games]
     if args.stack:
@@ -83,7 +89,8 @@ def main(argv=None) -> int:
                           args.alpha_switch, args.alpha_dead)
     with open(DECODE_PATH, "w") as handle:
         json.dump({"decode": asdict(decode), "use_tags": not args.no_tags, "features": args.features,
-                   "stack": args.stack, "bench": args.bench, "deep_weight": args.deep_weight},
+                   "stack": args.stack, "bench": args.bench, "deep_weight": args.deep_weight,
+                   "video_fill": args.video_fill},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)
     return 0

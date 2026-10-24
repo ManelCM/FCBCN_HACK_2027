@@ -1,0 +1,50 @@
+import numpy as np
+
+from hackbarca.io.load_match import MatchTracking
+from hackbarca.io.video_fill import VideoFill, apply_video_fill, simulate_video_fill
+
+
+def _match(n=20000, seed=0):
+    rng = np.random.default_rng(seed)
+    t = np.arange(n)
+    bx, by = 52.5 + 30 * np.sin(t / 400), 34 + 20 * np.cos(t / 300)
+    px = rng.uniform(0, 105, (n, 4))
+    return MatchTracking(n_frames=n, fps=25, pitch_length=105.0, pitch_width=68.0,
+                         team_of_track=np.array([0, 0, 1, 1], np.int8), players_x=px, players_y=px.copy(),
+                         players_speed=np.full((n, 4), np.nan), ball_x=bx, ball_y=by, ball_speed=np.full(n, np.nan))
+
+
+def test_simulated_fill_matches_measured_shape():
+    from dataclasses import replace
+    clean = _match()
+    gaps = np.zeros(clean.n_frames, bool)
+    for a in range(0, clean.n_frames, 1000):
+        gaps[a + 200:a + 700] = True     # huecos de 500 frames
+    degraded = replace(clean, ball_x=np.where(gaps, np.nan, clean.ball_x), ball_y=np.where(gaps, np.nan, clean.ball_y))
+    filled = simulate_video_fill(degraded, clean, VideoFill(), seed=3)
+    np.testing.assert_array_equal(filled.ball_x[~gaps], clean.ball_x[~gaps])   # fuera de huecos no toca
+    covered = gaps & ~np.isnan(filled.ball_x)
+    assert 0.45 < covered.sum() / gaps.sum() < 0.65                           # ~56 % medido en el reto
+    err = np.hypot(filled.ball_x[covered] - clean.ball_x[covered], filled.ball_y[covered] - clean.ball_y[covered])
+    assert 0.4 < np.median(err) < 1.5
+    assert 0.55 < np.mean(err < 2) < 0.9
+    again = simulate_video_fill(degraded, clean, VideoFill(), seed=3)
+    np.testing.assert_array_equal(np.isnan(again.ball_x), np.isnan(filled.ball_x))   # determinista
+
+
+def test_apply_video_fill_only_touches_atd_gaps(tmp_path):
+    from dataclasses import replace
+    clean = _match(100)
+    bx = clean.ball_x.copy()
+    bx[10:20] = np.nan
+    match = replace(clean, ball_x=bx, ball_y=np.where(np.isnan(bx), np.nan, clean.ball_y))
+    path = str(tmp_path / "video_ball.npz")
+    frames = np.arange(5, 25)
+    x = np.full(len(frames), 1.0)
+    x[frames == 15] = np.nan                                                   # el detector tampoco lo ve
+    np.savez(path, frame=frames, x=x, y=np.full(len(frames), 2.0))
+    out = apply_video_fill(match, path)
+    np.testing.assert_array_equal(out.ball_x[:10], match.ball_x[:10])          # el ATD manda donde ve el balon
+    assert np.isnan(out.ball_x[15])
+    assert (out.ball_x[[10, 14, 16, 19]] == 1.0).all()
+    np.testing.assert_array_equal(out.ball_x[20:], match.ball_x[20:])

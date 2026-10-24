@@ -49,6 +49,8 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--features", type=feature_spec, default="touch+ball+players+blocks+structure+restart")
     parser.add_argument("--only-new", action="store_true", help="solo las columnas que no estan en v3")
+    parser.add_argument("--video-fill", action="store_true",
+                        help="reto con el balon del video en los huecos y banco con el relleno simulado (E063)")
     args = parser.parse_args(argv)
 
     import pandas as pd
@@ -56,11 +58,17 @@ def main(argv=None) -> int:
     from hackbarca.io.load_match import load_match
     halftime = (GRADED[0][1] + GRADED[1][0]) // 2
     match = load_match()
+    fill = None
+    if args.video_fill:
+        from hackbarca.io.video_fill import VideoFill, apply_video_fill
+        from hackbarca.pipeline.make_submission import video_ball_path
+        match = apply_video_fill(match, video_ball_path(None))
+        fill = VideoFill()
     real = features_for(match, None, halftime, args.features)
     real = real[_graded_mask(len(real))]
     from hackbarca.pipeline.tune_l3 import bench_feature_paths, read_features
     # misma cache que tune_l3: de paso deja listas las features para la evaluacion del banco
-    paths = bench_feature_paths(use_tags=False, version=args.features, names=BENCH_GAMES_V3)
+    paths = bench_feature_paths(use_tags=False, version=args.features, names=BENCH_GAMES_V3, fill=fill)
     bench = pd.concat([read_features(p)[gt != 3] for p, gt in paths], ignore_index=True)
     columns = list(real.columns)
     if args.only_new:

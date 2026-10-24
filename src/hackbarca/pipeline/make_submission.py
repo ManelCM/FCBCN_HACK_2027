@@ -25,6 +25,10 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 LETTERS = np.array(["H", "A", "D"])
 
 
+def video_ball_path(data_dir: str | None) -> str:
+    return os.path.join(data_dir or os.environ.get("MTAH_DATA_DIR", "data"), "derived", "video_ball.npz")
+
+
 def predict(model: str, data_dir: str | None) -> np.ndarray:
     from hackbarca.io.load_match import load_match
     match = load_match(data_dir=data_dir)
@@ -46,6 +50,10 @@ def predict(model: str, data_dir: str | None) -> np.ndarray:
         with open(DECODE_PATH) as handle:
             config = json.load(handle)
         windows = set_piece_windows(data_dir=data_dir) if config["use_tags"] else None
+        if config.get("video_fill"):
+            # E063: balon del detector de video en los huecos del ATD (vision.ball_detector)
+            from hackbarca.io.video_fill import apply_video_fill
+            match = apply_video_fill(match, video_ball_path(data_dir))
         # descanso entre las dos mitades evaluadas: los equipos cambian de campo
         halftime = (GRADED[0][1] + GRADED[1][0]) // 2
         df = features_for(match, windows, halftime, config.get("features", 1))

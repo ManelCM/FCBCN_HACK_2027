@@ -58,9 +58,13 @@ def _code_hash() -> str:
     return digest.hexdigest()
 
 
-def feature_path(game: str, index: int, version: int, use_tags: bool, params) -> str:
+def feature_path(game: str, index: int, version: int, use_tags: bool, params, fill=None) -> str:
     """Fichero de cache de las features de un partido degradado (semilla = posicion en el banco)."""
-    key = hashlib.sha1(repr((game, index, version, use_tags, asdict(params), _code_hash())).encode())
+    parts = (game, index, version, use_tags, asdict(params), _code_hash())
+    if fill is not None:  # solo entra en la clave si se usa: la cache sin relleno sigue valiendo
+        with open(os.path.join(_REPO_ROOT, "src", "hackbarca", "io", "video_fill.py"), "rb") as handle:
+            parts += (asdict(fill), hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest())
+    key = hashlib.sha1(repr(parts).encode())
     return os.path.join(FEATURE_CACHE, "{}_v{}_{}.npz".format(game, version, key.hexdigest()[:12]))
 
 
@@ -70,16 +74,22 @@ def read_features(path: str):
     return pd.DataFrame(blob["values"], columns=[str(c) for c in blob["columns"]])
 
 
-def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES):
-    """[(ruta de features en cache, gt)] por partido; calcula y guarda solo lo que falte."""
+def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES, fill=None):
+    """[(ruta de features en cache, gt)] por partido; calcula y guarda solo lo que falte.
+
+    fill: VideoFill para simular el relleno del balon con el detector de video (E063), o None.
+    """
     params = params or BENCH_DEGRADE
     os.makedirs(FEATURE_CACHE, exist_ok=True)
     out = []
     for i, game in enumerate(names):
         match, gt = load_bench_game(game)
-        path = feature_path(game, i, version, use_tags, params)
+        path = feature_path(game, i, version, use_tags, params, fill)
         if not os.path.exists(path):
             degraded = degrade(match, params, seed=i)
+            if fill is not None:
+                from hackbarca.io.video_fill import simulate_video_fill
+                degraded = simulate_video_fill(degraded, match, fill, seed=i)
             # el Smart Tagging simulado sale de los eventos de Metrica; DFL va siempre sin etiquetas
             windows = (simulate_set_piece_windows(metrica_events(game), seed=i)
                        if use_tags and not is_dfl(game) else None)
@@ -91,9 +101,9 @@ def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, na
     return out
 
 
-def load_bench(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES):
+def load_bench(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES, fill=None):
     return [(read_features(path), gt)
-            for path, gt in bench_feature_paths(use_tags, version, params, names)]
+            for path, gt in bench_feature_paths(use_tags, version, params, names, fill)]
 
 
 def _materialize(item):
@@ -179,6 +189,8 @@ def main(argv=None) -> int:
                         help="OOF del modelo profundo (tune_seq) para promediar con LightGBM (E034)")
     parser.add_argument("--dynamic", action="store_true",
                         help="detector de cambio + Viterbi con coste por frame (E032)")
+    parser.add_argument("--video-fill", action="store_true",
+                        help="simula en el banco el relleno del balon con el detector de video (E063)")
     args = parser.parse_args(argv)
     names = BENCHES[args.bench]
 
@@ -194,7 +206,11 @@ def main(argv=None) -> int:
         games = [(None, load_bench_game(game)[1]) for game in names]
     else:
         # rutas de la cache, no DataFrames: el proceso principal no guarda las features en memoria
-        games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, names=names)
+        fill = None
+        if args.video_fill:
+            from hackbarca.io.video_fill import VideoFill
+            fill = VideoFill()
+        games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, names=names, fill=fill)
     train_games = games
     if args.controlled:
         def t_of(game):
@@ -252,6 +268,8 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_stack.npz")
     if args.dynamic:
         name = name.replace(".npz", "_dyn.npz")
+    if args.video_fill:
+        name = name.replace(".npz", "_vfill.npz")
     if args.controlled:
         name = name.replace(".npz", "_ctl{:g}.npz".format(args.controlled))
         if args.controlled_dfl is not None:
