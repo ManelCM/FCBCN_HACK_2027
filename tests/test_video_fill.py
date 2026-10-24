@@ -32,6 +32,25 @@ def test_simulated_fill_matches_measured_shape():
     np.testing.assert_array_equal(np.isnan(again.ball_x), np.isnan(filled.ball_x))   # determinista
 
 
+def test_simulated_fill_is_smooth_and_holds_dead_ball():
+    from dataclasses import replace
+    clean = _match(6000)
+    gaps = np.zeros(clean.n_frames, bool)
+    gaps[1000:5000] = True
+    still = clean.ball_x * 0 + 50.0                                            # balon parado: velocidad 0
+    clean = replace(clean, ball_x=still.copy(), ball_y=still.copy())
+    cx = clean.ball_x.copy()
+    cx[2000:3000] = np.nan                                                     # paron en el limpio
+    clean = replace(clean, ball_x=cx, ball_y=np.where(np.isnan(cx), np.nan, clean.ball_y))
+    degraded = replace(clean, ball_x=np.where(gaps, np.nan, clean.ball_x), ball_y=np.where(gaps, np.nan, clean.ball_y))
+    filled = simulate_video_fill(degraded, clean, VideoFill(inlier_frac=1.0), seed=1)
+    x, y = filled.ball_x, filled.ball_y
+    both = ~np.isnan(x[1:]) & ~np.isnan(x[:-1]) & gaps[1:]
+    speed = np.hypot(np.diff(x), np.diff(y))[both] * 25
+    assert np.median(speed) < 1.5                                              # sin saltos de ruido por frame
+    assert (~np.isnan(x[2000:3000])).mean() > 0.3                              # el paron tambien se rellena
+
+
 def test_apply_video_fill_only_touches_atd_gaps(tmp_path):
     from dataclasses import replace
     clean = _match(100)
