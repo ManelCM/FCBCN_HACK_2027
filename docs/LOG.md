@@ -11,6 +11,25 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-24 — Manel (con agente)
+- Hecho (rama `banco-v3`):
+  - **E037**: el modelo profundo no aporta sobre las familias (0,7172 y 0,7134 frente a 0,7185). Queda fuera
+    de la entrega; el código se conserva.
+  - **Informe de estado en PDF** (`docs/informe/`, 12 páginas con gráficos) para ponernos al día los tres:
+    qué hemos hecho, por qué, qué se aprobó o rechazó, dónde fallamos y qué viene.
+  - **ADR-0014** (banco v3 con DFL y T por fuente) y **ADR-0015** (familias de features; pendiente de la
+    ablación).
+  - **Documentación al día**: `01_contexto_completo.md` reescrito, `03_plan_ganar.md` con estado,
+    prioridades, **reparto para los compañeros** y cómo empezar, `datos.md` y `README.md`.
+  - Ablación sin «jugadores» relanzada (se cortó al reiniciarse la sesión). WSL cerrado para liberar
+    memoria.
+- Pendiente:
+  - resto de ablaciones (persona B);
+  - reproducibilidad cruzada y documento técnico (persona C);
+  - artefacto final con los 10 partidos y regenerar `La MasIA.csv` (agente).
+- Bloqueos (personas): email a la organización, invitaciones de GitHub, revisar la PR `banco-v3` → `main`
+  y los ADR 0001-0015 (sobre todo el 0004).
+
 ## 2026-10-23 — Manel (con agente)
 - Hecho (rama `banco-v3`):
   - **Plan de investigación** (`docs/04_plan_investigacion.md`): revisión crítica de lo hecho, estado del arte (PathCRF, Ball Radar, Pressing Intensity, contrapresión, compacidad, formaciones, SoccerNet-Echoes) y plan hasta el 14 nov.

@@ -24,13 +24,15 @@ git clone --recursive https://github.com/ManelCM/FCBCN_HACK_2027.git C:/dev/hack
 
 ## Por dónde empezar (personas y agentes)
 
+0. **[docs/informe/La_MasIA_informe_estado_2026-10-24.pdf](docs/informe/)**: todo lo hecho, por qué y dónde fallamos, explicado y con gráficos.
 1. [CLAUDE.md](CLAUDE.md): reglas de trabajo para los agentes de IA (y para nosotros).
-2. [CONTRIBUTING.md](CONTRIBUTING.md): flujo de git, revisiones y cómo documentar.
-3. [docs/00_reto.md](docs/00_reto.md): qué se pide, qué sabemos y qué falta por saber.
-4. [docs/investigacion/01_posesion_estado_del_arte.md](docs/investigacion/01_posesion_estado_del_arte.md): investigación técnica de la fase 1.
-5. [docs/02_estrategia.md](docs/02_estrategia.md): plan para ganar, por fases.
-6. [docs/decisiones/](docs/decisiones/): registro de decisiones (ADR). **Toda decisión importante está aquí.**
-7. [docs/LOG.md](docs/LOG.md): bitácora del equipo (qué hizo cada persona y cuándo).
+2. [docs/01_contexto_completo.md](docs/01_contexto_completo.md): el proyecto desde cero, al día.
+3. [docs/03_plan_ganar.md](docs/03_plan_ganar.md): **estado, prioridades, reparto y cómo empezar**.
+4. [docs/04_plan_investigacion.md](docs/04_plan_investigacion.md): revisión crítica, estado del arte y plan hasta el 14 nov.
+5. [docs/experimentos.md](docs/experimentos.md): todos los experimentos con números (E001-E037), también los que fallaron.
+6. [docs/decisiones/](docs/decisiones/): registro de decisiones (ADR 0001-0015). **Toda decisión importante está aquí.**
+7. [docs/LOG.md](docs/LOG.md): bitácora del equipo.
+8. [CONTRIBUTING.md](CONTRIBUTING.md), [docs/00_reto.md](docs/00_reto.md) (reto y preguntas abiertas) y [docs/datos.md](docs/datos.md).
 
 ## Cómo se genera la entrega
 
@@ -51,7 +53,13 @@ cd external/more-than-a-hack-2027/evaluation
 uv run python run_evaluation.py --results ../../../submissions --out ../../../submissions/reports --gt public --no-detail
 ```
 
-Banco externo (no usa datos del reto): `uv run python -m hackbarca.pipeline.tune_l3 --features 3 --no-tags`.
+Banco externo v3 (10 partidos públicos, no usa datos del reto):
+
+```bash
+uv run python -m hackbarca.pipeline.tune_l3 --bench v3 --no-tags --stack --controlled 1.5 --controlled-dfl 2 --train-gt raw --jobs 2 \n    --features touch+ball+players+blocks+structure+restart
+```
+
+> **Para ponerse al día**: `docs/informe/La_MasIA_informe_estado_2026-10-24.pdf` (explicación completa con gráficos), `docs/01_contexto_completo.md` y el apartado «Estado y prioridades» + «Cómo empezar» de `docs/03_plan_ganar.md`. La rama de trabajo actual es `banco-v3`.
 Estado y números en [docs/experimentos.md](docs/experimentos.md); plan en [docs/03_plan_ganar.md](docs/03_plan_ganar.md).
 
 ## Estructura

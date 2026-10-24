@@ -1,40 +1,87 @@
 # Plan para ganar la fase 1 (La MasIA)
 
-> Aprobado el 2026-10-21. Reparto: A = visión y fusión del balón, B = banco v3 y protocolo, C = modelo. El agente escribe el código de los tres frentes; las piezas que tocan datos reales las ejecuta una persona (ADR-0004).
+> Aprobado el 2026-10-21. La sección «Estado y prioridades» manda; lo que hay desde «Contexto» hacia abajo
+> es el plan original del 21 oct y se conserva como histórico. Plan de investigación vigente:
+> `docs/04_plan_investigacion.md`. Explicación completa: `docs/informe/La_MasIA_informe_estado_2026-10-24.pdf`.
 
 
-## Estado y prioridades (actualizado 2026-10-22)
-
-> Esta sección manda sobre el calendario de abajo, que es el plan original del 21 oct.
+## Estado y prioridades (actualizado 2026-10-24)
 
 **Dónde estamos**
-- Modelo vigente: **L3 apilado** (ADR-0011): 0,542 en el banco v2.1 con la GT por eventos; 0,558 con el ATD simulado de otra forma.
-- **Hallazgo del 22 oct** (`docs/investigacion/02_analisis_fallos.md`): la GT del banco no seguía la definición de posesión «controlada» del reto. Con la regla corregida (ADR-0012, T = 1,5 s), el mismo modelo saca **0,6245**. Reentrenar con ella no aporta (E021), así que el cambio es de medida. **Desde ahora se evalúa con `--controlled 1.5`.** Estimación orientativa en el reto: ~0,55-0,60.
-- **`La MasIA.csv` ya sale del modelo final** (E022-E024): artefacto apilado con Viterbi 1/20/10/10 (confirmado con la GT controlada), entrenamiento determinista bit a bit, sha256 del CSV `252716b03d614399`, 322 posesiones. Humo en los 5 min públicos 0,513 (ruido del bootstrap ±0,38: no decide nada).
-- **Rellenar los huecos con otras fuentes de balón no funciona tal cual** (22 oct): el broadcast alineado cubre el 7,5 % de los huecos (E023) y el detector YOLO genérico acierta el 24 % incluso donde el ATD ve el balón (E025). Los huecos hay que atacarlos sin balón: colocación de los jugadores (#5) y **audio del broadcast**, que sí tiene sonido y se alinea con un desfase por parte (E026).
-
-**Dónde fallamos (GT controlada)**
-1. **No vemos la mitad de los robos.** Solo el 49 % de los cambios H↔A tienen una frontera predicha a ≤ 2 s. Cada robo perdido cuesta 2-3 posesiones, y es el **79 % de las pérdidas**.
-2. **Huecos largos de balón** (38 % de los frames): acierto 0,78, y el juego vivo se predice D el 22 %. Oráculo: +0,158 con el balón ideal, +0,081 con la mitad de los huecos.
-3. Duelos, aéreos y despejes (0,70 de acierto cerca de un duelo; despejes encontrados el 12,5 %).
-4. Infrasegmentación general (738 posesiones predichas frente a 868 reales).
-- **No son el problema**: el retraso de las fronteras (0-1 frame), los huecos cortos y partir posesiones largas.
+- **Banco v3** = 3 Metrica + 7 DFL (ADR-0014). Referencia (apilado v3): **0,6470** (E030).
+- **Candidato**: apilado + **familias de features** (balón, jugadores, bloques, estructura, reanudación):
+  **0,7185** (+0,072, 9/10, E035, ADR-0015). Antes de entregarlo falta la ablación por familias.
+- **Rechazados esta semana, con número**: coste de cambio dinámico (E036), modelo profundo sobre las
+  familias (E037), comentario dentro del modelo (E033), silbato (E029), broadcast como balón (E023) y YOLO
+  genérico (E025).
+- **`La MasIA.csv` actual**: válido y reproducible (sha `252716b03d614399`), pero sale del modelo v3
+  (0,6245 en el banco v2). Hay que regenerarlo con el candidato.
+- Estimación orientativa en el reto con el candidato: ~0,62-0,68 (incierta).
 
 **Prioridades, en orden**
-| # | tarea | quién | ataca | estado |
-|---|---|---|---|---|
-| 1 | ~~E021: reentrenar con la GT controlada~~ → no aporta; la GT controlada queda para evaluar (ADR-0012). Falta medir con T = 1 y 2 | agente | la medida | hecho |
-| 2 | ~~Entrenar el artefacto final y regenerar `La MasIA.csv`~~ (E022, E024: determinista) | agente | reserva válida | hecho |
-| 3 | Señales de **cambio de posesión**: reacción colectiva (bloques que se abren o cierran, avance invertido), sentido del balón respecto a los equipos, modelo por segmento candidato | agente | robos no vistos (79 %) | **siguiente** |
-| 4 | ~~Balón fusionado~~ → **no pasa la puerta** tal cual (broadcast 7,5 %, E023; YOLO COCO 24 %, E025). Variante abierta de baja prioridad: detector reentrenado con pseudoetiquetas del ATD | agente | huecos | descartado tal cual |
-| 5 | **Detector de balón parado dentro de los huecos** por la colocación (jugadores quietos, barrera, córner, portero, banda) | agente | D en huecos (+0,04) | por hacer (sube: es la vía principal para los huecos) |
-| 6 | DFL → banco de 10 partidos; contrastar sus duraciones con la GT controlada. Figshare bloquea la descarga automática: con el navegador (`/chrome`) o a mano | persona B o agente con navegador | ruido y definición | pendiente |
-| 7 | HSMM con duración mínima ~1,5 s | agente | infrasegmentación | por hacer |
-| 8 | Audio del broadcast (ADR-0013): **hay audio y se alinea** (E026). Siguiente paso: detector de silbato y comprobar con la GT pública si cae en los paso a D; que una persona escuche si hay comentarista | agente + persona | D en huecos | desbloqueado |
-| 9 | Enviar las preguntas Q4, Q6 (y Q2, Q5). Texto listo en `docs/00_reto.md` (el conector de Gmail no tiene permiso de borradores) | persona | reglas | pendiente |
-| 10 | Medir el modelo vigente con T = 1 y T = 2 s (robustez de ADR-0012) y el acierto por longitud de pase (cambios de juego, balones largos, despejes) | agente | la medida | por hacer |
+| # | tarea | quién | estado |
+|---|---|---|---|
+| 1 | Ablación sin «jugadores» (incluye el portero, con desajuste real/banco de 0,22) | agente (Manel) | **en marcha** |
+| 2 | Resto de ablaciones: sin balón, sin bloques, sin estructura, sin reanudación | **persona B** (en su máquina, en paralelo) | por hacer |
+| 3 | Análisis de fallos con el modelo nuevo en el banco v3 (hoy `failure_analysis` solo cubre Metrica) y por qué empeora J03WR9 | persona B + su agente | por hacer |
+| 4 | Decidir la composición final (ADR-0015 → *Aceptada*); artefacto con los 10 partidos (`train_l3_final --bench v3`) | agente (Manel) | tras 1-3 |
+| 5 | Regenerar `La MasIA.csv` (dos veces, mismo sha) + humo con los 5 min públicos | agente (Manel) | tras 4 |
+| 6 | **Reproducibilidad cruzada**: en otra máquina, reentrenar el artefacto y regenerar el CSV, y comparar los sha | **persona C** | por hacer (urgente antes del 14) |
+| 7 | Documento técnico: revisar y completar `docs/entrega/La MasIA - technical document.md` → PDF | **persona C** | por hacer |
+| 8 | Mejoras baratas: ensamblado de semillas, calibración, reelegir el Viterbi en v3 | agente | 7-9 nov |
+| 9 | Email a la organización (Q2/Q4/Q5/Q6), invitar a los compañeros en GitHub, revisar los ADR 0001-0015 | **Manel** | pendiente |
+| 10 | PR `banco-v3` → `main` revisada y aprobada por otra persona (ADR-0001) | **persona B o C** | pendiente |
+| 11 | Congelar el 14 nov; repo público; subir CSV y PDF al formulario el 15-16 nov | los tres | 14-16 nov |
 
-## Contexto
+## Cómo empezar (compañeros)
+1. **Leer**: este apartado, `docs/01_contexto_completo.md` y el PDF de `docs/informe/` (30-40 min).
+2. **Instalar** (abrid Claude Code **desde la carpeta del repo**, para que se aplique el bloqueo de `data/`):
+   ```
+   git clone --recursive https://github.com/ManelCM/FCBCN_HACK_2027.git C:/dev/hack_barca
+   cd C:/dev/hack_barca && git checkout banco-v3 && uv sync && uv run pytest
+   ```
+3. **Datos**:
+   - **del reto**: del Drive de la organización a `data/`, con `MTAH_DATA_DIR` apuntando ahí. Ningún agente
+     los lee (ADR-0004).
+   - **públicos**: Metrica se baja solo. DFL: abrid en el navegador las 21 URLs
+     `https://springernature.figshare.com/ndownloader/files/<id>` (los id están en
+     `kloppy/_providers/sportec.py`, `get_IDSSE_url`) y luego
+     `uv run python -m hackbarca.io.dfl --from-downloads <carpeta de descargas>`.
+4. **Reglas**:
+   - nada de `data/` en git;
+   - todo experimento en `docs/experimentos.md`, también los que fallan;
+   - cada sesión, una entrada en `docs/LOG.md`;
+   - cada decisión no trivial, un ADR;
+   - rama propia y PR.
+   - **Numeración de experimentos para no pisarnos**: Manel E038-E059, persona B E060-E079, persona C
+     E080-E099.
+
+### Persona B: ablaciones (prioridad 2)
+- Cada evaluación tarda 1-2 h y pide unos 8 GB de RAM libres (cerrad WSL/Docker). No lancéis más de una a la
+  vez. Se compara contra 0,7185 por partido y en el agregado.
+  ```
+  uv run python -m hackbarca.pipeline.tune_l3 --bench v3 --no-tags --stack --controlled 1.5 --controlled-dfl 2 --train-gt raw --jobs 2 --features <FAMILIAS>
+  ```
+- `<FAMILIAS>`, una por evaluación:
+  - `touch+players+blocks+structure+restart` (sin balón);
+  - `touch+ball+players+structure+restart` (sin bloques);
+  - `touch+ball+players+blocks+restart` (sin estructura);
+  - `touch+ball+players+blocks+structure` (sin reanudación).
+- El entrenamiento es determinista: si en vuestra máquina repetís la del candidato
+  (`touch+ball+players+blocks+structure+restart`), debería salir exactamente 0,7185. Es una buena prueba de
+  que el entorno está bien.
+
+### Persona C: reproducibilidad y documento técnico (prioridades 6-7)
+- **Prueba cruzada**:
+  1. `uv run python -m hackbarca.pipeline.train_l3_final --features 3 --no-tags --stack --temperature 1 --switch 20 --to-dead 10 --from-dead 10`
+     → los sha256 de `src/hackbarca/models/artifacts/` tienen que coincidir con los del repo
+     (capa 1 `8e44cc9d…`, capa 2 `80137a05…`).
+  2. `scripts/run_aggregate.sh sub uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA"`
+     → sha `252716b03d614399`. Si no coincide, es lo más urgente del proyecto.
+- **Documento técnico**: el borrador está en `docs/entrega/`; el informe de `docs/informe/` tiene todo el
+  material.
+
+## Contexto (plan original del 21 oct, histórico)
 - **Estado (21 oct):** L3 (LightGBM + Viterbi) saca 0,502 de spellF1 en el banco externo v2, frente a 0,300 del baseline, y 0,588 en los 5 min públicos (comprobación). El baseline oficial da 0,243 en el partido completo real. El banco es ~0,05 más fácil que el reto, así que estimamos ~0,40-0,45 en el reto. Seguramente basta para el top 20; para ganar, no.
 - **Dónde se pierde** (E009): con el equipo perfecto pasaríamos a 0,87; con el D perfecto, solo a 0,58. En el 41 % del partido falta el balón (134 huecos largos), y ahí el acierto cae de 0,89 a 0,74. Además estamos limitados por datos: solo 3 partidos de entrenamiento y la calidad aún sube con más capacidad (E010).
 - **Restricciones:** los agentes no ven los datos del reto (ADR-0004); los modelos que procesen vídeo o tracking corren en local en vuestra máquina. Reproducción exacta con un solo comando. Prohibido etiquetar a mano. Sin leaderboard, así que el banco es nuestro único juez.

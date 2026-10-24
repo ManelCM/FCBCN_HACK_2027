@@ -2,15 +2,16 @@
 
 > Para quien llega sin saber nada: compañeros del equipo o un agente en una sesión nueva. Resume
 > el reto, los datos, cómo validamos, cómo funciona el modelo, dónde fallamos y qué viene. Las
-> cifras salen de `docs/experimentos.md` y de los ADR; ante cualquier duda, mandan esos ficheros.
-> Actualizado: 2026-10-22.
+> cifras salen de `docs/experimentos.md` (E001-E037) y de los ADR; ante cualquier duda, mandan esos
+> ficheros. Versión explicada y con gráficos: `docs/informe/La_MasIA_informe_estado_2026-10-24.pdf`.
+> Actualizado: 2026-10-24.
 
 ## 1. El reto
 
-- **More Than A Hack 2027**, fase 1 (Metrica Sports). Más de 10.000 inscritos; **pasan 20**.
-- Somos **«La MasIA»** (3 personas). **Entrega: 17 nov 2026.**
-- Entrada: un partido, **Barça–Athletic**. Vídeo táctico a 25 fps: **199.319 frames**, de los que
-  158.857 se puntúan.
+- **More Than A Hack 2027**, fase 1 (Metrica Sports). **Pasan 20 equipos.**
+- Somos **«La MasIA»** (3 personas). **Entrega: 17 nov 2026; congelamos el 14.**
+- Entrada: un partido, **Barça–Athletic**. Vídeo táctico a 25 fps: **199.319 frames**, de los que se
+  puntúan 158.857.
 - Salida: una etiqueta por frame.
 
 | etiqueta | significado |
@@ -20,196 +21,181 @@
 | **D** | balón muerto |
 | **X** | sin respuesta; fuera de las partes no cuenta |
 
-- Entregables: `La MasIA.csv`, `La MasIA.pdf` (documento técnico) y el repo **público** que
-  regenera **el mismo CSV byte a byte** con un comando.
+- Entregables: `La MasIA.csv`, `La MasIA.pdf` (documento técnico) y el repo **público** que regenera
+  **el mismo CSV byte a byte** con un comando.
 
 ### La métrica: spellF1 (lee esto antes de proponer nada)
 
-- **No puntúa frames, puntúa posesiones.** Una posesión es una racha máxima de H o de A, y un D en
-  medio la corta: «H D H» son dos.
-- Una posesión predicha acierta si **se solapa (IoU) con una real** por encima de un umbral. Se
-  promedia en IoU 0,3-0,7, y el F1 combina precisión y recall.
+- **No puntúa frames, puntúa posesiones.** Una posesión es una racha máxima de H o de A; un D en medio
+  la corta («H D H» son dos).
+- Una posesión predicha acierta si **se solapa (IoU) con una real** por encima de un umbral. Se promedia
+  en IoU 0,3-0,7.
 - Consecuencias:
-  - **partir una posesión o fusionar dos se paga muy caro**;
-  - **llegar 1 s tarde a un cambio cuesta ~35 %**, porque hay muchas posesiones cortas;
-  - acertar frames no basta: el baseline oficial tiene macroF1 0,67 y spellF1 solo **0,243** en
-    el partido real.
+  - **no ver un robo cuesta 2-3 posesiones**;
+  - **parpadear es letal**;
+  - **llegar 1 s tarde a un cambio cuesta ~35 %**;
+  - acertar frames no basta: el baseline oficial tiene macroF1 0,67 y spellF1 solo **0,243**.
 
 ### Qué cuenta como posesión (CHALLENGE.md)
 
-- Cambia cuando el rival gana el balón **controlado**. Un toque, un desvío o un duelo aéreo sin
-  control **no** cuentan.
-- La GT sale del tracking corregido de forma mecánica y la referencia es la GT pública de 5 min:
-  17 posesiones de 14,2 s de media.
-- **Esto importa mucho**: ver §6 y ADR-0012.
+- Cambia cuando el rival gana el balón **controlado**. Un toque, un desvío o un duelo sin control **no**
+  cuentan.
+- La GT sale del tracking corregido de forma mecánica. La referencia es la GT pública de 5 min:
+  17 posesiones, 14,2 s de media, 17,6 % de menos de 3 s.
 
 ### Reglas que nos condicionan
 
-1. **Los agentes de IA no ven los datos del reto** (ADR-0004). El agente escribe el código, las
-   personas lo ejecutan en local y solo se comparten agregados (notas, conteos).
-2. **No hay leaderboard.** La GT completa es privada; solo tenemos 5 min públicos.
-3. **Prohibido etiquetar a mano**: las etiquetas salen de un algoritmo.
-4. Prohibido usar otras fuentes de posesión de este partido. Los datos no van al repo.
+1. **Los agentes de IA no ven los datos del reto** (ADR-0004).
+   - El agente escribe el código, el código corre en local y solo vuelven agregados.
+   - Desde el 22 oct, con autorización de Manel, el agente ejecuta los scripts de solo agregados a través
+     de `scripts/run_aggregate.sh`, que oculta la salida si el script falla. **Pendiente de que el equipo
+     lo apruebe en el ADR.**
+2. **No hay leaderboard.** La GT completa es privada.
+3. **Prohibido etiquetar a mano**, usar otras fuentes de posesión de este partido o subir los datos al
+   repo.
 
 ## 2. Los datos
 
 | fuente | qué es | estado | uso hoy |
 |---|---|---|---|
-| **ATD táctico** | posición (m) y velocidad de jugadores y balón por frame, sin identidades (46 slots) | ✅ | base de todo |
-| **Vídeo táctico** | 1080p con homografía válida en el 100 % de los frames; su pista de audio está muda | ✅ | detector YOLO genérico probado: **no sirve** (24 % a < 2 m, E025) |
-| **Broadcast** | cámara de tele con su ATD; no sincronizada, con cortes y repeticiones; **audio real** | ✅ completo | como balón, no sirve (7,5 % de los huecos, E023); **su audio se alinea** con un desfase por parte (E026) → silbato (ADR-0013) |
-| **Smart Tagging** | eventos automáticos (balones parados…) | ✅ | descartado: +0,008, dentro del ruido (ADR-0007) |
-| **GT pública 5 min** | 17 posesiones | ✅ | solo prueba de humo; **nunca elige modelos** |
-| **Metrica (externo)** | 3 partidos públicos con tracking y eventos | ✅ | entrenar y validar (el «banco») |
-| **DFL (externo)** | 7 partidos de la Bundesliga | ❌ descarga manual | banco de 10 partidos |
+| **ATD táctico** | posición de jugadores y balón por frame, sin identidades (46 slots) | ✅ | **base de todo** |
+| **Vídeo táctico** | 1080p, homografía válida en todos los frames; audio mudo | ✅ | detector YOLO genérico **descartado** (24 % a < 2 m, E025) |
+| **Broadcast** | tele con su ATD; no sincronizada; **audio con comentarista en inglés** | ✅ | como balón **no sirve** (7,5 % de los huecos, E023); alineado con un desfase por parte (E026); silbato sin señal (E029); comentario transcrito, solo como comprobación (E033) |
+| **Smart Tagging** | eventos automáticos | ✅ | **descartado** (+0,008, ADR-0007) |
+| **GT pública 5 min** | 17 posesiones | ✅ | solo prueba de humo y forma de la definición; **nunca elige modelos** |
+| **Metrica (externo)** | 3 partidos con tracking y eventos | ✅ | banco (GT de eventos) |
+| **DFL (externo)** | 7 partidos de la Bundesliga con flags de posesión en el tracking | ✅ desde el 23 oct | banco (GT del tracking, como la del reto) |
 
 **Problemas del ATD:**
-- **Falta el balón en el 40,7 %** de los frames puntuados, sobre todo en ~134 huecos de más de 4 s
-  (mediana ~11 s). Más de la mitad de esos frames son D.
-- **La trayectoria del balón está filtrada**: casi no se ven los toques (0,02-0,04 por segundo).
-- Con el balón parado los jugadores corren menos (0,97 frente a 1,62 m/s), y eso ayuda a detectar
-  D.
+- **Falta el balón en el 40,7 %** de los frames puntuados, sobre todo en ~134 huecos de más de 4 s.
+- La trayectoria del balón está filtrada: casi no se ven los toques.
+- En el ATD real los equipos salen ~5 m más cortos que en el banco (estilo o jugadores no detectados).
+  Por eso las medidas de forma van relativas al partido.
 
-**Rellenar el balón con otras fuentes** (ADR-0010) se probó el 22 oct y **no pasa la puerta tal
-cual**: el broadcast pierde el balón en las mismas jugadas que el táctico, y el detector genérico
-no ve un balón tan pequeño. Los huecos se atacan sin balón: colocación de los jugadores y audio.
+Rellenar el balón con otras fuentes no funciona: el balón falta en las mismas jugadas para todos. Los
+huecos se atacan **sin balón**, con lo que hacen los 22 jugadores.
 
-## 3. Cómo validamos sin leaderboard
+## 3. Cómo validamos sin leaderboard (ADR-0005, 0006, 0008, 0009, 0012, 0014)
 
-- **Banco**: los partidos de Metrica con su GT sacada de eventos, **estropeados para parecerse al
-  ATD**: huecos largos de balón, balón suavizado, trayectorias partidas, ruido.
-- **Calibración con dos anclas**:
-  1. el banco reproduce el orden y la escala de los 4 números publicados del baseline oficial
-     (s50 > s125 > s25 > raw);
-  2. agregados del ATD real (% de balón ausente, huecos, dinámica del balón, toques).
-- **Dejando un partido fuera**: se entrena con 2 y se puntúa el 3.º, en las tres combinaciones.
-- **Regla anti-suerte** (ADR-0008): un cambio solo se acepta si sube la nota agregada ≥ 0,01
-  **y** mejora en todos los partidos. Todo se registra, también lo que falla.
-- **Prueba de robustez**: se evalúa también con otra calibración del balón, igual de compatible
-  con el ATD real.
+- **Banco v3 = 3 Metrica + 7 DFL**, con el tracking limpio **estropeado para parecerse al ATD**: huecos
+  largos de balón, balón suavizado, 46 slots sin identidad y ruido.
+- **Calibración**: el baseline oficial reproduce en el banco el orden y la escala de los 4 números
+  publicados (DFL, sin tocar nada: 0,025 / 0,203 / 0,265 / 0,236 frente a 0,049 / 0,200 / 0,243 / 0,224),
+  y además coinciden los agregados del ATD real.
+- **Posesión controlada**: un robo solo cuenta si el nuevo equipo conserva el balón ≥ T s (tras un parón
+  siempre). Metrica usa T = 1,5 s y DFL T = 2 s. T se elige por la forma de la distribución (17,5 % de
+  posesiones de menos de 3 s, como la GT pública), nunca por la nota. Se entrena con la GT original y se
+  evalúa con la controlada.
+- **Protocolo**:
+  - siempre dejando un partido fuera;
+  - un cambio entra si sube **≥ 0,01** y mejora en **≥ 7 de 10** partidos;
+  - antes, comprobación de dominio de las features nuevas con `feature_shift`.
 - **Límites**:
-  - el banco es ~0,05 más fácil que el reto: sirve para ordenar modelos, no para predecir la nota;
-  - solo hay 3 partidos (ruido ±0,02);
-  - la GT por eventos no es la del reto (ver §6).
+  - el banco es ~0,02-0,04 más fácil que el reto: sirve para ordenar modelos, no para predecir la nota;
+  - la GT del banco aproxima la del reto, pero no es idéntica.
 
-## 4. El modelo actual: L3 apilado (ADR-0011)
+## 4. El modelo
 
-1. **Preparar**: mitades por separado; huecos de balón ≤ 0,4 s interpolados; sin identidades.
-2. **~65 números por frame** (`features/frame_features.py`, versión 3):
-   - cercanía al balón por equipo;
-   - estado del balón (visible, velocidad, distancia a la banda);
-   - **toques con umbral relativo al partido** (último y siguiente toque y su equipo, receptor);
-   - colectivo (velocidad, altura del bloque, dispersión, presión);
-   - contexto del hueco (quién estaba cerca justo antes y justo después).
+1. **Features por frame**, todo colectivo y sin identidades.
+   - Versión 3 (modelo de la entrega actual): unas 65 features de cercanía, toques relativos, receptor,
+     velocidad colectiva, forma y contexto de los huecos.
+   - **Familias nuevas** (ADR-0015, candidato): balón, jugadores, bloques, estructura y reanudación (§6).
+2. **Capa 1: LightGBM** (127 hojas, 400 rondas) → P(H), P(A), P(D). Entrena con equipos intercambiados y
+   la predicción se simetriza.
+3. **Capa 2 (apilado, ADR-0011)**: LightGBM que ve las probabilidades de la capa 1 en ventanas de 1-10 s.
+4. **Viterbi** por parte con coste por cambio (1 / 20 / 10 / 10). Sin retraso.
+5. **Formato**: X fuera de las partes, validador oficial, sha256.
+   - El modelo va versionado en `src/hackbarca/models/artifacts/` y el entrenamiento es determinista bit a
+     bit (E024).
+   - `make_submission` admite también, si el artefacto lo pide, el modelo profundo (predicción en numpy) y
+     el Viterbi dinámico. Ninguno de los dos se usa: E036 y E037.
 
-   Se usan ventanas de ±0,5 / 2 / 5 s hacia atrás y hacia delante.
-3. **Capa 1: LightGBM** (127 hojas, 400 rondas) → P(H), P(A), P(D). Aumento de datos con los
-   equipos intercambiados y predicción simetrizada.
-4. **Capa 2 (apilado)**: otro LightGBM que ve las probabilidades de la capa 1 resumidas en ±1, 2,
-   5 y 10 s. Se entrena con probabilidades fuera de muestra y elimina los saltos sueltos.
-5. **Viterbi**: la secuencia más probable de cada mitad, con coste por cambio (H↔A 20, entrar o
-   salir de D 10). Sin retraso, porque decide la mitad entera de una vez.
-6. **Formato**: X fuera de las partes, validador oficial, sha256. La entrega no reentrena: el
-   modelo va versionado.
+**Entrega actual** (E024): `La MasIA.csv`, sha256 `252716b03d614399`, 322 posesiones. Sale del modelo
+v3, **no del candidato nuevo**: hay que regenerarla.
 
-**Artefacto vigente** (E024, 22 oct): capa 1 `8e44cc9d…`, capa 2 `80137a05…`. El entrenamiento es
-determinista bit a bit (`force_col_wise`) y `La MasIA.csv` sale de él: sha256 `252716b03d614399`,
-322 posesiones.
+## 5. Resultados
 
-## 5. Resultados y qué aportó cada pieza
-
-| modelo | banco v2 | banco v2.1 (GT por eventos) | 5 min reales (humo) |
+| banco | modelo | spellF1 | nota |
 |---|---|---|---|
-| baseline oficial | 0,300 | — | 0,326 |
-| L1 reglas + Viterbi | 0,326 | — | 0,469 |
-| L3 | 0,502 | 0,465 | 0,588 |
-| L3 + toques relativos (v3) | — | 0,513-0,519 | — |
-| **L3 apilado** | — | **0,542** (0,558 con el dominio desplazado) | — |
+| v2 (3 Metrica, GT controlada) | apilado v3 | 0,6245 | entregado en el CSV actual |
+| **v3 (10 partidos)** | apilado v3 (referencia) | **0,6470** | E030 |
+| v3 | + modelo profundo promediado | 0,6570 | E034 (pasaba sobre la referencia) |
+| **v3** | **apilado + familias** | **0,7185** | **E035: candidato, pendiente de ablación** |
+| v3 | familias + modelo profundo | 0,7172 / 0,7134 | E037: rechazado |
+| v3 | familias + coste de cambio dinámico | igual (nunca se elige) | E036: rechazado |
 
-| pieza | ganancia |
-|---|---|
-| Viterbi | de 0,107 a 0,555 |
-| LightGBM frente a reglas | +0,15 a +0,19 |
-| Más capacidad | +0,023 |
-| Toques | +0,054 |
-| Apilado | +0,029 |
+**Lo que no funcionó** (con motivo en `experimentos.md`):
+- Smart Tagging;
+- toques con umbral fijo (espejismo por el balón filtrado);
+- empuje de bloque como nivel;
+- aleatorización del dominio;
+- entrenar con la GT controlada;
+- broadcast como balón;
+- YOLO genérico;
+- silbato;
+- comentario dentro del modelo;
+- coste de cambio dinámico;
+- modelo profundo sobre las familias.
 
-**Lo que no funcionó** (también es información):
-- Smart Tagging: +0,008.
-- Features v2 con umbral fijo de toque: un espejismo de +0,083, porque el balón real va filtrado
-  (ADR-0009).
-- v4 (empuje de bloque): +0,009 en 2/3 partidos.
-- Aleatorización del dominio sobre el apilado: 0,550, pero no mejora los 3 partidos.
+**Estimación orientativa en el reto**: banco − ~0,04 → **~0,62-0,68** con el candidato, frente al 0,243 del
+baseline. Muy incierta (±0,05 o más).
 
-**Estimación en el reto**: con la GT controlada, el banco queda ~0,04 más fácil que el reto
-(medido con el baseline), así que esperamos **~0,55-0,60**, frente al 0,243 del baseline. Es muy
-incierta (±0,05).
+## 6. Dónde fallábamos y qué hemos hecho (E020, E028, E035)
 
-## 6. Dónde y por qué fallamos (análisis del 22 oct)
+1. **Robos en juego que no vemos: 79 % de las posesiones perdidas.** Solo la mitad de los cambios H↔A
+   tenían una frontera a ≤ 2 s, y tras un pase perdido acertábamos el 58 %. En cambio, los cambios de juego
+   y los balones largos que alguien controla se aciertan al 93-95 %. **Por qué**: el modelo miraba cercanía
+   y toques, y en el ATD el balón falta justo en el choque.
+2. **Huecos largos sin balón** (38 % de los frames): acierto 0,78 frente a 0,92 con balón; el juego vivo
+   salía D el 22 %.
+3. **Duelos, aéreos y despejes** (sin altura del balón).
+4. **Infrasegmentación**: 2.298 posesiones predichas frente a 2.885 en el banco v3.
 
-Detalle completo en `docs/investigacion/02_analisis_fallos.md`.
+**Respuesta: features como las mira un entrenador** (ADR-0015, `features/tactical.py`). Cada señal lleva su
+cambio entre el segundo anterior y el posterior:
+- **balón**: sentido de progresión, vuelo largo, quieto;
+- **jugadores**: quién aprieta, sprints, desmarques, portero;
+- **bloques**: longitud, anchura, superficie, stretch, altura de líneas, distancia entre líneas, adelanto
+  entre bloques, relativos al partido;
+- **estructura**: jugadores por detrás del balón y en campo rival, forma propia abierta o cerrada, cambio de
+  forma;
+- **reanudación**: colocación de balón parado.
 
-0. **La GT del banco medía otra definición.** Contaba cada robo de 1 s, y el reto solo cuenta la
-   posesión controlada. Con la regla «un robo cuenta si dura ≥ 1,5 s» (ADR-0012), el banco
-   reproduce la GT pública (13,7 s de media y 17,5 % < 3 s, frente a 14,2 s y 17,6 %), y **el
-   mismo modelo pasa de 0,542 a 0,628** (0,6245 con Viterbi reajustado dejando un partido fuera).
-   Reentrenar con la nueva definición **no aporta** (E021: 0,6225): el cambio es de medida. **El
-   modelo era mejor de lo que creíamos; el examen estaba mal.** Desde ahora se evalúa con la GT
-   controlada.
-1. **No vemos la mitad de los robos.** El 49 % de los cambios H↔A tienen una frontera predicha a
-   ≤ 2 s. Un robo perdido cuesta 2-3 posesiones (la suya y las dos vecinas fusionadas): el **79 %
-   de las pérdidas**.
-2. **Huecos largos** (38 % de los frames): acierto 0,78 frente a 0,92 con balón, y el juego vivo
-   sale D el 22 %. Oráculo: +0,158 con el balón ideal, +0,081 con la mitad de los huecos.
-3. **Duelos, aéreos y despejes**: 0,70 de acierto cerca de un duelo; despejes encontrados el
-   12,5 %.
-4. **Infrasegmentación**: 738 posesiones predichas frente a 868 reales; precisión 0,71 y recall
-   0,60.
-5. **No son el problema**: el retraso de las fronteras (0-1 frame), los huecos cortos y partir
-   posesiones largas.
+Resultado: **0,7185 (+0,072, 9/10)** y 2.669 posesiones. **Cautelas**:
+- ablación por familias (en marcha);
+- las features del portero, importantes y con un desajuste real/banco de 0,22;
+- posibles artefactos del simulador;
+- J03WR9 empeora;
+- falta el humo en el reto.
 
-Un dato útil: incluso con el balón perfecto, el jugador más cercano es del equipo poseedor solo el
-79 % de las veces.
+## 7. Qué viene (ver `docs/03_plan_ganar.md`, «Estado y prioridades», y `docs/04_plan_investigacion.md`)
 
-## 7. El modelo futuro
-
-```
- ATD (el balón fusionado no pasó la puerta: E023, E025)
- audio del broadcast alineado (silbato; experimental) ─► señales de D
-                    ▼
- features + señales de CAMBIO DE POSESIÓN + detector de balón parado en huecos
-                    ▼
- capa 1 LightGBM (+ modelo de secuencia) ─► capa 2 apilada ─► HSMM (duración mínima)
-                    ▼
- La MasIA.csv
- Entrenado con 10 partidos (3 Metrica + 7 DFL) y la GT de posesión controlada.
-```
-
-| mejora | ataca | ganancia orientativa |
-|---|---|---|
-| GT controlada para evaluar (ADR-0012) | la medida | hecho: el examen pasa de 0,542 a 0,625; reentrenar no aporta (E021) |
-| Señales de cambio de posesión | robos no vistos (79 %) | alta, por medir |
-| Balón fusionado (ADR-0010) | huecos | **no pasa la puerta tal cual** (broadcast 7,5 % de los huecos; YOLO genérico 24 %). Abierto: detector con pseudoetiquetas del ATD |
-| Detector de balón parado en huecos | D en huecos | hasta +0,04 |
-| DFL (10 partidos) | ruido y datos | +0,02 a +0,04 |
-| HSMM | infrasegmentación | +0,01 a +0,03 |
-| Audio del broadcast (ADR-0013) | D en huecos | hay audio y se alinea (E026); no medible en el banco, se contrasta con la GT pública |
-
-Las ganancias no se suman: varias atacan lo mismo. Cada pieza pasa la regla anti-suerte antes de
-entrar.
+1. Ablación por familias → decidir la composición final (ADR-0015 → *Aceptada*).
+2. Repetir el análisis de fallos con el modelo nuevo; entender J03WR9.
+3. Artefacto final con los 10 partidos, `make_submission` dos veces con el mismo sha, humo con los 5 min
+   públicos.
+4. Mejoras baratas (semillas, calibración) si queda tiempo.
+5. Congelar el 14 nov: clon limpio, documento técnico, repo público, formulario.
 
 ## 8. Dónde está cada cosa
 
-- **Plan y prioridades vigentes**: `docs/03_plan_ganar.md` (sección «Estado y prioridades»).
-- **Presentación del equipo** (36 diapositivas, PDF/PPTX y fuente): `docs/presentacion/`.
-- **Decisiones**: `docs/decisiones/` (ADR 0001-0013, todas en *Propuesta* a falta de revisión).
-- **Experimentos**: `docs/experimentos.md`. **Diario**: `docs/LOG.md`.
-- **Reto y preguntas abiertas**: `docs/00_reto.md` (Q1-Q7). **Datos**: `docs/datos.md`.
-- **Código**:
-  - `src/hackbarca/` → `io/` (carga, banco, degradación, broadcast), `features/`, `models/`
-    (l1, l3), `decode/` (Viterbi), `vision/` (detector de balón), `pipeline/` (tune_l3,
-    train_l3_final, make_submission, failure_analysis, atd_stats…).
+- **Informe de estado explicado (PDF)**: `docs/informe/`. La presentación de `docs/presentacion/` es del
+  22 oct y ya no está al día.
+- **Plan de investigación y estado del arte**: `docs/04_plan_investigacion.md`.
+- **Prioridades y reparto**: `docs/03_plan_ganar.md`.
+- **Decisiones**: `docs/decisiones/` (ADR 0001-0015, todas en *Propuesta* a falta de revisión).
+- **Experimentos**: `docs/experimentos.md`. **Diario**: `docs/LOG.md`. **Datos**: `docs/datos.md`.
+- **Código** (`src/hackbarca/`):
+  - `io/`: carga, banco Metrica y DFL, degradación, broadcast;
+  - `features/`: `frame_features.py` y `tactical.py`;
+  - `models/`: l3, change, seq;
+  - `decode/viterbi.py`;
+  - `audio/`: silbato y comentario;
+  - `vision/`;
+  - `pipeline/`: tune_l3, tune_seq, train_l3_final, make_submission, failure_analysis, feature_shift,
+    atd_stats.
 - **Comandos clave**:
-  - Evaluar en el banco: `uv run python -m hackbarca.pipeline.tune_l3 --no-tags --features 3 --stack [--controlled 1.5]`
-  - Análisis de fallos: `uv run python -m hackbarca.pipeline.failure_analysis --controlled 1.5`
-  - Entrega (lo ejecuta una persona): `uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA"`
+  - Evaluar en el banco v3: `uv run python -m hackbarca.pipeline.tune_l3 --bench v3 --no-tags --features touch+ball+players+blocks+structure+restart --stack --controlled 1.5 --controlled-dfl 2 --train-gt raw --jobs 2`
+  - Desajuste real/banco de las features (datos reales, solo agregados): `scripts/run_aggregate.sh shift uv run python -m hackbarca.pipeline.feature_shift --only-new`
+  - Análisis de fallos (banco v2): `uv run python -m hackbarca.pipeline.failure_analysis --controlled 1.5`
+  - Entrega (datos reales): `scripts/run_aggregate.sh sub uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA"`

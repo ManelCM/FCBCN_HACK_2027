@@ -45,9 +45,14 @@ Comprobación: `python external/more-than-a-hack-2027/starter/load_atd.py` → `
 | `data/derived/logs/` | salida de los scripts sobre datos reales cuando fallan: la lee una persona, nunca un agente (ADR-0004) | No |
 | `data/derived/video_ball.npz` | balón detectado en los frames de hueco (`vision.ball_detector`). Hoy solo hay una prueba: el detector genérico no pasa la puerta (E025) | Pendiente de Q4 (ADR-0010) |
 | `external_data/metrica/` | Metrica sample-data, 3 partidos (descarga automática desde GitHub) | No |
-| `external_data/dfl/<id>/` | DFL/IDSSE, 7 partidos. **Figshare bloquea la descarga automática: bajar a mano** `meta.xml`, `event.xml` y `tracking.xml` | No |
+| `external_data/dfl/<id>/` | DFL/IDSSE, 7 partidos (✅ desde el 23 oct). Figshare bloquea la descarga automática: abrir las URLs en el navegador y luego `uv run python -m hackbarca.io.dfl --from-downloads <carpeta>` | No |
+| `external_data/features/` | caché de features por partido del banco (la clave incluye el código que las genera) | No |
+| `external_data/seq/` | caché de entradas del modelo profundo | No |
+| `external_data/oof_*.npz` | probabilidades fuera de muestra de cada evaluación (para re-decodificar con `--from-oof`) | No |
+| `data/derived/whistle_score.npy`, `whistle_energy.npy`, `whistles.npz` | silbato (E029, sin señal) | No (dentro de `data/`) |
+| `data/derived/commentary_*.npz` | transcripción del comentario y señales (E033). **El agente no la lee** | No (dentro de `data/`) |
 
-Lo único que falta es **DFL** (bajar a mano o con el navegador).
+**No falta ningún dato** (24 oct): reto completo, Metrica y DFL descargados.
 
 ## Lo que sabemos del ATD (solo agregados, E005, E006 y E013)
 - Balón ausente en el 40,7 % de los frames evaluados, en ~134 huecos > 4 s (mediana de 268 frames). En la ventana pública: 6,5 % vivo / 34 % muerto.
