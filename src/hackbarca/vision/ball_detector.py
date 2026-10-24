@@ -37,11 +37,11 @@ def tiles(width: int = 1920, height: int = 1080, size: int = TILE, overlap: int 
     return [(x, y) for y in starts(height) for x in starts(width)]
 
 
-def detect_frame(model, image, conf: float = 0.1) -> np.ndarray:
+def detect_frame(model, image, conf: float = 0.1, class_id: int = SPORTS_BALL) -> np.ndarray:
     """Candidatos (k, 3) en pixeles: x, y del centro y confianza."""
     corners = tiles(image.shape[1], image.shape[0])
     crops = [image[y:y + TILE, x:x + TILE] for x, y in corners]
-    results = model.predict(crops, imgsz=TILE, conf=conf, classes=[SPORTS_BALL], verbose=False)
+    results = model.predict(crops, imgsz=TILE, conf=conf, classes=[class_id], verbose=False)
     rows = []
     for (x0, y0), res in zip(corners, results):
         for box, score in zip(res.boxes.xywh.cpu().numpy(), res.boxes.conf.cpu().numpy()):
@@ -113,6 +113,8 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--weights", default="yolov8s.pt")
     parser.add_argument("--conf", type=float, default=0.1)
+    parser.add_argument("--class-id", type=int, default=SPORTS_BALL,
+                        help="clase del detector: 32 (COCO sports ball) o 0 (modelo afinado con pseudoetiquetas)")
     parser.add_argument("--validate-every", type=int, default=25,
                         help="ademas, 1 de cada N frames con balon en el ATD para medir el acuerdo")
     parser.add_argument("--limit", type=int, default=0, help="procesar solo N frames (prueba)")
@@ -166,7 +168,7 @@ def main(argv=None) -> int:
             break
         if frame in wanted_set:
             _, image = video.retrieve()
-            cands[frame] = to_pitch(detect_frame(model, image, args.conf), matrices[frame], pitch) \
+            cands[frame] = to_pitch(detect_frame(model, image, args.conf, args.class_id), matrices[frame], pitch) \
                 if valid[frame] else np.zeros((0, 3))
         frame += 1
         if frame % 10000 == 0:
