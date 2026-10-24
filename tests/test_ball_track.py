@@ -24,6 +24,28 @@ def test_link_follows_true_ball_and_drops_false_positives():
     assert np.mean(err > 5) < 0.05   # casi nunca se va a un falso positivo
 
 
+def test_link_low_confidence_detector_needs_conf_ref():
+    from hackbarca.vision.ball_detector import auto_conf_ref
+    n = 100
+    true = np.column_stack([20 + 0.4 * np.arange(n), np.full(n, 30.0)])
+    cands = [np.array([[*true[f], 0.02]]) for f in range(n)]   # detector bien colocado pero poco seguro
+    assert np.isnan(link_candidates(cands)[:, 0]).all()
+    ref = auto_conf_ref(dict(enumerate(cands)))
+    assert np.isclose(ref, 0.02)
+    np.testing.assert_allclose(link_candidates(cands, conf_ref=ref), true)
+
+
+def test_cands_cache_roundtrip(tmp_path):
+    from hackbarca.vision.ball_detector import _load_cands, _save_cands
+    cands = {3: np.array([[1.0, 2.0, 0.5], [3.0, 4.0, 0.1]]), 7: np.zeros((0, 3)), 9: np.array([[5.0, 6.0, 0.9]])}
+    path = str(tmp_path / "c.npz")
+    _save_cands(cands, path)
+    back = _load_cands(path)
+    assert sorted(back) == [3, 7, 9]
+    for f in cands:
+        np.testing.assert_allclose(back[f], cands[f])
+
+
 def test_link_empty_frames():
     assert np.isnan(link_candidates([np.zeros((0, 3))] * 5)).all()
 

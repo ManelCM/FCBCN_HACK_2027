@@ -103,13 +103,31 @@ def build() -> None:
     print("recortes con balon %d | sin balon %d | balon fuera de imagen (descartados) %d" % (stats["pos"], stats["neg"], stats["outside"]))
 
 
+def _checkpoint_epoch(path: str) -> int:
+    import torch
+    return int(torch.load(path, map_location="cpu", weights_only=False).get("epoch", -1))
+
+
 def train(epochs: int = 30) -> None:
     from ultralytics import YOLO
     root = out_dir()
-    model = YOLO("yolov8n.pt")
-    model.train(data=os.path.join(root, "data.yaml"), imgsz=TILE, epochs=epochs, batch=16, seed=SEED,
-                deterministic=True, project=os.path.join(root, "runs"), name="atd_pl", exist_ok=True,
-                workers=2, plots=False, verbose=False)
+    weights = os.path.join(root, "runs", "atd_pl", "weights")
+    last = os.path.join(weights, "last.pt")
+    # Ultralytics deja epoch=-1 en last.pt al terminar. Con resume=True sobre un entrenamiento ya
+    # terminado entrena de cero con sus valores por defecto (coco8), asi que se distinguen los casos.
+    state = _checkpoint_epoch(last) if os.path.exists(last) else None
+    if state == -1:            # terminado (p. ej. cortado en la validacion final): solo se valida
+        print("entrenamiento ya terminado: se valida best.pt")
+        model = YOLO(os.path.join(weights, "best.pt"))
+    elif state is not None:    # cortado a medias: sigue desde el ultimo epoch guardado
+        print("reanudando desde el epoch %d" % (state + 1))
+        model = YOLO(last)
+        model.train(resume=True, workers=2)
+    else:
+        model = YOLO("yolov8n.pt")
+        model.train(data=os.path.join(root, "data.yaml"), imgsz=TILE, epochs=epochs, batch=16, seed=SEED,
+                    deterministic=True, project=os.path.join(root, "runs"), name="atd_pl", exist_ok=True,
+                    workers=2, plots=False, verbose=False)
     metrics = model.val(data=os.path.join(root, "data.yaml"), imgsz=TILE, verbose=False, plots=False)
     print("validacion (recortes apartados): precision %.3f recall %.3f mAP50 %.3f" % (
         metrics.box.mp, metrics.box.mr, metrics.box.map50))

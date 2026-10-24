@@ -35,3 +35,6 @@ desktop.ini
 
 # Pesos de modelos preentrenados (se descargan solos)
 *.pt
+
+# Salidas por defecto de Ultralytics (pueden contener recortes del video del reto)
+/runs/

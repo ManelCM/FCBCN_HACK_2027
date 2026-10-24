@@ -83,7 +83,30 @@ def _sim_windows(ball_seen: np.ndarray, n: int, length: int = SIM_GAP):
     return [(starts[i], starts[i] + length) for i in picks]
 
 
-def _report_sim_gaps(windows, cands, match) -> None:
+def auto_conf_ref(cands: dict) -> float:
+    """Mediana de la confianza maxima por frame (solo frames con candidatos): sale del detector, sin GT."""
+    tops = [float(c[:, 2].max()) for c in cands.values() if len(c)]
+    return float(np.median(tops)) if tops else 1.0
+
+
+def _cache_path() -> str:
+    return os.path.join(os.environ.get("MTAH_DATA_DIR", "data"), "derived", "sim_gaps_cands.npz")
+
+
+def _save_cands(cands: dict, path: str) -> None:
+    frames = np.array(sorted(cands), dtype=int)
+    rows = [cands[f] for f in frames]
+    np.savez_compressed(path, frame=frames, count=np.array([len(r) for r in rows], dtype=int),
+                        cand=np.concatenate(rows) if rows else np.zeros((0, 3)))
+
+
+def _load_cands(path: str) -> dict:
+    data = np.load(path)
+    parts = np.split(data["cand"], np.cumsum(data["count"])[:-1])
+    return {int(f): p.reshape(-1, 3) for f, p in zip(data["frame"], parts)}
+
+
+def _report_sim_gaps(windows, cands, match, conf_ref: float = 1.0) -> None:
     """Agregados del detector en huecos simulados, con el balon del ATD como referencia."""
     top_err, any_err, path_err, covered = [], [], [], []
     for a, b in windows:
@@ -94,13 +117,13 @@ def _report_sim_gaps(windows, cands, match) -> None:
             d = np.hypot(c[:, 0] - rx, c[:, 1] - ry) if len(c) else np.array([np.inf])
             any_err.append(d.min())
             top_err.append(d[np.argmax(c[:, 2])] if len(c) else np.inf)
-        path = link_candidates([cands.get(int(f), np.zeros((0, 3))) for f in frames], match.fps)
+        path = link_candidates([cands.get(int(f), np.zeros((0, 3))) for f in frames], match.fps, conf_ref)
         ok = ~np.isnan(path[:, 0])
         covered.append(ok)
         path_err.append(np.where(ok, np.hypot(path[:, 0] - ref[:, 0], path[:, 1] - ref[:, 1]), np.inf))
     top_err, any_err = np.array(top_err), np.array(any_err)
     path_err, covered = np.concatenate(path_err), np.concatenate(covered)
-    print("huecos simulados: {} tramos de {} frames".format(len(windows), SIM_GAP))
+    print("huecos simulados: {} tramos de {} frames (conf_ref {:.3f})".format(len(windows), SIM_GAP, conf_ref))
     print("  algun candidato a < 2 m: {:.3f}   el de mas confianza a < 2 m: {:.3f}".format(
         float(np.mean(any_err < 2)), float(np.mean(top_err < 2))))
     print("  tras enlazar: cobertura {:.3f}  a < 2 m (sobre todos los frames) {:.3f}  "
@@ -122,7 +145,13 @@ def main(argv=None) -> int:
                         help="solo los frames de validacion, repartidos por todo el partido (sin huecos)")
     parser.add_argument("--sim-gaps", type=int, default=0,
                         help="diagnostico: N tramos de 10 s CON balon en el ATD tratados como huecos "
-                             "(deteccion + enlace) y comparados con el ATD; no guarda nada")
+                             "(deteccion + enlace) y comparados con el ATD; guarda los candidatos en "
+                             "data/derived/sim_gaps_cands.npz")
+    parser.add_argument("--reuse-cands", action="store_true",
+                        help="con --sim-gaps: reutiliza los candidatos guardados (solo repite el enlace)")
+    parser.add_argument("--conf-ref", default="1",
+                        help="confianza tratada como segura en el enlace: un numero o 'auto' "
+                             "(mediana de la confianza maxima por frame del propio detector)")
     args = parser.parse_args(argv)
 
     import cv2
@@ -157,10 +186,16 @@ def main(argv=None) -> int:
         wanted = wanted[:args.limit]
     wanted_set = set(wanted.tolist())
 
+    started, frame = time.time(), 0
+    if windows and args.reuse_cands:
+        cands = _load_cands(_cache_path())
+        conf_ref = auto_conf_ref(cands) if args.conf_ref == "auto" else float(args.conf_ref)
+        _report_sim_gaps(windows, cands, match, conf_ref)
+        return 0
+
     model = YOLO(args.weights)
     video = cv2.VideoCapture(require(["video"])[0])
     cands = {}
-    started, frame = time.time(), 0
     last = int(wanted.max()) if len(wanted) else -1
     while frame <= last:
         ok = video.grab()
@@ -174,15 +209,18 @@ def main(argv=None) -> int:
         if frame % 10000 == 0:
             print("frame {} ({:.0f}s)".format(frame, time.time() - started), flush=True)
 
+    conf_ref = auto_conf_ref(cands) if args.conf_ref == "auto" else float(args.conf_ref)
     if windows:
-        _report_sim_gaps(windows, cands, match)
+        os.makedirs(os.path.dirname(_cache_path()), exist_ok=True)
+        _save_cands(cands, _cache_path())
+        _report_sim_gaps(windows, cands, match, conf_ref)
         print("({:.0f}s)".format(time.time() - started))
         return 0
 
     # huecos: trayectoria enlazada por tramos consecutivos
     xs, ys, fs = [], [], []
     for run in _runs(np.array([f for f in gap_frames if f in cands])):
-        path = link_candidates([cands[f] for f in run], match.fps)
+        path = link_candidates([cands[f] for f in run], match.fps, conf_ref)
         fs.append(run)
         xs.append(path[:, 0])
         ys.append(path[:, 1])

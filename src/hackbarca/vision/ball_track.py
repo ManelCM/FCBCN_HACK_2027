@@ -15,9 +15,12 @@ MAX_SPEED = 40.0    # m/s: por encima, la transicion es imposible
 SPEED_SCALE = 12.0  # m/s: escala del coste cuadratico de velocidad
 
 
-def link_candidates(cands: list[np.ndarray], fps: int = 25) -> np.ndarray:
+def link_candidates(cands: list[np.ndarray], fps: int = 25, conf_ref: float = 1.0) -> np.ndarray:
     """cands[t] = array (k_t, 3) con x, y (m) y confianza. Devuelve (n, 2) con NaN sin balon.
 
+    conf_ref: confianza que se trata como "segura" (coste 0). Con 1.0 se usa la confianza tal cual;
+    un detector poco calibrado (confianzas tipicas ~0.02) necesita su propia referencia o el estado
+    "sin balon" gana siempre.
     Se asume que los frames son consecutivos; para tramos separados, llamar una vez por tramo.
     """
     n = len(cands)
@@ -25,7 +28,7 @@ def link_candidates(cands: list[np.ndarray], fps: int = 25) -> np.ndarray:
     if n == 0:
         return out
     # estado 0 = sin balon; estados 1..k = candidatos
-    costs = [np.concatenate(([NONE_COST], -np.log(np.clip(c[:, 2], 1e-3, 1.0)))) for c in cands]
+    costs = [np.concatenate(([NONE_COST], -np.log(np.clip(c[:, 2] / conf_ref, 1e-3, 1.0)))) for c in cands]
     acc = costs[0].copy()
     acc[1:] += BIRTH_COST
     back = []
