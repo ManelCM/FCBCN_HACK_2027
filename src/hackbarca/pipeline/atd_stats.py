@@ -103,6 +103,73 @@ def long_gap_report(match, graded: np.ndarray, windows=None, gt=None) -> None:
                 np.mean(dead[in_long & (alive | dead)])))
 
 
+SLOW_STEP = 0.05   # m por frame (1,25 m/s): balon "lento" (E043)
+
+
+def _run_length_per_frame(mask: np.ndarray) -> np.ndarray:
+    """Por frame, la longitud de la racha True a la que pertenece (0 fuera)."""
+    out = np.zeros(len(mask), dtype=np.int64)
+    edges = np.diff(np.concatenate(([0], mask.astype(np.int8), [0])))
+    for a, b in zip(np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)):
+        out[a:b] = b - a
+    return out
+
+
+def ball_dynamics(ball_x: np.ndarray, ball_y: np.ndarray, graded: np.ndarray, live: np.ndarray | None = None,
+                  fps: int = 25) -> dict:
+    """Agregados de la dinamica del balon: objetivos para calibrar el simulador (E013, E047).
+
+    Solo necesita el balon, asi que sirve igual para el ATD real que para el banco degradado sin
+    jugadores. `live` (opcional) marca el juego vivo para medir el balon lento en vivo (E043).
+    """
+    from hackbarca.features.frame_features import TOUCH_DV, TOUCH_W, _centered_max
+    n = len(ball_x)
+    missing = np.isnan(ball_x)
+    seen = graded & ~missing
+    out = {"ball_missing": float(missing[graded].mean())}
+    # residuo frente a la media movil de 9 frames (suavidad del tracker), como en describe()
+    kernel = np.ones(9) / 9
+    resid = np.where(missing, np.nan, ball_x) - np.convolve(np.nan_to_num(ball_x), kernel, mode="same")
+    full = np.convolve((~missing).astype(float), kernel, mode="same") > 0.999
+    ok = seen & full & ~np.isnan(resid)
+    out["resid_std"] = float(np.std(resid[ok])) if ok.any() else np.nan
+    # cambio de velocidad antes/despues (el touch_dv de frame_features), huecos <= 10 interpolados
+    idx = np.arange(n)
+    bx, by = ball_x.copy(), ball_y.copy()
+    if (~missing).sum() >= 2:
+        fill = missing & (_run_length_per_frame(missing) <= 10)
+        bx[fill] = np.interp(idx[fill], idx[~missing], ball_x[~missing])
+        by[fill] = np.interp(idx[fill], idx[~missing], ball_y[~missing])
+    w = TOUCH_W
+    before = np.full((n, 2), np.nan)
+    after = np.full((n, 2), np.nan)
+    before[w:, 0], before[w:, 1] = (bx[w:] - bx[:-w]) * fps / w, (by[w:] - by[:-w]) * fps / w
+    after[:-w, 0], after[:-w, 1] = (bx[w:] - bx[:-w]) * fps / w, (by[w:] - by[:-w]) * fps / w
+    dv = np.hypot(after[:, 0] - before[:, 0], after[:, 1] - before[:, 1])
+    dvs = dv[seen & np.isfinite(dv)]
+    for q in (50, 90, 99):
+        out["dv_p%d" % q] = float(np.percentile(dvs, q)) if len(dvs) else np.nan
+    dvz = np.nan_to_num(dv)
+    touch = (dvz > TOUCH_DV) & (dvz >= _centered_max(dvz, 5))
+    out["touches_per_s"] = float(touch[seen].sum() / max(seen.sum() / fps, 1e-9))
+    speed = np.full(n, np.nan)
+    speed[4:] = np.hypot(ball_x[4:] - ball_x[:-4], ball_y[4:] - ball_y[:-4]) * fps / 4
+    sp = speed[seen & np.isfinite(speed)]
+    for q in (50, 90, 99):
+        out["speed_p%d" % q] = float(np.percentile(sp, q)) if len(sp) else np.nan
+    starts = np.flatnonzero(np.diff(missing.astype(np.int8)) == 1)    # ultimo frame con balon
+    starts = starts[graded[starts] & (starts >= 4)]
+    out["speed_before_gap_p50"] = float(np.nanpercentile(speed[starts], 50)) if len(starts) else np.nan
+    if live is not None:
+        step = np.full(n, np.nan)
+        step[1:] = np.hypot(np.diff(ball_x), np.diff(ball_y))
+        vis = graded & live & np.isfinite(step)
+        slow = vis & (step < SLOW_STEP)
+        out["live_slow_share"] = float(slow.sum() / max(vis.sum(), 1))
+        out["live_slow_runs_per_min"] = float((_runs(slow) >= fps).sum() / max(vis.sum() / fps / 60, 1e-9))
+    return out
+
+
 def describe(match, gt: np.ndarray | None, graded: np.ndarray, title: str) -> None:
     ball_missing = np.isnan(match.ball_x)
     visible = ~np.isnan(match.players_x)
@@ -171,7 +238,29 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bench", action="store_true",
                         help="calcular sobre el banco externo degradado en vez de sobre el ATD")
+    parser.add_argument("--json", default=None,
+                        help="solo la dinamica del balon del reto (objetivos de calibracion, E047) a este json")
     args = parser.parse_args(argv)
+
+    if args.json:
+        # vivo = lo que predice la entrega (sin GT): cota inferior del balon lento en vivo, porque
+        # parte de los D cortos que predecimos es vivo (E041-E043); ventana publica con su GT
+        import json
+        from hackbarca.io.load_match import load_match
+        match = load_match()
+        graded = np.zeros(match.n_frames, dtype=bool)
+        for start, stop in GRADED:
+            graded[start:stop] = True
+        pred = pm.label_codes(pm.read_label_csv(os.path.join(_REPO_ROOT, "submissions", "La MasIA.csv")))
+        public = load_gt_codes(PUBLIC_GT)
+        out = {"reto (vivo predicho)": ball_dynamics(match.ball_x, match.ball_y, graded, (pred == pm.H) | (pred == pm.A)),
+               "ventana publica (vivo GT)": ball_dynamics(match.ball_x, match.ball_y, public != pm.X,
+                                                         (public == pm.H) | (public == pm.A))}
+        for name, row in out.items():
+            print(name + ": " + ", ".join("%s=%.3f" % kv for kv in row.items()))
+        with open(args.json, "w", encoding="utf-8") as handle:
+            json.dump(out, handle, indent=1, ensure_ascii=False)
+        return 0
 
     if args.bench:
         from hackbarca.io.degrade import degrade

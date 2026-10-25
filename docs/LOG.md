@@ -11,6 +11,49 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-25 (noche) — Manel (con agente) · PUNTO DE PARADA
+- **Plan aprobado**: «plan de máxima mejora». Copia de trabajo en `C:\Users\manel\.claude\plans\lucky-cuddling-hellman.md`;
+  la versión del equipo está en `docs/05_plan_mejora.md`. Fases:
+  1. M1 banco v3.1 + guardarraíl en el reto;
+  2. M2a familia «control»;
+  3. las puertas deciden entre más datos y poseedor tipo PathCRF;
+  4. bagging;
+  5. congelación.
+- Hecho (rama **`banco-v3-1`**, sale de `analisis-fallos-v3`):
+  - **1.1** `atd_stats.ball_dynamics()` y `atd_stats --json`: objetivos del balón del reto en
+    `docs/investigacion/resultados/objetivos_balon_reto.json`.
+    - Reproducen E013: residuo 0,044; dv 1,77/5,59/11,81; 0,043 toques/s; velocidad 5,1/14,3/24,5; velocidad
+      antes de un hueco 2,0.
+    - Balón lento en vivo: en el vivo predicho del reto, 5,6 % y 0,55 tramos ≥ 1 s por minuto. **En la ventana
+      pública, con la GT, 9,4 % y 1,86 por minuto**: el valor real está por encima de 0,55, cerca o por encima
+      del limpio (1,08).
+  - **1.2** `DegradeParams.ball_corr_smooth`: suavizado gaussiano del error correlado del balón.
+    - Con 0 el degradado es **idéntico bit a bit** al anterior (comprobado con J03WR9).
+    - Ojo: tocar `degrade.py` cambia el hash de la caché de features, así que **la próxima evaluación recalcula
+      las features del banco**, también las de v3.
+  - Tests: 60 pasan.
+- **Siguiente paso al retomar (1.3)**: `pipeline/calibrate_ball.py`.
+  - Para cada partido del banco v3: GT controlada y vivo = GT H/A. Degradar solo el balón con la misma semilla
+    que el banco: `rng = default_rng(i)`, `visible`, `occluded`, `weight` como en `degrade()` y luego
+    `_long_ball(...)`.
+  - Medir con `ball_dynamics(..., live=vivo)`.
+  - Rejilla de unas 48 combinaciones: `ball_smooth_sigma` {6, 10} × `ball_corr_noise` {0,4, 0,8, 1,2} ×
+    `ball_corr_tau` {75, 150} × `ball_corr_smooth` {0, 10, 25, 50}.
+  - Pérdida normalizada frente a los objetivos del reto. Para el balón lento, objetivo ~1,08 por minuto y
+    ~8,8 % (limpio), con penalización fuerte por debajo de 0,55.
+  - Guardar en `docs/investigacion/resultados/calibracion_balon_v3_1.json`. Elegir `BENCH_DEGRADE_V3_1` en
+    `bench_config.py` y añadir `v3_1` a `BENCHES` de `tune_l3`. Escribir ADR-0017.
+- Después:
+  - **1.4** `tune_l3 --eval-degrade v3_1`: E070 entrenado en v3 y evaluado en v3.1; tiene que verse el defecto;
+  - **1.5** reentrenar en v3.1 (protocolo);
+  - **1.6** ADR-0018 con los umbrales del guardarraíl **antes** de ejecutar: D < 5 s ≤ 0,25/min, tramos D
+    0,8-1,3/min, cambios directos ≥ 1,7/min, % D 0,38-0,50.
+- Pendiente de personas:
+  - revisar la PR `analisis-fallos-v3` (sin subir todavía);
+  - reproducibilidad cruzada (persona C);
+  - email Q2/Q3/Q6;
+  - inscripción antes del 10 nov.
+
 ## 2026-10-25 (tarde) — Manel (con agente)
 - Hecho (rama `analisis-fallos-v3`, desde `banco-v3`):
   - **Análisis de fallos del modelo de la entrega** en el banco v3 (E039-E040,

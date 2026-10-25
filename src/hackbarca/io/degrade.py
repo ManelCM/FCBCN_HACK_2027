@@ -38,6 +38,10 @@ class DegradeParams:
     ball_smooth_sigma: float = 0.0     # frames; 0 = sin suavizar
     ball_corr_noise: float = 0.0       # m, desviacion del error correlado
     ball_corr_tau: float = 25.0        # frames, escala temporal del error correlado
+    # v3.1 (E047): el AR(1) sin suavizar mete ~0,13 m de salto por frame (~4 m/s de velocidad
+    # aparente) y borra el balon lento del juego vivo (E043). Suavizarlo deja la deriva lenta sin
+    # velocidad aparente. 0 = sin suavizar (v2.1/v3 se reproducen igual).
+    ball_corr_smooth: float = 0.0      # frames, sigma del suavizado gaussiano del error correlado
     # Jugadores: tracklets con huecos, reasignados a slots sin identidad.
     tracklet_mean: float = 750.0       # frames (30 s)
     player_gap_mean: float = 25.0      # frames
@@ -62,8 +66,13 @@ def _ball_signal(rng, x: np.ndarray, y: np.ndarray, p: "DegradeParams"):
     if p.ball_corr_noise > 0:
         rho = np.exp(-1.0 / max(p.ball_corr_tau, 1.0))
         scale = p.ball_corr_noise * np.sqrt(1 - rho ** 2)
-        x = x + lfilter([scale], [1, -rho], rng.normal(0, 1, n))
-        y = y + lfilter([scale], [1, -rho], rng.normal(0, 1, n))
+        ex = lfilter([scale], [1, -rho], rng.normal(0, 1, n))
+        ey = lfilter([scale], [1, -rho], rng.normal(0, 1, n))
+        if p.ball_corr_smooth > 0:
+            ex = gaussian_filter1d(ex, p.ball_corr_smooth, mode="nearest")
+            ey = gaussian_filter1d(ey, p.ball_corr_smooth, mode="nearest")
+        x = x + ex
+        y = y + ey
     return x + rng.normal(0, p.ball_noise, n), y + rng.normal(0, p.ball_noise, n)
 
 
