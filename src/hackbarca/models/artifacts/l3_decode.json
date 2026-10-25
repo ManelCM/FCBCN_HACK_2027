@@ -3,9 +3,14 @@
     "temperature": 1.0,
     "switch": 20.0,
     "to_dead": 10.0,
-    "from_dead": 10.0
+    "from_dead": 10.0,
+    "alpha_switch": 0.0,
+    "alpha_dead": 0.0
   },
   "use_tags": false,
-  "features": 3,
-  "stack": true
+  "features": "touch+ball+players+blocks+structure+restart",
+  "stack": true,
+  "bench": "v3",
+  "deep_weight": 0.0,
+  "video_fill": false
 }
