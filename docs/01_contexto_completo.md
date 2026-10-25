@@ -59,7 +59,7 @@
 | fuente | qué es | estado | uso hoy |
 |---|---|---|---|
 | **ATD táctico** | posición de jugadores y balón por frame, sin identidades (46 slots) | ✅ | **base de todo** |
-| **Vídeo táctico** | 1080p, homografía válida en todos los frames; audio mudo | ✅ | detector YOLO genérico **descartado** (24 % a < 2 m, E025) |
+| **Vídeo táctico** | 1080p, homografía válida en todos los frames; audio mudo | ✅ | YOLO genérico **descartado** (24 % a < 2 m, E025); YOLO afinado con pseudoetiquetas encuentra el balón en el 55,9 % de los huecos, pero sobre todo en parones y pegado a jugadores: **rechazado** (E061-E069, ADR-0016) |
 | **Broadcast** | tele con su ATD; no sincronizada; **audio con comentarista en inglés** | ✅ | como balón **no sirve** (7,5 % de los huecos, E023); alineado con un desfase por parte (E026); silbato sin señal (E029); comentario transcrito, solo como comprobación (E033) |
 | **Smart Tagging** | eventos automáticos | ✅ | **descartado** (+0,008, ADR-0007) |
 | **GT pública 5 min** | 17 posesiones | ✅ | solo prueba de humo y forma de la definición; **nunca elige modelos** |
@@ -99,7 +99,7 @@ huecos se atacan **sin balón**, con lo que hacen los 22 jugadores.
 1. **Features por frame**, todo colectivo y sin identidades.
    - Versión 3 (modelo de la entrega actual): unas 65 features de cercanía, toques relativos, receptor,
      velocidad colectiva, forma y contexto de los huecos.
-   - **Familias nuevas** (ADR-0015, candidato): balón, jugadores, bloques, estructura y reanudación (§6).
+   - **Familias** (ADR-0015, modelo de la entrega): balón, jugadores, bloques, estructura y reanudación (§6).
 2. **Capa 1: LightGBM** (127 hojas, 400 rondas) → P(H), P(A), P(D). Entrena con equipos intercambiados y
    la predicción se simetriza.
 3. **Capa 2 (apilado, ADR-0011)**: LightGBM que ve las probabilidades de la capa 1 en ventanas de 1-10 s.
@@ -110,8 +110,8 @@ huecos se atacan **sin balón**, con lo que hacen los 22 jugadores.
    - `make_submission` admite también, si el artefacto lo pide, el modelo profundo (predicción en numpy) y
      el Viterbi dinámico. Ninguno de los dos se usa: E036 y E037.
 
-**Entrega actual** (E024): `La MasIA.csv`, sha256 `252716b03d614399`, 322 posesiones. Sale del modelo
-v3, **no del candidato nuevo**: hay que regenerarla.
+**Entrega actual** (E070): `La MasIA.csv`, sha256 `9602959c4ec05bd6`, 336 posesiones, modelo de las cinco
+familias (regenerado dos veces con el mismo sha). Ventana pública: spellF1 0,651 y macroF1 0,803.
 
 ## 5. Resultados
 
@@ -120,7 +120,9 @@ v3, **no del candidato nuevo**: hay que regenerarla.
 | v2 (3 Metrica, GT controlada) | apilado v3 | 0,6245 | entregado en el CSV actual |
 | **v3 (10 partidos)** | apilado v3 (referencia) | **0,6470** | E030 |
 | v3 | + modelo profundo promediado | 0,6570 | E034 (pasaba sobre la referencia) |
-| **v3** | **apilado + familias** | **0,7185** | **E035: candidato, pendiente de ablación** |
+| **v3** | **apilado + familias** | **0,7185** | **E035/E070: modelo de la entrega** |
+| v3 | ablaciones por familias | 0,7065-0,7192 | E038-E067: se quedan las cinco |
+| v3 | familias + relleno de balón con YOLO (simulación fiel) | 0,7262 | E069: no pasa el protocolo (E064 daba 0,7484 con una simulación optimista) |
 | v3 | familias + modelo profundo | 0,7172 / 0,7134 | E037: rechazado |
 | v3 | familias + coste de cambio dinámico | igual (nunca se elige) | E036: rechazado |
 
@@ -135,7 +137,8 @@ v3, **no del candidato nuevo**: hay que regenerarla.
 - silbato;
 - comentario dentro del modelo;
 - coste de cambio dinámico;
-- modelo profundo sobre las familias.
+- modelo profundo sobre las familias;
+- relleno de balón con YOLO afinado (en el reto convertía parones en juego vivo).
 
 **Estimación orientativa en el reto**: banco − ~0,04 → **~0,62-0,68** con el candidato, frente al 0,243 del
 baseline. Muy incierta (±0,05 o más).
@@ -161,19 +164,18 @@ cambio entre el segundo anterior y el posterior:
   forma;
 - **reanudación**: colocación de balón parado.
 
-Resultado: **0,7185 (+0,072, 9/10)** y 2.669 posesiones. **Cautelas**:
-- ablación por familias (en marcha);
+Resultado: **0,7185 (+0,072, 9/10)** y 2.669 posesiones. Ablación (25 oct): todas las familias aportan
+algo salvo bloques y estructura por separado, que son redundantes entre sí (sin las dos, −0,012). **Cautelas**:
 - las features del portero, importantes y con un desajuste real/banco de 0,22;
-- posibles artefactos del simulador;
-- J03WR9 empeora;
-- falta el humo en el reto.
+- posibles artefactos del simulador en «balón» (explica la caída de J03WR9, E060);
+- humo en el reto hecho: 0,651 en la ventana pública (banda de ruido grande).
 
 ## 7. Qué viene (ver `docs/03_plan_ganar.md`, «Estado y prioridades», y `docs/04_plan_investigacion.md`)
 
-1. Ablación por familias → decidir la composición final (ADR-0015 → *Aceptada*).
+1. Ablación por familias y artefacto final con el mismo sha: **hecho** (E070). Falta que el equipo revise
+   ADR-0015 y ADR-0016.
 2. Repetir el análisis de fallos con el modelo nuevo; entender J03WR9.
-3. Artefacto final con los 10 partidos, `make_submission` dos veces con el mismo sha, humo con los 5 min
-   públicos.
+3. Reproducibilidad cruzada en otra máquina (sha `9602959c4ec05bd6`).
 4. Mejoras baratas (semillas, calibración) si queda tiempo.
 5. Congelar el 14 nov: clon limpio, documento técnico, repo público, formulario.
 

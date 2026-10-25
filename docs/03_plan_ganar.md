@@ -5,27 +5,29 @@
 > `docs/04_plan_investigacion.md`. Explicación completa: `docs/informe/La_MasIA_informe_estado_2026-10-24.pdf`.
 
 
-## Estado y prioridades (actualizado 2026-10-24)
+## Estado y prioridades (actualizado 2026-10-25)
 
 **Dónde estamos**
 - **Banco v3** = 3 Metrica + 7 DFL (ADR-0014). Referencia (apilado v3): **0,6470** (E030).
-- **Candidato**: apilado + **familias de features** (balón, jugadores, bloques, estructura, reanudación):
-  **0,7185** (+0,072, 9/10, E035, ADR-0015). Antes de entregarlo falta la ablación por familias.
-- **Rechazados esta semana, con número**: coste de cambio dinámico (E036), modelo profundo sobre las
-  familias (E037), comentario dentro del modelo (E033), silbato (E029), broadcast como balón (E023) y YOLO
-  genérico (E025).
-- **`La MasIA.csv` actual**: válido y reproducible (sha `252716b03d614399`), pero sale del modelo v3
-  (0,6245 en el banco v2). Hay que regenerarlo con el candidato.
-- Estimación orientativa en el reto con el candidato: ~0,62-0,68 (incierta).
+- **Modelo de la entrega** (E070): apilado + **las cinco familias de features** (balón, jugadores, bloques,
+  estructura, reanudación), sin relleno de balón: **0,7185** (+0,072, 9/10, E035).
+  - **Ablación hecha** (ADR-0015): jugadores −0,008, reanudación −0,005, balón −0,003; bloques y estructura
+    no aportan por separado, pero quitar las dos cuesta −0,012 (son redundantes). Se quedan las cinco.
+  - **`La MasIA.csv`** regenerado dos veces con el mismo sha **`9602959c4ec05bd6`** (336 posesiones). Ventana
+    pública: spellF1 0,651 y macroF1 0,803 (el anterior, sha `252716b0…`, daba 0,556 y 0,766).
+- **Rechazados, con número**: relleno de balón con YOLO afinado (E061-E069, ADR-0016: los parones salían
+  como juego vivo en el reto), coste de cambio dinámico (E036), modelo profundo sobre las familias (E037),
+  comentario dentro del modelo (E033), silbato (E029), broadcast como balón (E023), YOLO genérico (E025).
+- Estimación orientativa en el reto: ~0,62-0,68 (incierta).
 
 **Prioridades, en orden**
 | # | tarea | quién | estado |
 |---|---|---|---|
-| 1 | Ablación sin «jugadores» (incluye el portero, con desajuste real/banco de 0,22) | agente (Manel) | **en marcha** |
-| 2 | Resto de ablaciones: sin balón, sin bloques, sin estructura, sin reanudación | **persona B** (en su máquina, en paralelo) | por hacer |
+| 1 | Ablaciones por familias | agente (Manel) | **hecho** (E038, E060, E062, E065-E067) |
+| 2 | Relleno de balón con YOLO afinado | agente (Manel) | **rechazado** (E061-E069, ADR-0016) |
 | 3 | Análisis de fallos con el modelo nuevo en el banco v3 (hoy `failure_analysis` solo cubre Metrica) y por qué empeora J03WR9 | persona B + su agente | por hacer |
-| 4 | Decidir la composición final (ADR-0015 → *Aceptada*); artefacto con los 10 partidos (`train_l3_final --bench v3`) | agente (Manel) | tras 1-3 |
-| 5 | Regenerar `La MasIA.csv` (dos veces, mismo sha) + humo con los 5 min públicos | agente (Manel) | tras 4 |
+| 4 | Composición final y artefacto con los 10 partidos | agente (Manel) | **hecho** (E070); ADR-0015 pendiente de revisión |
+| 5 | Regenerar `La MasIA.csv` (dos veces, mismo sha) + humo con los 5 min públicos | agente (Manel) | **hecho** (sha `9602959c4ec05bd6`) |
 | 6 | **Reproducibilidad cruzada**: en otra máquina, reentrenar el artefacto y regenerar el CSV, y comparar los sha | **persona C** | por hacer (urgente antes del 14) |
 | 7 | Documento técnico: revisar y completar `docs/entrega/La MasIA - technical document.md` → PDF | **persona C** | por hacer |
 | 8 | Mejoras baratas: ensamblado de semillas, calibración, reelegir el Viterbi en v3 | agente | 7-9 nov |
@@ -56,28 +58,26 @@
    - **Numeración de experimentos para no pisarnos**: Manel E038-E059, persona B E060-E079, persona C
      E080-E099.
 
-### Persona B: ablaciones (prioridad 2)
+### Persona B: análisis de fallos (prioridad 3; las ablaciones ya están hechas)
+- Las ablaciones las hizo el agente de Manel (E060-E067, del rango de B). Lo que queda para B es el análisis
+  de fallos del modelo nuevo en el banco v3 y el porqué de J03WR9 (la familia «balón» explica su caída, E060).
 - Cada evaluación tarda 1-2 h y pide unos 8 GB de RAM libres (cerrad WSL/Docker). No lancéis más de una a la
-  vez. Se compara contra 0,7185 por partido y en el agregado.
+  vez. Se compara contra 0,7185 por partido y en el agregado. Referencia de los comandos:
   ```
   uv run python -m hackbarca.pipeline.tune_l3 --bench v3 --no-tags --stack --controlled 1.5 --controlled-dfl 2 --train-gt raw --jobs 2 --features <FAMILIAS>
   ```
-- `<FAMILIAS>`, una por evaluación:
-  - `touch+players+blocks+structure+restart` (sin balón);
-  - `touch+ball+players+structure+restart` (sin bloques);
-  - `touch+ball+players+blocks+restart` (sin estructura);
-  - `touch+ball+players+blocks+structure` (sin reanudación).
 - El entrenamiento es determinista: si en vuestra máquina repetís la del candidato
   (`touch+ball+players+blocks+structure+restart`), debería salir exactamente 0,7185. Es una buena prueba de
   que el entorno está bien.
 
 ### Persona C: reproducibilidad y documento técnico (prioridades 6-7)
 - **Prueba cruzada**:
-  1. `uv run python -m hackbarca.pipeline.train_l3_final --features 3 --no-tags --stack --temperature 1 --switch 20 --to-dead 10 --from-dead 10`
+  1. Con los 10 partidos del banco v3 descargados (Metrica y DFL):
+     `uv run python -m hackbarca.pipeline.train_l3_final --bench v3 --no-tags --stack --features touch+ball+players+blocks+structure+restart --temperature 1 --switch 20 --to-dead 10 --from-dead 10`
      → los sha256 de `src/hackbarca/models/artifacts/` tienen que coincidir con los del repo
-     (capa 1 `8e44cc9d…`, capa 2 `80137a05…`).
+     (capa 1 `3aea086e…`, capa 2 `b761b483…`).
   2. `scripts/run_aggregate.sh sub uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA"`
-     → sha `252716b03d614399`. Si no coincide, es lo más urgente del proyecto.
+     → sha `9602959c4ec05bd6`. Si no coincide, es lo más urgente del proyecto.
 - **Documento técnico**: el borrador está en `docs/entrega/`; el informe de `docs/informe/` tiene todo el
   material.
 
