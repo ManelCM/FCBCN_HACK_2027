@@ -1,6 +1,6 @@
 # 0016 — Relleno del balón en los huecos del ATD con un YOLO afinado con pseudoetiquetas
 
-- **Estado**: Propuesta (pendiente de la comprobación en la ventana pública y de revisión)
+- **Estado**: Propuesta, **en suspenso** (E068: en la ventana pública los parones salen como juego vivo; hay que rehacer la simulación)
 - **Fecha**: 2026-10-25
 - **Autor/a**: Manel (con agente)
 - **Revisado por**: ☐ ☐
@@ -50,3 +50,11 @@ pública 3 de 4 parones salen como juego vivo. ADR-0010 buscaba otra fuente de b
   organización lo permite (no contiene datos del reto, pero se deriva de ellos: preguntar).
 - Comprobación antes de aceptar: CSV con y sin relleno en la ventana pública de 5 min. Sirve solo para
   detectar roturas, porque la banda de ruido es grande (E022).
+
+## E068 (25 oct): comprobación en el reto
+- Ventana pública: spellF1 0,607 y macroF1 0,625 con relleno, frente a 0,651 y 0,803 sin relleno. 3 de los 4
+  parones salen como juego vivo.
+- Causa probable, vista en agregados: en el reto el balón relleno está pegado a un jugador (en parones, p50 1,9 m)
+  y casi todo cae en parones. En el banco simulado estaba más lejos (3,1 m) y rellenaba demasiado juego vivo.
+- Antes de adoptarlo hay que simular el relleno condicionado a la velocidad del balón, con el balón junto a un
+  jugador en los parones, y repetir E064 y la ventana pública.
