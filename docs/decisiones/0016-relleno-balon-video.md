@@ -1,6 +1,6 @@
 # 0016 — Relleno del balón en los huecos del ATD con un YOLO afinado con pseudoetiquetas
 
-- **Estado**: Propuesta, **en suspenso** (E068: en la ventana pública los parones salen como juego vivo; hay que rehacer la simulación)
+- **Estado**: **Rechazada** (25 oct). E068: en la ventana pública los parones salen como juego vivo. E069: con una simulación fiel, +0,008 en 6/10 partidos, por debajo del protocolo
 - **Fecha**: 2026-10-25
 - **Autor/a**: Manel (con agente)
 - **Revisado por**: ☐ ☐
@@ -58,3 +58,10 @@ pública 3 de 4 parones salen como juego vivo. ADR-0010 buscaba otra fuente de b
   y casi todo cae en parones. En el banco simulado estaba más lejos (3,1 m) y rellenaba demasiado juego vivo.
 - Antes de adoptarlo hay que simular el relleno condicionado a la velocidad del balón, con el balón junto a un
   jugador en los parones, y repetir E064 y la ventana pública.
+
+## E069 (25 oct): simulación fiel y decisión
+- Relleno v3, calibrado con los agregados del reto: en juego vivo solo balón lento y junto a alguien; en
+  parones, a veces llevado por quien saca; enganches a otro jugador.
+- Resultado: 0,7262 frente a 0,7185 (+0,008), mejora en 6 de 10 partidos. No pasa ADR-0008.
+- **Rechazada**: la entrega va sin relleno. El código (`io/video_fill.py`, `vision/*`) se conserva.
+  Posible continuación: rellenar solo cuando un clasificador indique juego vivo.
