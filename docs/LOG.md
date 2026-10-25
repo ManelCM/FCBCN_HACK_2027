@@ -11,6 +11,30 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-25 — Manel (con agente)
+- Hecho (rama `banco-v3`):
+  - **Ablaciones de familias terminadas** (E038, E060, E062, E065, E066), quitando una cada vez frente a
+    0,7185: jugadores −0,008 (10/10 peor), reanudación −0,005 (6/10), balón −0,003 (7/10), estructura
+    −0,000 (6/10), bloques +0,001 (5/10). Bloques y estructura no aportan nada medible y son además lo que
+    más se desajusta entre reto y banco. Falta la ablación combinada (sin las dos) para cerrar ADR-0015.
+  - **YOLO afinado con pseudoetiquetas del ATD** (E061): pasa la puerta de huecos simulados (59,6 % a
+    < 2 m tras enlazar, frente al 24 % del genérico). La clave fue que el enlace descartaba sus candidatos
+    por tener confianzas bajas (`conf_ref` relativo al propio detector, sin GT).
+  - **Sobre los huecos reales** (E063) encuentra el balón en el **55,9 %** (el broadcast daba 7,5 %). El
+    balón relleno va a 0,64 m/s de mediana: casi todo es balón parado en parones y reanudaciones.
+  - **Relleno simulado en el banco** (`io/video_fill.py`, `--video-fill` en `tune_l3`, `train_l3_final` y
+    `feature_shift`; `make_submission` lo aplica si el artefacto lo pide). Con la forma medida, el desajuste
+    reto/banco baja de 0,060 a 0,045.
+- Pendiente:
+  - E064 (todas las familias con relleno) y la ablación sin bloques ni estructura (corriendo);
+  - cerrar ADR-0015 y, si el relleno entra, un ADR que lo documente (reproducibilidad: pesos YOLO,
+    `video_ball.npz` regenerable con `ball_detector`);
+  - falsos D cortos del candidato, artefacto final, `La MasIA.csv` dos veces con el mismo sha, documento
+    técnico, PR a `main`.
+- Incidencias: Claude Code cortó varias veces procesos por falta de memoria (dos evaluaciones a la vez,
+  YOLO, juego y Docker abiertos). Ahora las colas van en serie y como proceso independiente de la sesión.
+  Ultralytics deja una carpeta `runs/` en la raíz cuando se le llama sin `project` (ya en `.gitignore`).
+
 ## 2026-10-24 — Manel (con agente)
 - Hecho (rama `banco-v3`):
   - **E037**: el modelo profundo no aporta sobre las familias (0,7172 y 0,7134 frente a 0,7185). Queda fuera
