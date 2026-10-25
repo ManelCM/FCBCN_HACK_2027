@@ -4,7 +4,7 @@
 > el reto, los datos, cómo validamos, cómo funciona el modelo, dónde fallamos y qué viene. Las
 > cifras salen de `docs/experimentos.md` (E001-E037) y de los ADR; ante cualquier duda, mandan esos
 > ficheros. Versión explicada y con gráficos: `docs/informe/La_MasIA_informe_estado_2026-10-24.pdf`.
-> Actualizado: 2026-10-24.
+> Actualizado: 2026-10-25 (análisis de fallos v3 y plan de mejora).
 
 ## 1. El reto
 
@@ -170,20 +170,40 @@ algo salvo bloques y estructura por separado, que son redundantes entre sí (sin
 - posibles artefactos del simulador en «balón» (explica la caída de J03WR9, E060);
 - humo en el reto hecho: 0,651 en la ventana pública (banda de ruido grande).
 
-## 7. Qué viene (ver `docs/03_plan_ganar.md`, «Estado y prioridades», y `docs/04_plan_investigacion.md`)
+### Análisis de fallos del modelo de la entrega (25 oct, E039-E046, `docs/investigacion/04_analisis_fallos_v3.md`)
+- **Banco v3: 0,7206** con la decodificación de la entrega.
+- El margen está en **ver los robos cortos** (cambios H↔A no vistos +0,146, la mayoría con el balón visible) y en
+  **no inventar cambios** (+0,090). El Viterbi está agotado (+0,001) y las fronteras de lo que ya vemos, casi
+  (+0,015).
+- **J03WR9 falla en las fronteras** (F1@0,7 0,50), no en los huecos.
+- **En el reto, un defecto que el banco no ve**: unas seis veces más D cortos (0,68 por minuto frente a 0,09), el
+  90 % con el balón visible, que parten posesiones y sustituyen robos.
+  - **Causa**: el simulador del banco borra el balón lento del juego vivo (error correlado sin suavizar, unos
+    4 m/s aparentes), y el modelo aprendió que balón lento es parón (TreeSHAP: `ball_speed`, `touch_rank`).
+  - **Coste**: inyectado en el banco a la tasa del reto, **−0,088** (0,721 → 0,633). Es el fallo más caro.
+- **Puertas**:
+  - audio con PANNs: sin señal;
+  - YOLO como evidencia de equipo: fiable (92 %), pero con poco recorrido hoy;
+  - compacidad: ya explotada; tras un robo el nivel engaña y manda el cambio.
 
-1. Ablación por familias y artefacto final con el mismo sha: **hecho** (E070). Falta que el equipo revise
-   ADR-0015 y ADR-0016.
-2. Repetir el análisis de fallos con el modelo nuevo; entender J03WR9.
-3. Reproducibilidad cruzada en otra máquina (sha `9602959c4ec05bd6`).
-4. Mejoras baratas (semillas, calibración) si queda tiempo.
-5. Congelar el 14 nov: clon limpio, documento técnico, repo público, formulario.
+## 7. Qué viene (**`docs/05_plan_mejora.md`**, que sustituye a la tabla de `docs/03_plan_ganar.md` cuando se apruebe)
+
+1. **M1**: banco v3.1 con el balón lento realista + guardarraíl de forma en el reto (26-28 oct).
+2. **M2**: señal de control del balón para los robos cortos (features de control; si no basta, poseedor
+   individual tipo PathCRF).
+3. **M3**: más partidos de entrenamiento (SkillCorner y PFF), con curva de aprendizaje antes de invertir.
+4. **M4**: semillas. M5/M6 (Ball Radar, YOLO como evidencia) si queda tiempo.
+5. Reproducibilidad cruzada en otra máquina (sha `9602959c4ec05bd6`): persona C, urgente.
+6. Congelar el 14 nov: clon limpio, documento técnico, repo público, formulario.
 
 ## 8. Dónde está cada cosa
 
 - **Informe de estado explicado (PDF)**: `docs/informe/`. La presentación de `docs/presentacion/` es del
   22 oct y ya no está al día.
-- **Plan de investigación y estado del arte**: `docs/04_plan_investigacion.md`.
+- **Plan de investigación y estado del arte**: `docs/04_plan_investigacion.md` y, ampliado el 25 oct,
+  `docs/investigacion/05_estado_del_arte_v2.md`.
+- **Análisis de fallos del modelo actual**: `docs/investigacion/04_analisis_fallos_v3.md`. **Plan de mejora**:
+  `docs/05_plan_mejora.md`.
 - **Prioridades y reparto**: `docs/03_plan_ganar.md`.
 - **Decisiones**: `docs/decisiones/` (ADR 0001-0015, todas en *Propuesta* a falta de revisión).
 - **Experimentos**: `docs/experimentos.md`. **Diario**: `docs/LOG.md`. **Datos**: `docs/datos.md`.

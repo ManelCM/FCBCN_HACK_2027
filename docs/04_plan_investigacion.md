@@ -1,5 +1,10 @@
 # Plan de investigación y mejora — La MasIA, fase 1 (desde el 23 oct hasta la congelación del 14 nov)
 
+> **25 oct**: las familias (§4.1), los costes dinámicos (§4.2), el modelo profundo (§4.3) y el comentario (§4.4)
+> ya están medidos (E031-E070). El plan vigente a partir de ahora es **`docs/05_plan_mejora.md`**, basado en el
+> análisis de fallos del modelo actual (`docs/investigacion/04_analisis_fallos_v3.md`) y en el estado del arte
+> ampliado (`docs/investigacion/05_estado_del_arte_v2.md`). Este documento se conserva como histórico.
+
 ## 1. Contexto: por qué este plan
 Manel pide parar, revisar todo como haría un investigador, apoyarse en lo que ya existe y pensar el problema como un entrenador:
 - **balón**: dónde está, si se mueve o está quieto, hacia dónde avanza;

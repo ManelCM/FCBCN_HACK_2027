@@ -48,5 +48,25 @@
 | Robos cortos (< 3 s) que no vemos o vemos tarde | Familias **jugadores** (presión, sprints) y **balón** (sentido de progresión) |
 | Microposesiones (< 1,5 s) | Revisar la regla controlada del banco |
 
+## Repetición con la entrega E070 (25 oct, sha `9602959c4ec05bd6`)
+- spellF1 0,651, macroF1 0,803, acierto por frame 0,842 (antes 0,830).
+- **30 segmentos predichos frente a 21 reales**. De los 11 cambios sobrantes, **todos pasan por D**, y la
+  mayoría son D de 0,3-4 s que parten una posesión viva en dos: 0:17, 1:43, 1:54, 2:41, 3:18, 3:22, 3:24,
+  4:11, 4:41 y 4:43.
+- **Comparación con los cinco errores del 24 oct**:
+
+  | error | antes (`252716b0…`) | ahora (E070) |
+  |---|---|---|
+  | 1. Robos cortos tarde o no vistos | recuperación de 0:06 a +3,5 s; posesión A de 2,8 s fusionada | 0:06 a **+4,5 s**; la A de 2,8 s **sí se ve** (−0,2 s); el robo de 0:59 llega a +1,6 s |
+  | 2. Microposesiones < 1,5 s | no se ven | siguen sin verse (2:46 y 3:03); la H de 3,5 s a 4:04 tampoco |
+  | 3. Parón de 20 s (3:08-3:28) | D al 19 % | D al 33 %, con 4 cambios H/D sobrantes dentro |
+  | 4. Parón de 18 s (4:07-4:26) | D al 80 %, cambio falso antes | D al 69 %; entramos 31 s tarde porque no vemos la H de 4:04 |
+  | 5. Tramo 4:26-4:48 con parpadeo | 5 cambios falsos | D al 53 %; 4 cambios H/D sobrantes |
+
+- **Lectura**: el parpadeo entre equipos ha desaparecido, pero ahora el error dominante son **D cortos sobrantes
+  con el balón visible**. En el partido completo, `real_vs_bench` (E041) mide 0,68 tramos D de menos de 5 s por
+  minuto en el reto, frente a 0,09 en la GT del banco: es un patrón del partido entero, no de la ventana. Se
+  analiza en `04_analisis_fallos_v3.md` §6.
+
 ## Pendiente
-- Repetir con el candidato de familias (`submissions/candidato_familias.csv`) y comparar los cinco errores.
+- ~~Repetir con el candidato de familias y comparar los cinco errores.~~ Hecho arriba.

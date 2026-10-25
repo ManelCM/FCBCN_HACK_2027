@@ -29,7 +29,9 @@ def video_ball_path(data_dir: str | None) -> str:
     return os.path.join(data_dir or os.environ.get("MTAH_DATA_DIR", "data"), "derived", "video_ball.npz")
 
 
-def predict(model: str, data_dir: str | None) -> np.ndarray:
+def predict(model: str, data_dir: str | None, dump_proba: str | None = None) -> np.ndarray:
+    """dump_proba: ruta (en data/derived/) donde guardar P(H/A/D) por frame y si el ATD ve el balon,
+    para los agregados de `real_vs_bench` (ADR-0004: se queda en data/, no lo lee ningun agente)."""
     from hackbarca.io.load_match import load_match
     match = load_match(data_dir=data_dir)
     if model == "baseline":
@@ -70,6 +72,12 @@ def predict(model: str, data_dir: str | None) -> np.ndarray:
             w = config["deep_weight"]
             deep = predict_seq_numpy(load_numpy_state(SEQ_PATH), tokens, mask, glob, match.n_frames)
             proba = (1 - w) * proba + w * deep
+        if dump_proba:
+            os.makedirs(os.path.dirname(dump_proba), exist_ok=True)
+            np.savez_compressed(dump_proba, proba=proba.astype(np.float32), ball_known=~np.isnan(match.ball_x))
+            # y las features de la capa 1, para atribuir los errores (short_dead_report)
+            np.savez_compressed(dump_proba.replace(".npz", "_features.npz"), columns=np.array(df.columns, dtype=str),
+                                values=df.to_numpy(np.float32))
         params = DecodeParams(**config["decode"])
         p_change = None
         if params.alpha_switch or params.alpha_dead:
@@ -96,9 +104,11 @@ def main(argv=None) -> int:
     parser.add_argument("--team-name", required=True)
     parser.add_argument("--out-dir", default=os.path.join(_REPO_ROOT, "submissions"))
     parser.add_argument("--data-dir", default=None)
+    parser.add_argument("--dump-proba", default=None,
+                        help="guarda las probabilidades (solo l3) en esta ruta de data/derived/; no cambia el CSV")
     args = parser.parse_args(argv)
 
-    codes = predict(args.model, args.data_dir)
+    codes = predict(args.model, args.data_dir, args.dump_proba)
     path = os.path.join(args.out_dir, "{}.csv".format(args.team_name))
     write_csv(path, codes)
     result = validate_csv(path)

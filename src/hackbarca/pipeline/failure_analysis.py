@@ -1,15 +1,21 @@
-"""Analisis a fondo de los fallos del modelo vigente (L3 apilado, E018) en el banco v2.1.
+"""Analisis a fondo de los fallos del modelo vigente en el banco externo.
 
     uv run python -m hackbarca.pipeline.failure_analysis [--oof oof_l3_notags_f3_stack.npz]
+    uv run python -m hackbarca.pipeline.failure_analysis --bench v3 --controlled 1.5 --controlled-dfl 2 \
+        --oof <oof del banco v3>
 
-Solo datos externos (Metrica). Usa las probabilidades fuera de muestra que guarda `tune_l3` y la
-decodificacion elegida en E019 (DecodeParams por defecto). Responde a:
+Solo datos externos (Metrica y DFL). Usa las probabilidades fuera de muestra que guarda `tune_l3`
+y la decodificacion fija del artefacto (DecodeParams por defecto). Responde a:
 1. que posesiones se pierden y por que (taxonomia de cada posesion GT no emparejada),
 2. en que contexto (duracion, huecos de balon, como empiezan y acaban, zona del campo),
 3. como de bien se colocan las fronteras segun el tipo de transicion,
 4. donde falla el frame a frame y por que (senal del mas cercano, fase de juego, calibracion),
-5. cuanto spellF1 valdria arreglar cada causa (oraculos).
-Guarda el resumen en external_data/failure_analysis.json.
+5. cuanto spellF1 valdria arreglar cada causa (oraculos),
+6. (v3) por partido, y que parte del margen es de "donde" (fronteras) y de "quien" (etiqueta),
+   cuanto valen los cambios no vistos o sobrantes y cuanto da la decodificacion.
+En DFL el contexto de eventos usa una ventana de +-1 s: sus eventos van a 3,5-5,5 m del balon del
+tracking (desfase manual, E039), frente a los +-2 frames de Metrica.
+Guarda el resumen en external_data/failure_analysis*.json.
 """
 
 from __future__ import annotations
@@ -24,10 +30,11 @@ import numpy as np
 
 from hackbarca.eval.bench import pm
 from hackbarca.io.degrade import degrade
-from hackbarca.io.external import CONTROL_TYPES, controlled_possession, load_metrica_bench, metrica_events
+from hackbarca.io.external import (CONTROL_TYPES, controlled_possession, dfl_events, is_dfl, load_bench_game,
+                                   metrica_events)
 from hackbarca.models.l1 import interpolate_ball, team_distances
 from hackbarca.models.l3 import DecodeParams, decode
-from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES
+from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES, BENCH_GAMES_V3
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
@@ -88,9 +95,9 @@ def _restart_name(subtype: str) -> str:
     return "otra reanudacion"
 
 
-def start_kind(events, s: int, team: int, prev_label: int) -> str:
+def start_kind(events, s: int, team: int, prev_label: int, tol: int = 2) -> str:
     """Como empieza una posesion GT: reanudacion (tras D) o tipo de robo (tras el rival)."""
-    near = events[(events["start"] >= s - 2) & (events["start"] <= s + 2) & (events["team"] == team)
+    near = events[(events["start"] >= s - tol) & (events["start"] <= s + tol) & (events["team"] == team)
                   & events["type"].isin(CONTROL_TYPES)]
     if not len(near):
         return "sin evento"
@@ -116,9 +123,9 @@ def start_kind(events, s: int, team: int, prev_label: int) -> str:
     return "robo: otro (" + ev["type"].lower() + ")"
 
 
-def end_kind(events, s: int, e: int, team: int, next_label: int) -> str:
+def end_kind(events, s: int, e: int, team: int, next_label: int, tol: int = 2) -> str:
     """Como acaba una posesion GT: en paron (por que) o en perdida (de que tipo)."""
-    inside = events[(events["start"] >= s) & (events["start"] < e + 2)]
+    inside = events[(events["start"] >= s) & (events["start"] < e + tol)]
     own = inside[inside["team"] == team]
     if next_label == D:
         if (inside["type"] == "BALL OUT").any():
@@ -151,14 +158,20 @@ def end_kind(events, s: int, e: int, team: int, next_label: int) -> str:
 
 # ----------------------------------------------------------------------------- datos
 
-def load(oof_name: str, params: DecodeParams, controlled: float = 0.0):
+DFL_EVENT_TOL = 25  # frames: ventana de contexto con los eventos DFL (+-1 s)
+
+
+def load(oof_name: str, params: DecodeParams, controlled: float = 0.0, names=BENCH_GAMES,
+         controlled_dfl: float | None = None):
     blob = np.load(os.path.join(_REPO_ROOT, "external_data", oof_name))
     games = []
-    for i, name in enumerate(BENCH_GAMES):
-        match, gt = load_metrica_bench(name)
-        assert np.array_equal(gt, blob["gt%d" % i]), "los OOF no corresponden a esta GT"
-        if controlled:
-            gt = controlled_possession(gt, int(round(controlled * match.fps)))
+    for i, name in enumerate(names):
+        match, raw = load_bench_game(name)
+        t = controlled_dfl if (is_dfl(name) and controlled_dfl is not None) else controlled
+        gt = controlled_possession(raw, int(round(t * match.fps))) if t else raw
+        # tune_l3 guarda la GT con la que evalua (la controlada si se pidio)
+        assert np.array_equal(gt, blob["gt%d" % i]) or np.array_equal(raw, blob["gt%d" % i]), \
+            "los OOF no corresponden a esta GT"
         deg = degrade(match, BENCH_DEGRADE, seed=i)
         proba = blob["p%d" % i]
         pred = decode(proba, pm.valid_runs(gt), params)
@@ -177,7 +190,7 @@ def load(oof_name: str, params: DecodeParams, controlled: float = 0.0):
         near_clean = np.where(ch <= ca, H, A)
         near_clean[np.isnan(cbx)] = X
 
-        events = metrica_events(name)
+        events = dfl_events(name, match) if is_dfl(name) else metrica_events(name)
         in_pass = np.zeros(match.n_frames, dtype=bool)
         for _, ev in events[events["type"] == "PASS"].iterrows():
             in_pass[int(ev["start"]) + 1:int(ev["end"])] = True
@@ -185,8 +198,9 @@ def load(oof_name: str, params: DecodeParams, controlled: float = 0.0):
         for _, ev in events[events["type"] == "CHALLENGE"].iterrows():
             near_duel[max(0, int(ev["start"]) - 12):int(ev["start"]) + 13] = True
 
-        games.append(dict(gt=gt, proba=proba, pred=pred, known=known, long_gap=long_gap, near=near,
+        games.append(dict(name=name, gt=gt, proba=proba, pred=pred, known=known, long_gap=long_gap, near=near,
                           near_clean=near_clean, in_pass=in_pass, near_duel=near_duel, events=events,
+                          tol=DFL_EVENT_TOL if is_dfl(name) else 2,
                           ball_x=match.ball_x, ball_y=match.ball_y, length=match.pitch_length,
                           width=match.pitch_width))
     return games
@@ -218,8 +232,8 @@ def classify_spells(game) -> list[dict]:
         x0 = bx[~np.isnan(bx)][0] if (~np.isnan(bx)).any() else np.nan
         row = dict(start=s, stop=e, dur=e - s, team=k, matched=i in pairs,
                    gap_frac=float(game["long_gap"][s:e].mean()),
-                   start_kind=start_kind(events, s, k, prev_label),
-                   end_kind=end_kind(events, s, e, k, next_label),
+                   start_kind=start_kind(events, s, k, prev_label, game.get("tol", 2)),
+                   end_kind=end_kind(events, s, e, k, next_label, game.get("tol", 2)),
                    passes=int(((events["type"] == "PASS") & (events["team"] == k) & (events["start"] >= s)
                                & (events["start"] < e)).sum()),
                    x0=float(x0) / game["length"] if np.isfinite(x0) else np.nan,
@@ -349,6 +363,179 @@ def category_masks(games, spells, cats):
     return masks
 
 
+# ----------------------------------------------------------------------------- descomposicion (v3)
+
+def segment_oracle(game) -> np.ndarray:
+    """Fronteras de la GT, etiqueta del modelo: cada tramo GT toma el argmax de la media de P.
+    Lo que falte hasta 1,0 es error de "quien" (etiqueta), no de "donde" (fronteras)."""
+    gt, proba = game["gt"], game["proba"]
+    out = gt.copy()
+    for s, e, _ in pm.segments(gt, pm.valid_runs(gt)):
+        out[s:e] = int(np.argmax(proba[s:e].mean(0)))
+    return out
+
+
+def label_oracle(game) -> np.ndarray:
+    """Nuestras fronteras, etiqueta de la GT: cada tramo predicho toma la etiqueta mayoritaria de
+    la GT. Lo que falte hasta 1,0 es error de "donde"."""
+    gt, pred = game["gt"], game["pred"]
+    out = pred.copy()
+    for s, e, _ in pm.segments(pred, pm.valid_runs(gt)):
+        vals = gt[s:e]
+        vals = vals[vals != X]
+        if len(vals):
+            out[s:e] = int(np.bincount(vals, minlength=3).argmax())
+    return out
+
+
+def snap_oracle(game, k: int) -> np.ndarray:
+    """Cada transicion predicha se lleva a la transicion GT del mismo tipo mas cercana si esta a
+    <= k frames: lo que vale la precision temporal de las fronteras que si vemos."""
+    gt, pred = game["gt"], game["pred"]
+    runs = pm.valid_runs(gt)
+    ref = defaultdict(list)
+    for t, a, b in transitions(gt, runs):
+        ref[(a, b)].append(t)
+    ref = {key: np.array(v) for key, v in ref.items()}
+    out = pred.copy()
+    for t, a, b in transitions(pred, runs):
+        cand = ref.get((a, b))
+        if cand is None:
+            continue
+        t2 = int(cand[np.argmin(np.abs(cand - t))])
+        if t2 == t or abs(t2 - t) > k:
+            continue
+        if t2 < t:
+            out[t2:t] = b
+        else:
+            out[t:t2] = a
+    return out
+
+
+def change_masks(game, window: int = 50):
+    """Mascaras de oraculo de cambios H<->A: (no vistos con balon visible, no vistos en hueco,
+    sobrantes). Un cambio GT no visto (ninguno predicho del mismo tipo a <= window) se arregla
+    poniendo la GT en la posesion que empieza; uno predicho sobrante, en el tramo que abre."""
+    gt, pred = game["gt"], game["pred"]
+    runs = pm.valid_runs(gt)
+    gt_t, pr_t = transitions(gt, runs), transitions(pred, runs)
+
+    def ends(ts):
+        starts = np.array([t for t, _, _ in ts] + [len(gt)])
+        return {t: int(starts[starts > t].min()) for t, _, _ in ts}
+
+    gt_end, pr_end = ends(gt_t), ends(pr_t)
+    by = defaultdict(list)
+    for t, a, b in pr_t:
+        by[(a, b)].append(t)
+    gby = defaultdict(list)
+    for t, a, b in gt_t:
+        gby[(a, b)].append(t)
+    seen, gap, false = (np.zeros(len(gt), dtype=bool) for _ in range(3))
+    counts = Counter()
+    for t, a, b in gt_t:
+        if {a, b} != {H, A}:
+            continue
+        cand = np.array(by.get((a, b), []))
+        if len(cand) and np.min(np.abs(cand - t)) <= window:
+            counts["vistos"] += 1
+            continue
+        mask = seen if game["known"][t] else gap
+        counts["no vistos, balon visible" if game["known"][t] else "no vistos, en hueco"] += 1
+        mask[t:gt_end[t]] = True
+    for t, a, b in pr_t:
+        if {a, b} != {H, A}:
+            continue
+        ref = np.array(gby.get((a, b), []))
+        if not len(ref) or np.min(np.abs(ref - t)) > window:
+            counts["sobrantes"] += 1
+            false[t:pr_end[t]] = True
+    return seen, gap, false, counts
+
+
+def drop_short(pred: np.ndarray, runs, k: int) -> np.ndarray:
+    """Filtro de duracion minima (aproximacion barata a un HSMM): cada tramo de menos de k frames
+    toma la etiqueta del vecino mas largo."""
+    out = pred.copy()
+    for s, e in runs:
+        segs = pm.segments(out, [(s, e)])
+        for n, (a, b, code) in enumerate(segs):
+            if b - a >= k or len(segs) == 1:
+                continue
+            left = segs[n - 1] if n > 0 else None
+            right = segs[n + 1] if n + 1 < len(segs) else None
+            nb = max((x for x in (left, right) if x is not None), key=lambda x: x[1] - x[0])
+            out[a:b] = nb[2]
+    return out
+
+
+def drop_short_dead(pred: np.ndarray, runs, k: int) -> np.ndarray:
+    """Regla real (no oraculo): cada tramo D predicho de menos de k frames entre dos tramos vivos
+    toma la etiqueta del tramo anterior. En la ventana publica, casi todos los cambios sobrantes son
+    D de 0,3-4 s que parten una posesion en dos."""
+    out = pred.copy()
+    for s, e in runs:
+        segs = pm.segments(out, [(s, e)])
+        for n, (a, b, code) in enumerate(segs):
+            if code == D and b - a < k and 0 < n < len(segs) - 1:
+                out[a:b] = segs[n - 1][2]
+    return out
+
+
+def inject_short_dead(pred: np.ndarray, runs, rate_same: float, rate_other: float, rng,
+                      fps: int = 25) -> np.ndarray:
+    """Simula en el banco el defecto del reto (E041): D cortos de 1-4,5 s con el balon visible.
+    rate_same por minuto parten un tramo vivo en dos (H D H); rate_other por minuto sustituyen un
+    cambio H<->A predicho (H D A). Sirve para estimar cuanto spellF1 nos cuestan en el reto."""
+    out = pred.copy()
+    minutes = sum(e - s for s, e in runs) / fps / 60
+    segs = [(a, b, c) for s, e in runs for a, b, c in pm.segments(pred, [(s, e)])]
+    live = [(a, b) for a, b, c in segs if c in (H, A) and b - a > 12 * fps]   # cabe 3 s + 4,5 s + 3 s
+    for _ in range(rng.poisson(rate_same * minutes)):
+        if not live:
+            break
+        a, b = live[rng.integers(len(live))]
+        length = int(rng.uniform(1, 4.5) * fps)
+        t = int(rng.integers(a + 3 * fps, b - 3 * fps - length))
+        out[t:t + length] = D
+    changes = [t for t, x, y in transitions(pred, runs) if {x, y} == {H, A}]
+    for t in rng.choice(changes, min(len(changes), rng.poisson(rate_other * minutes)), replace=False):
+        length = int(rng.uniform(1, 4.5) * fps)
+        out[t - length // 2:t + length - length // 2] = D
+    return out
+
+
+def false_dead_mask(game, overlap: float = 0.2) -> np.ndarray:
+    """Oraculo: tramos D predichos que casi no tocan D en la GT (< overlap) se arreglan."""
+    gt, pred = game["gt"], game["pred"]
+    m = np.zeros(len(gt), dtype=bool)
+    for a, b, code in pm.segments(pred, pm.valid_runs(gt)):
+        if code == D and np.mean(gt[a:b] == D) < overlap:
+            m[a:b] = True
+    return m
+
+
+DECODE_GRID = [DecodeParams(temperature=t, switch=sw, to_dead=dd, from_dead=dd)
+               for t in (0.5, 1.0) for sw in (10.0, 20.0, 40.0) for dd in (5.0, 10.0, 20.0)]
+
+
+def decode_ceiling(games) -> dict:
+    """Techo de afinar el Viterbi: mejor rejilla por partido dentro de la muestra (cota superior,
+    optimista) y la mejor rejilla comun a todos."""
+    scores = np.zeros((len(DECODE_GRID), len(games)))
+    preds = {}
+    for c, params in enumerate(DECODE_GRID):
+        for g, game in enumerate(games):
+            preds[c, g] = decode(game["proba"], pm.valid_runs(game["gt"]), params)
+            scores[c, g] = spell([game["gt"]], [preds[c, g]])["mean_f1"]
+    per_game = scores.argmax(0)
+    common = int(scores.mean(1).argmax())
+    gts = [g["gt"] for g in games]
+    return dict(per_game=spell(gts, [preds[int(c), g] for g, c in enumerate(per_game)])["mean_f1"],
+                common=spell(gts, [preds[common, g] for g in range(len(games))])["mean_f1"],
+                common_params=asdict(DECODE_GRID[common]))
+
+
 # ----------------------------------------------------------------------------- main
 
 LONG_PASS = 30.0   # m
@@ -407,18 +594,27 @@ def main(argv=None) -> int:
     parser.add_argument("--oof", default="oof_l3_notags_f3_stack.npz")
     parser.add_argument("--controlled", type=float, default=0.0,
                         help="segundos minimos de control para que un robo cuente (E020); 0 = GT por eventos")
+    parser.add_argument("--controlled-dfl", type=float, default=None, help="T propio para DFL (ADR-0014)")
+    parser.add_argument("--bench", choices=("v2", "v3"), default="v2")
+    parser.add_argument("--out", default=None, help="nombre del json de salida en external_data/")
     args = parser.parse_args(argv)
     params = DecodeParams()
-    games = load(args.oof, params, args.controlled)
+    names = BENCH_GAMES_V3 if args.bench == "v3" else BENCH_GAMES
+    games = load(args.oof, params, args.controlled, names, args.controlled_dfl)
     gts = [g["gt"] for g in games]
-    report = {"oof": args.oof, "decode": asdict(params), "controlled_s": args.controlled}
+    report = {"oof": args.oof, "decode": asdict(params), "controlled_s": args.controlled,
+              "controlled_dfl_s": args.controlled_dfl, "bench": args.bench}
+    for g in games:
+        if "lags" in g["events"].attrs:
+            print("eventos DFL {}: desfase {} frames, distancia mediana evento-balon {:.2f} m".format(
+                g["name"], g["events"].attrs["lags"], g["events"].attrs["median_ball_distance"]))
 
     # 1. nota
     base = spell(gts, [g["pred"] for g in games])
     print("== 1. Nota ({}; decodificacion {}; GT {})".format(
         args.oof, params, "controlada %g s" % args.controlled if args.controlled else "por eventos"))
     print("spellF1 {:.4f}  posesiones predichas {} / GT {}".format(base["mean_f1"], base["n_pred"], base["n_gt"]))
-    for t in (0.3, 0.5, 0.7):
+    for t in pm.SPELL_IOUS:
         r = base["per_iou"][t]
         print("  IoU {:.1f}: precision {:.3f}  recall {:.3f}  F1 {:.3f}".format(t, r["precision"], r["recall"], r["f1"]))
     report["spell"] = base["mean_f1"]
@@ -602,8 +798,79 @@ def main(argv=None) -> int:
     print("\n== 7. Pases por longitud (acierto frame a frame con el juego vivo)")
     report["passes"] = pass_length_report(games)
 
+    # 8. por partido
+    print("\n== 8. Por partido")
+    report["per_game"] = {}
+    for g in games:
+        r = spell([g["gt"]], [g["pred"]])
+        m = g["gt"] != X
+        gap = g["long_gap"] & m
+        row = dict(spell=r["mean_f1"], n_pred=r["n_pred"], n_gt=r["n_gt"],
+                   long_gap_share=float(gap.sum() / m.sum()), dead_share=float(np.mean(g["gt"][m] == D)),
+                   acc=float(np.mean(g["pred"][m] == g["gt"][m])),
+                   acc_gap=float(np.mean(g["pred"][gap] == g["gt"][gap])) if gap.any() else np.nan,
+                   acc_visible=float(np.mean(g["pred"][g["known"] & m] == g["gt"][g["known"] & m])),
+                   f1_03=r["per_iou"][0.3]["f1"], f1_07=r["per_iou"][0.7]["f1"])
+        print("  {:<7} spellF1 {:.3f}  F1@0,3 {:.3f} F1@0,7 {:.3f}  posesiones {:4d}/{:4d}  hueco largo {:5.1%}  "
+              "D {:5.1%}  acierto {:.3f} (visible {:.3f}, hueco {:.3f})".format(
+                  g["name"], row["spell"], row["f1_03"], row["f1_07"], row["n_pred"], row["n_gt"],
+                  row["long_gap_share"], row["dead_share"], row["acc"], row["acc_visible"], row["acc_gap"]))
+        report["per_game"][g["name"]] = row
+
+    # 9. descomposicion del margen
+    print("\n== 9. Descomposicion del margen (base {:.4f})".format(base["mean_f1"]))
+    report["decomposition"] = {}
+
+    def show(label, preds):
+        v = spell(gts, preds)
+        print("  {:<62} {:.4f}  ({:+.4f})  posesiones {}".format(label, v["mean_f1"], v["mean_f1"] - base["mean_f1"],
+                                                                 v["n_pred"]))
+        report["decomposition"][label] = v["mean_f1"]
+        return v["mean_f1"]
+
+    show("argmax por frame, sin Viterbi", [np.where(g["gt"] == X, X, np.argmax(g["proba"], 1)).astype(np.int8)
+                                           for g in games])
+    show("fronteras de la GT + etiqueta del modelo (error de 'quien')", [segment_oracle(g) for g in games])
+    show("fronteras del modelo + etiqueta de la GT (error de 'donde')", [label_oracle(g) for g in games])
+    for k, lab in ((12, "0,5 s"), (25, "1 s"), (50, "2 s")):
+        show("fronteras vistas ajustadas a la GT si estan a <= %s" % lab, [snap_oracle(g, k) for g in games])
+    masks = [change_masks(g) for g in games]
+    counts = Counter()
+    for *_, c in masks:
+        counts.update(c)
+    print("  cambios H<->A GT: vistos {} | no vistos con balon {} | no vistos en hueco {} | predichos sobrantes {}".format(
+        counts["vistos"], counts["no vistos, balon visible"], counts["no vistos, en hueco"], counts["sobrantes"]))
+    report["changes"] = dict(counts)
+    for idx, lab in ((0, "cambios H<->A no vistos con balon visible, arreglados"),
+                     (1, "cambios H<->A no vistos en hueco, arreglados"),
+                     (2, "cambios H<->A sobrantes, quitados")):
+        show(lab, [np.where(m[idx], g["gt"], g["pred"]).astype(np.int8) for g, m in zip(games, masks)])
+    show("todos los cambios H<->A no vistos arreglados",
+         [np.where(m[0] | m[1], g["gt"], g["pred"]).astype(np.int8) for g, m in zip(games, masks)])
+    for k in (12, 25, 50):
+        show("filtro de duracion minima %d frames" % k,
+             [drop_short(g["pred"], pm.valid_runs(g["gt"]), k) for g in games])
+    show("tramos D predichos sin D en la GT, arreglados (oraculo)",
+         [np.where(false_dead_mask(g), g["gt"], g["pred"]).astype(np.int8) for g in games])
+    for k in (25, 50, 75, 100, 125):
+        show("regla: D predicho de menos de %.0f s entre juego vivo -> tramo anterior" % (k / 25),
+             [drop_short_dead(g["pred"], pm.valid_runs(g["gt"]), k) for g in games])
+    # coste estimado del defecto del reto: D cortos de mas (reto 0,47/0,21 por minuto frente a
+    # 0,05/0,06 de nuestra prediccion en el banco; E041), media de 5 semillas
+    for same, other, lab in ((0.42, 0.14, "tasa del reto"), (0.21, 0.07, "la mitad")):
+        vals = [spell(gts, [inject_short_dead(g["pred"], pm.valid_runs(g["gt"]), same, other,
+                                              np.random.default_rng(seed)) for g in games])["mean_f1"]
+                for seed in range(5)]
+        print("  {:<62} {:.4f}  ({:+.4f})".format("D cortos de mas inyectados (%s)" % lab, np.mean(vals),
+                                                  np.mean(vals) - base["mean_f1"]))
+        report["decomposition"]["inyectados D cortos (%s)" % lab] = float(np.mean(vals))
+    ceiling = decode_ceiling(games)
+    print("  Viterbi: mejor rejilla comun {:.4f} ({}) | mejor por partido (optimista) {:.4f}".format(
+        ceiling["common"], ceiling["common_params"], ceiling["per_game"]))
+    report["decode_ceiling"] = ceiling
+
     suffix = "_controlled%g" % args.controlled if args.controlled else ""
-    path = os.path.join(_REPO_ROOT, "external_data", "failure_analysis%s.json" % suffix)
+    path = os.path.join(_REPO_ROOT, "external_data", args.out or "failure_analysis%s.json" % suffix)
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=1, ensure_ascii=False, default=float)
     print("\nresumen en", os.path.relpath(path, _REPO_ROOT))

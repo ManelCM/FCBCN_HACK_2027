@@ -288,3 +288,138 @@ def load_dfl_bench(match_id: str, cache_dir: str | None = None):
         match, gt = dfl_to_bench(dataset)
         np.savez_compressed(cache, gt=gt, **{k: v for k, v in vars(match).items()})
     return _load_cache(cache)
+
+
+# ----------------------------------------------------------------------------- eventos DFL
+
+# GENERIC de DFL que nos interesan: el duelo no es control; "OtherBallAction" (conduccion,
+# despeje, toque) si lo es, como CARRY en Metrica
+_DFL_GENERIC = {"TacklingGame": "CHALLENGE", "OtherBallAction": "CARRY"}
+MAX_PASS_S = 5.0  # DFL no trae el instante de la recepcion: fin = siguiente evento, como mucho 5 s
+
+
+def dfl_event_table(dataset, pitch=PITCH) -> pd.DataFrame:
+    """EventDataset de kloppy (sportec, coordinates="metrica") -> tabla con el esquema de
+    `metrica_events` pero con tiempos en segundos desde el inicio de cada parte (t0, t1).
+
+    Se traduce a los tipos de Metrica para reutilizar la taxonomia de `failure_analysis`:
+    pase completo -> PASS; incompleto -> BALL LOST (INTERCEPTION); fuera -> BALL LOST + el BALL
+    OUT que trae DFL; saque de banda, corner, falta, saque de puerta o de centro -> SET PIECE
+    (con el subtipo de Metrica) seguido del PASS; falta cometida -> FAULT RECEIVED del rival.
+    """
+    from kloppy.domain import SetPieceQualifier
+
+    home = dataset.metadata.teams[0]
+    length, width = pitch
+    rows = []
+
+    def side(team):
+        return HOME if team is home else AWAY
+
+    def xy(point):
+        if point is None:
+            return np.nan, np.nan
+        return float(point.x) * length, float(point.y) * width
+
+    events = [e for e in dataset.events if e.team is not None or e.event_type.name == "BALL_OUT"]
+    for k, e in enumerate(events):
+        name, t0 = e.event_type.name, e.timestamp.total_seconds()
+        nxt = next((n for n in events[k + 1:] if n.period.id == e.period.id), None)
+        t_next = nxt.timestamp.total_seconds() if nxt is not None else t0
+        sx, sy = xy(e.coordinates)
+        base = dict(period=e.period.id, t0=t0, t1=t0, sx=sx, sy=sy, ex=np.nan, ey=np.nan, subtype="")
+        team = side(e.team) if e.team is not None else HOME
+        if name == "PASS":
+            piece = e.get_qualifier_value(SetPieceQualifier)
+            if piece is not None:
+                rows.append(dict(base, team=team, type="SET PIECE", subtype=piece.name.replace("_", " ")))
+            ex, ey = xy(getattr(e, "receiver_coordinates", None))
+            t1 = min(max(t_next, t0), t0 + MAX_PASS_S)
+            result = str(getattr(e.result, "name", e.result))
+            kind = "PASS" if result == "COMPLETE" else "BALL LOST"
+            sub = "" if kind == "PASS" else ("INTERCEPTION" if result == "INCOMPLETE" else "OUT")
+            rows.append(dict(base, team=team, type=kind, subtype=sub, t1=t1, ex=ex, ey=ey))
+        elif name == "SHOT":
+            rows.append(dict(base, team=team, type="SHOT", subtype=str(getattr(e.result, "name", ""))))
+        elif name == "RECOVERY":
+            rows.append(dict(base, team=team, type="RECOVERY"))
+        elif name == "BALL_OUT":
+            rows.append(dict(base, team=team, type="BALL OUT"))
+        elif name == "FOUL_COMMITTED":
+            rows.append(dict(base, team=AWAY if team == HOME else HOME, type="FAULT RECEIVED"))
+        elif name == "GENERIC" and getattr(e, "event_name", None) in _DFL_GENERIC:
+            rows.append(dict(base, team=team, type=_DFL_GENERIC[e.event_name]))
+    return pd.DataFrame(rows, columns=["team", "type", "subtype", "period", "t0", "t1", "sx", "sy", "ex", "ey"])
+
+
+def place_events(table: pd.DataFrame, period: np.ndarray, fps: int, lags: dict | None = None) -> pd.DataFrame:
+    """Tiempos de `dfl_event_table` -> frames del banco (start/end) con el indice compactado de
+    `dfl_to_bench`: frame = primer frame de la parte + t * fps + desfase de la parte."""
+    lags = lags or {}
+    out = table.copy()
+    start = np.zeros(len(out), dtype=np.int64)
+    end = np.zeros(len(out), dtype=np.int64)
+    for p in np.unique(out["period"]):
+        frames = np.flatnonzero(period == p)
+        if not len(frames):
+            continue
+        sel = (out["period"] == p).to_numpy()
+        offset = frames[0] + lags.get(int(p), 0)
+        start[sel] = np.clip(offset + np.round(out.loc[sel, "t0"] * fps), frames[0], frames[-1])
+        end[sel] = np.clip(offset + np.round(out.loc[sel, "t1"] * fps), frames[0], frames[-1])
+    out["start"], out["end"] = start, np.maximum(end, start)
+    return out.drop(columns=["t0", "t1"]).sort_values(["start", "end"], kind="stable").reset_index(drop=True)
+
+
+def event_ball_distance(events: pd.DataFrame, match: MatchTracking) -> np.ndarray:
+    """Distancia (m) entre la posicion de inicio de cada evento y el balon del tracking en su frame."""
+    idx = events["start"].to_numpy()
+    return np.hypot(events["sx"].to_numpy() - match.ball_x[idx], events["sy"].to_numpy() - match.ball_y[idx])
+
+
+def estimate_lags(table: pd.DataFrame, match: MatchTracking, max_lag: int = 250) -> dict:
+    """Desfase (frames) por parte que minimiza la distancia mediana evento-balon en los pases."""
+    passes = table[table["type"].isin(["PASS", "BALL LOST"])]
+    lags = {}
+    for p in np.unique(passes["period"]):
+        best = (np.inf, 0)
+        for lag in range(-max_lag, max_lag + 1, 5):
+            dist = event_ball_distance(place_events(passes[passes["period"] == p], match.period, match.fps,
+                                                    {int(p): lag}), match)
+            dist = dist[np.isfinite(dist)]
+            if len(dist) and np.median(dist) < best[0]:
+                best = (float(np.median(dist)), lag)
+        coarse = best[1]
+        for lag in range(coarse - 5, coarse + 6):
+            dist = event_ball_distance(place_events(passes[passes["period"] == p], match.period, match.fps,
+                                                    {int(p): lag}), match)
+            dist = dist[np.isfinite(dist)]
+            if len(dist) and np.median(dist) < best[0]:
+                best = (float(np.median(dist)), lag)
+        lags[int(p)] = best[1]
+    return lags
+
+
+def dfl_events(match_id: str, match: MatchTracking | None = None, cache_dir: str | None = None) -> pd.DataFrame:
+    """Eventos de un partido DFL en frames del banco, con el esquema de `metrica_events`.
+
+    El desfase de cada parte se estima contra el balon del tracking (`estimate_lags`); la tabla
+    resultante lleva en `attrs` el desfase y la distancia mediana evento-balon (puerta: <= 2 m).
+    """
+    from kloppy import sportec
+
+    from hackbarca.io.dfl import DEFAULT_CACHE as DFL_CACHE
+    from hackbarca.io.dfl import dfl_paths
+
+    cache_dir = cache_dir or DFL_CACHE
+    if match is None:
+        match, _ = load_dfl_bench(match_id, cache_dir)
+    paths = dfl_paths(match_id, cache_dir)
+    dataset = sportec.load_event(event_data=paths["event"], meta_data=paths["meta"], coordinates="metrica")
+    table = dfl_event_table(dataset, (match.pitch_length, match.pitch_width))
+    lags = estimate_lags(table, match)
+    events = place_events(table, match.period, match.fps, lags)
+    dist = event_ball_distance(events[events["type"].isin(["PASS", "BALL LOST"])], match)
+    events.attrs["lags"] = lags
+    events.attrs["median_ball_distance"] = float(np.nanmedian(dist))
+    return events

@@ -5,6 +5,11 @@
 > `docs/04_plan_investigacion.md`. Explicación completa: `docs/informe/La_MasIA_informe_estado_2026-10-24.pdf`.
 
 
+> **25 oct (tarde)**: hay un plan de mejora nuevo basado en el análisis de fallos del modelo actual:
+> **`docs/05_plan_mejora.md`** (M1 balón lento en el simulador, M2 señal de control, M3 más datos, M4 semillas).
+> Cuando el equipo lo apruebe, sustituye a la tabla de abajo en lo que toca al modelo. Las tareas de equipo
+> (reproducibilidad, documento técnico, email, PR, congelación) siguen igual.
+
 ## Estado y prioridades (actualizado 2026-10-25)
 
 **Dónde estamos**

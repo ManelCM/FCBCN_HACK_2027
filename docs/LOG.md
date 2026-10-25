@@ -11,6 +11,42 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-25 (tarde) — Manel (con agente)
+- Hecho (rama `analisis-fallos-v3`, desde `banco-v3`):
+  - **Análisis de fallos del modelo de la entrega** en el banco v3 (E039-E040,
+    `docs/investigacion/04_analisis_fallos_v3.md`).
+    - `failure_analysis --bench v3`: eventos DFL vía kloppy, tabla por partido y descomposición con oráculos.
+    - Banco 0,7206 con la decodificación de la entrega.
+    - El margen está en los robos no vistos (+0,146, la mayoría con el balón visible) y en los cambios sobrantes
+      (+0,090). El Viterbi está agotado (+0,001).
+    - J03WR9 falla en las fronteras.
+  - **Reto frente a banco** (E041-E043, solo agregados):
+    - unas seis veces más D cortos en el reto (0,68 por minuto frente a 0,09), el 90 % con el balón visible;
+    - TreeSHAP: `ball_speed` y `touch_rank`;
+    - **el simulador borra el balón lento del juego vivo**: tramos lentos ≥ 1 s por minuto, limpio 1,08, degradado
+      0,01, reto 0,55;
+    - **cuesta unas 0,09**: inyectado en el banco a la tasa del reto, 0,721 → 0,633.
+  - **Puertas**:
+    - YOLO como evidencia de equipo: 92 %, pero poco recorrido hoy (E044);
+    - audio con PANNs: sin señal (E045);
+    - compacidad: ya explotada; tras un robo manda el cambio (E046).
+  - **Estado del arte ampliado** (`docs/investigacion/05_estado_del_arte_v2.md`): PathCRF, Ball Radar,
+    TranSPORTmer, MS-TCN/ASRF, SkillCorner/PFF, PANNs, compacidad y formaciones.
+  - **Plan de mejora** `docs/05_plan_mejora.md`: M1 balón lento en el simulador + guardarraíl en el reto; M2 señal
+    de control; M3 más datos; M4 semillas.
+  - `make_submission --dump-proba` guarda las probabilidades y features del reto en `data/derived/` (el sha no
+    cambia: `9602959c4ec05bd6`).
+- Pendiente:
+  - aprobar el plan;
+  - M1 (26-28 oct);
+  - ADR-0017 (banco v3.1) y ADR-0018 (guardarraíl de forma en el reto) cuando se implemente M1.
+- Bloqueos (personas):
+  - revisar la PR;
+  - reproducibilidad cruzada (persona C);
+  - descarga de SkillCorner y PFF (persona B, M3);
+  - email Q2/Q3/Q6;
+  - inscripción antes del 10 nov.
+
 ## 2026-10-25 — Manel (con agente)
 - Hecho (rama `banco-v3`):
   - **Ablaciones de familias terminadas** (E038, E060, E062, E065-E067): jugadores −0,008, reanudación −0,005,

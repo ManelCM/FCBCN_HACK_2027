@@ -1,0 +1,11 @@
+cobertura del audio sobre los frames puntuados: 1.000
+
+Silbato (prob. maxima en +-0,5 s) frente a instantes al azar de juego vivo predicho
+   azar (vivo)                 n=3000  mediana 0.0000
+   inicio de D largo (>= 5 s)   n= 116  mediana 0.0000  AUC frente al azar 0.510
+   inicio de D corto (< 5 s)    n=  72  mediana 0.0000  AUC frente al azar 0.544
+   reanudacion tras D largo     n= 114  mediana 0.0000  AUC frente al azar 0.520
+
+Grada media: juego vivo predicho 0.0034 | D predicho 0.0044
+Habla media: juego vivo predicho 0.5644 | D predicho 0.5508
+
