@@ -1,6 +1,6 @@
 # 0015 — Features por familias (balón, jugadores, bloques, estructura, reanudación) en el modelo final
 
-- **Estado**: Propuesta (**pendiente de la ablación por familias** antes de entregar)
+- **Estado**: Propuesta (ablación hecha el 25 oct: se quedan las cinco familias; pendiente de revisión)
 - **Fecha**: 2026-10-24
 - **Autor/a**: Manel (con agente)
 - **Revisado por**: ☐ ☐
@@ -46,14 +46,26 @@ formaciones (ver `docs/04_plan_investigacion.md`).
   - modelo profundo sobre las familias: 0,7172 y 0,7134, frente a 0,7185 (E037);
   - comentario en inglés: los parones que comenta ya los detectamos (E033).
 
+## Ablación por familias (25 oct)
+Quitando una familia cada vez frente a 0,7185 (banco v3, sin relleno de vídeo):
+
+| Sin… | spellF1 | Cambio | Partidos peor | Exp. |
+|---|---|---|---|---|
+| jugadores | 0,7106 | −0,008 | 10/10 | E038 |
+| reanudación | 0,7137 | −0,005 | 6/10 | E066 |
+| balón | 0,7157 | −0,003 | 7/10 | E060 |
+| estructura | 0,7183 | −0,000 | 6/10 | E062 |
+| bloques | 0,7192 | +0,001 | 5/10 | E065 |
+| **bloques y estructura a la vez** | **0,7065** | **−0,012** | 6/10 | E067 |
+
+- Bloques y estructura no aportan por separado, pero quitar las dos cuesta −0,012: son **redundantes entre
+  sí** (las dos describen la forma colectiva) y basta con una. Se quedan las dos porque el modelo con todas ya
+  está medido con el relleno de vídeo (E064, 0,7484, ADR-0016). Quitar una de ellas no mejora y obligaría a
+  repetir la medida.
+- **Decisión: las cinco familias**, `touch+ball+players+blocks+structure+restart`.
+
 ## Consecuencias y cautelas antes de entregar
-- **Ablación por familias**: quitar una cada vez para saber de dónde sale la mejora. La primera, sin
-  «jugadores», está en marcha.
-  - Las features del portero están entre las más importantes y en el ATD real su distribución difiere algo
-    (desajuste 0,22).
-  - Si sin «jugadores» la nota apenas baja, se quita esa familia.
-- Descartar que el modelo aproveche artefactos del simulador. Por ejemplo, el balón que se interpola en los
-  parones revelados.
-- Analizar por qué empeora J03WR9 y repetir el análisis de fallos con el modelo nuevo.
+- La familia «balón» explica la caída de J03WR9 (E060). Sospecha de artefacto del simulador en «balón
+  quieto» y «vuelo largo»; con el relleno de vídeo (E064) J03WR9 sube a 0,645.
+- Las features del portero difieren algo entre el ATD real y el banco (desajuste 0,22).
 - Prueba de humo en el reto real; `make_submission` dos veces con el mismo sha.
-- Si la ablación lo confirma, pasa a *Aceptada* y se regenera `La MasIA.csv`.
