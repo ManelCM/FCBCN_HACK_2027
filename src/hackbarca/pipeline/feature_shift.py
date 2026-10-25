@@ -60,10 +60,10 @@ def main(argv=None) -> int:
     match = load_match()
     fill = None
     if args.video_fill:
-        from hackbarca.io.video_fill import VideoFill, apply_video_fill
+        from hackbarca.io.video_fill import VIDEO_FILL, apply_video_fill
         from hackbarca.pipeline.make_submission import video_ball_path
         match = apply_video_fill(match, video_ball_path(None))
-        fill = VideoFill()
+        fill = VIDEO_FILL
     real = features_for(match, None, halftime, args.features)
     real = real[_graded_mask(len(real))]
     from hackbarca.pipeline.tune_l3 import bench_feature_paths, read_features

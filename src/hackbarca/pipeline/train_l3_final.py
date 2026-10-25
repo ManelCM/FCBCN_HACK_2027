@@ -60,8 +60,8 @@ def main(argv=None) -> int:
 
     fill = None
     if args.video_fill:
-        from hackbarca.io.video_fill import VideoFill
-        fill = VideoFill()
+        from hackbarca.io.video_fill import VIDEO_FILL
+        fill = VIDEO_FILL
     games = load_bench(use_tags=not args.no_tags, version=args.features, names=BENCHES[args.bench], fill=fill)
     os.makedirs(ARTIFACTS, exist_ok=True)
     features, labels = [df for df, _ in games], [gt for _, gt in games]

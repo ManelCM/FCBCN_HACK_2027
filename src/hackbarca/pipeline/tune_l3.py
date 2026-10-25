@@ -208,8 +208,8 @@ def main(argv=None) -> int:
         # rutas de la cache, no DataFrames: el proceso principal no guarda las features en memoria
         fill = None
         if args.video_fill:
-            from hackbarca.io.video_fill import VideoFill
-            fill = VideoFill()
+            from hackbarca.io.video_fill import VIDEO_FILL
+            fill = VIDEO_FILL
         games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, names=names, fill=fill)
     train_games = games
     if args.controlled:

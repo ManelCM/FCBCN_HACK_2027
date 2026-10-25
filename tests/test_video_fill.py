@@ -67,3 +67,26 @@ def test_apply_video_fill_only_touches_atd_gaps(tmp_path):
     assert np.isnan(out.ball_x[15])
     assert (out.ball_x[[10, 14, 16, 19]] == 1.0).all()
     np.testing.assert_array_equal(out.ball_x[20:], match.ball_x[20:])
+
+
+def test_v3_skips_fast_live_ball_and_carries_dead_ball():
+    from dataclasses import replace
+    from hackbarca.io.video_fill import VIDEO_FILL
+    n = 3000
+    t = np.arange(n)
+    bx = np.where(t < 1500, 10 + 0.6 * t, np.nan)              # 15 m/s en juego vivo; despues paron
+    bx[2900:] = 60.0                                           # reanudacion en x=60
+    by = np.where(np.isnan(bx), np.nan, 30.0)
+    px = np.column_stack([np.full(n, 61.0), np.full(n, 20.0)])  # alguien junto al punto de reanudacion
+    py = np.column_stack([np.full(n, 30.0), np.full(n, 50.0)])
+    clean = MatchTracking(n_frames=n, fps=25, pitch_length=105.0, pitch_width=68.0,
+                          team_of_track=np.array([0, 1], np.int8), players_x=px, players_y=py,
+                          players_speed=np.full((n, 2), np.nan), ball_x=bx, ball_y=by, ball_speed=np.full(n, np.nan))
+    gaps = (t >= 500) & (t < 2900)
+    degraded = replace(clean, ball_x=np.where(gaps, np.nan, bx), ball_y=np.where(gaps, np.nan, by))
+    filled = simulate_video_fill(degraded, clean, VIDEO_FILL, seed=0)
+    assert np.isnan(filled.ball_x[500:1500]).all()             # balon rapido en juego vivo: el video no lo ve
+    dead = ~np.isnan(filled.ball_x[1500:2900])
+    assert dead.mean() > 0.3                                   # el paron si se rellena
+    d = np.hypot(filled.ball_x[1500:2900][dead] - 61.0, filled.ball_y[1500:2900][dead] - 30.0)
+    assert np.median(d) < 3.0                                  # quieto en la reanudacion o con quien va a sacar

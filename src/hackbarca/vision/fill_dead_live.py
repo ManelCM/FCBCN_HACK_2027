@@ -9,7 +9,7 @@ simulado separado por la GT. Solo imprime cuantiles (ADR-0004).
 import numpy as np
 import pandas as pd
 from hackbarca.io.load_match import load_match
-from hackbarca.io.video_fill import apply_video_fill, simulate_video_fill, VideoFill
+from hackbarca.io.video_fill import apply_video_fill, simulate_video_fill, VIDEO_FILL
 from hackbarca.io.degrade import degrade
 from hackbarca.io.external import load_bench_game
 from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES_V3
@@ -40,7 +40,7 @@ acc = {"D": [], "V": []}
 for i, g in enumerate(BENCH_GAMES_V3):
     clean, gt = load_bench_game(g)
     deg = degrade(clean, BENCH_DEGRADE, seed=i)
-    sim = simulate_video_fill(deg, clean, VideoFill(), seed=i)
+    sim = simulate_video_fill(deg, clean, VIDEO_FILL, seed=i)
     gap_b = np.isnan(deg.ball_x)
     for k, sel in (("D", gt == 2), ("V", np.isin(gt, [0, 1]))):
         x, y = sim.ball_x, sim.ball_y
