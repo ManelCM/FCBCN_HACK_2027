@@ -32,7 +32,7 @@
 | T0 | E049: reentrenar en v3.1 | 26 oct | ✅ | 0,7254 frente a 0,7059 (10 de 10); con la decodificación de la entrega 0,7229 frente a 0,7006 y D cortos 0,180 → 0,107/min (GT 0,084) |
 | T0 | E053: curva de aprendizaje (5 frente a 9 partidos) | 27 oct | ⏳ | — |
 | T0 | E054: + 20 partidos de SkillCorner (GT completa H/A/D) | 27 oct | ⏳ | caché de los 20 partidos lista |
-| T0 | M1.6 artefacto + guardarraíl (ADR-0018, umbrales pre-registrados) | 27-28 oct | pendiente | — |
+| T0 | M1.6 artefacto + guardarraíl (ADR-0018, umbrales pre-registrados) | 26 oct | ❌ E049c: no pasa (3 de 4); la entrega sigue con E070 | D cortos en el reto 0,680 → 0,529/min (umbral 0,25); tramos D 1,78 → 1,61; cambios 1,40 → 1,48 |
 | T1 | búsqueda ampliada → `investigacion/06_estado_del_arte_v3.md` | 26-27 oct | ✅ 26 oct | Lang 2022 (estado sin balón), Link 2017 (toques ≥ 4 m/s²), Bauer y Anzer, pressing intensity, SigLIP/color, sonido del golpeo |
 | T2 | F1 roles y formación (Bialkowski, Shaw y Glickman) (E073) | 26 oct | ❌ por poco | hueco 0,729; tras robo, invertida (va con retraso) |
 | T2 | F2 clusters de situaciones de juego (E077) | 26 oct | ❌ | hueco 0,67; tras robo 0,68 |
