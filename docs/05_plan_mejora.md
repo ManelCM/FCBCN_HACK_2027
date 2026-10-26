@@ -29,7 +29,7 @@
 | T0 | M1.1 objetivos del balón del reto | 26 oct | ✅ | reproducen E013; balón lento en vivo ≥ 0,55/min (ventana pública con GT: 1,86) |
 | T0 | M1.2-1.3 simulador v3.1 (E047, ADR-0017) | 26 oct | ✅ | pérdida 160 → 20,5; balón lento en vivo 0,006 → 0,96 tramos/min |
 | T0 | E048: E070 evaluado en v3.1 | 26 oct | ✅ | 0,7206 → 0,7010 con la decodificación de la entrega; D cortos 0,119 → 0,186/min: el banco ya ve el defecto |
-| T0 | E049: reentrenar en v3.1 | 26-27 oct | ⏳ | — |
+| T0 | E049: reentrenar en v3.1 | 26 oct | ✅ | 0,7254 frente a 0,7059 (10 de 10); con la decodificación de la entrega 0,7229 frente a 0,7006 y D cortos 0,180 → 0,107/min (GT 0,084) |
 | T0 | E053: curva de aprendizaje (5 frente a 9 partidos) | 27 oct | ⏳ | — |
 | T0 | E054: + 20 partidos de SkillCorner (GT completa H/A/D) | 27 oct | ⏳ | caché de los 20 partidos lista |
 | T0 | M1.6 artefacto + guardarraíl (ADR-0018, umbrales pre-registrados) | 27-28 oct | pendiente | — |

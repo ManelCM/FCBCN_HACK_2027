@@ -4,7 +4,7 @@
 # El runner saca la primera linea, la ejecuta con el log en external_data/logs/<ID>.log y apunta el
 # resultado en external_data/cola_hecho.txt. Se puede editar cola.txt mientras corre (reordenar,
 # anadir o quitar lineas). Si existe external_data/cola.espera, espera a que exista ese fichero de log
-# con "solo fijo" (p. ej. una evaluacion lanzada fuera de la cola) antes de empezar.
+# con el resultado final ("real" del time) (p. ej. una evaluacion lanzada fuera de la cola) antes de empezar.
 #
 #   scripts/cola.sh            # en segundo plano
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -14,7 +14,7 @@ export PATH="/usr/bin:$PATH"
 cd "$root" || exit 1
 if [ -f "$root/external_data/cola.espera" ]; then
     wait_log="$(cat "$root/external_data/cola.espera")"
-    until grep -q "solo fijo\|Traceback" "$wait_log" 2>/dev/null; do sleep 60; done
+    until grep -q "^real\|Traceback" "$wait_log" 2>/dev/null; do sleep 60; done
 fi
 while true; do
     line="$(grep -v '^\s*$' "$queue" 2>/dev/null | head -1)"
