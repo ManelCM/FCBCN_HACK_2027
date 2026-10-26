@@ -22,9 +22,11 @@ from hackbarca.io.external import (controlled_possession, is_dfl, load_bench_gam
                                    load_metrica_bench, metrica_events)
 from hackbarca.io.smart_tagging import simulate_set_piece_windows
 from hackbarca.models.l3 import DecodeParams, decode, features_for
-from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES, BENCH_GAMES_V3
+from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_DEGRADE_V3_1, BENCH_GAMES, BENCH_GAMES_V3
 
-BENCHES = {"v2": BENCH_GAMES, "v3": BENCH_GAMES_V3}
+BENCHES = {"v2": BENCH_GAMES, "v3": BENCH_GAMES_V3, "v3_1": BENCH_GAMES_V3}
+# degradacion de cada banco: v3.1 (E047, ADR-0017) solo cambia el balon
+BENCH_PARAMS = {"v2": BENCH_DEGRADE, "v3": BENCH_DEGRADE, "v3_1": BENCH_DEGRADE_V3_1}
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))))
@@ -183,7 +185,13 @@ def main(argv=None) -> int:
     parser.add_argument("--from-oof", default=None,
                         help="no entrena: re-decodifica los OOF guardados (external_data/<fichero>)")
     parser.add_argument("--bench", choices=sorted(BENCHES), default="v2",
-                        help="v2: 3 Metrica; v3: 3 Metrica + 7 DFL")
+                        help="v2: 3 Metrica; v3: 3 Metrica + 7 DFL; v3_1: v3 con el balon recalibrado (E047)")
+    parser.add_argument("--eval-degrade", choices=sorted(BENCH_PARAMS), default=None,
+                        help="entrena con la degradacion de --bench y evalua el partido retenido con la de este banco (E048)")
+    parser.add_argument("--extra-sc", type=int, default=0,
+                        help="M3 (E054): anade a todos los pliegues los k primeros partidos de SkillCorner (solo entrenar)")
+    parser.add_argument("--train-subset", type=int, default=0,
+                        help="curva de aprendizaje (E053): cada pliegue entrena con k de los otros partidos (semilla fija)")
     parser.add_argument("--jobs", type=int, default=1, help="pliegues en paralelo (4 hilos cada uno)")
     parser.add_argument("--deep-oof", default=None,
                         help="OOF del modelo profundo (tune_seq) para promediar con LightGBM (E034)")
@@ -210,7 +218,8 @@ def main(argv=None) -> int:
         if args.video_fill:
             from hackbarca.io.video_fill import VIDEO_FILL
             fill = VIDEO_FILL
-        games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, names=names, fill=fill)
+        games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
+                                    names=names, fill=fill)
     train_games = games
     if args.controlled:
         def t_of(game):
@@ -224,11 +233,18 @@ def main(argv=None) -> int:
         shifted = replace(BENCH_DEGRADE, ball_smooth_sigma=6.0, ball_corr_noise=0.3, ball_corr_tau=25.0)
         eval_games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, params=shifted,
                                          names=names)
+    elif args.eval_degrade:
+        eval_games = bench_feature_paths(use_tags=not args.no_tags, version=args.features,
+                                         params=BENCH_PARAMS[args.eval_degrade], names=names)
     else:
         eval_games = games
     gts = [gt for _, gt in games]
     runs = [pm.valid_runs(gt) for gt in gts]
     extra = augmented_games(args.augment, args.features) if args.augment else {}
+    sc_games = []
+    if args.extra_sc:
+        from hackbarca.pipeline.extra_data import skillcorner_training_games
+        sc_games = skillcorner_training_games(args.features, BENCH_PARAMS[args.bench], args.extra_sc)
     oof = []
     if args.from_oof:
         blob = np.load(os.path.join(_REPO_ROOT, "external_data", args.from_oof))
@@ -239,7 +255,9 @@ def main(argv=None) -> int:
     jobs = []
     for g in range(len(games) if not args.from_oof else 0):
         others = [o for o in range(len(games)) if o != g]
-        train_sets = [train_games[o] for o in others] + [e for o in others for e in extra.get(o, [])]
+        if args.train_subset:
+            others = sorted(np.random.default_rng(1000 + g).choice(others, args.train_subset, replace=False).tolist())
+        train_sets = [train_games[o] for o in others] + [e for o in others for e in extra.get(o, [])] + sc_games
         jobs.append((train_sets, eval_games[g][0], args.stack, dict(l3.LGB_PARAMS), l3.N_ROUNDS, args.dynamic))
     if jobs:
         if args.jobs > 1:
@@ -264,6 +282,12 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_aug{}.npz".format(args.augment))
     if args.eval_shift:
         name = name.replace(".npz", "_shift.npz")
+    if args.eval_degrade:
+        name = name.replace(".npz", "_eval{}.npz".format(args.eval_degrade))
+    if args.train_subset:
+        name = name.replace(".npz", "_sub{}.npz".format(args.train_subset))
+    if args.extra_sc:
+        name = name.replace(".npz", "_sc{}.npz".format(args.extra_sc))
     if args.stack:
         name = name.replace(".npz", "_stack.npz")
     if args.dynamic:

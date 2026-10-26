@@ -9,6 +9,62 @@
 > se acepta con el protocolo de ADR-0008: ≥ +0,01 y mejor en ≥ 7 de 10 partidos. M1 añade además un
 > guardarraíl de forma en el reto (ADR nuevo).
 
+> **26 oct: plan ampliado («plan completo»).** Cubre todo lo que se pidió los días 25 y 26, sumado y no
+> sustituido:
+> - todos los fallos;
+> - internet «por todos lados»;
+> - más modelos;
+> - YOLO y audio para **todo** lo que ayude, no solo la posesión;
+> - Ball Radar y TranSPORTmer;
+> - compacidad y formaciones;
+> - pensar como entrenador y analista.
+>
+> Está organizado en seis frentes (T0-T6) y cada línea lleva fecha, entregable y puerta. Las secciones M1-M6 de
+> abajo siguen valiendo como detalle del frente T0. **Esta tabla se actualiza en cada sesión: nada sin
+> estado.**
+
+## Estado de la ejecución (se actualiza en cada sesión)
+| frente | línea | fecha prevista | estado | resultado / entregable |
+|---|---|---|---|---|
+| T0 | M1.1 objetivos del balón del reto | 26 oct | ✅ | reproducen E013; balón lento en vivo ≥ 0,55/min (ventana pública con GT: 1,86) |
+| T0 | M1.2-1.3 simulador v3.1 (E047, ADR-0017) | 26 oct | ✅ | pérdida 160 → 20,5; balón lento en vivo 0,006 → 0,96 tramos/min |
+| T0 | E048: E070 evaluado en v3.1 | 26 oct | ⏳ | — |
+| T0 | E049: reentrenar en v3.1 | 26-27 oct | ⏳ | — |
+| T0 | E053: curva de aprendizaje (5 frente a 9 partidos) | 27 oct | ⏳ | — |
+| T0 | E054: + 20 partidos de SkillCorner (GT completa H/A/D) | 27 oct | ⏳ | caché de los 20 partidos lista |
+| T0 | M1.6 artefacto + guardarraíl (ADR-0018, umbrales pre-registrados) | 27-28 oct | pendiente | — |
+| T1 | búsqueda ampliada → `investigacion/06_estado_del_arte_v3.md` | 26-27 oct | pendiente | — |
+| T2 | F1 roles y formación (Bialkowski, Shaw y Glickman, SoccerCPD) | 28-30 oct | pendiente | — |
+| T2 | F2 clusters de situaciones de juego | 28-30 oct | pendiente | — |
+| T2 | F3 firmas del robo y la contrapresión | 27-28 oct | pendiente | — |
+| T2 | F4 pressing intensity | 28-30 oct | pendiente | — |
+| T2 | F5 territorio e inclinación del campo | 27-28 oct | pendiente | — |
+| T2 | familia «control» (E051) | 26 oct | ❌ | AUC tras un robo 0,744 < 0,80; se reevalúa junto al poseedor |
+| T3 | U1 tipo de plano del broadcast → D | 26-27 oct | pendiente | — |
+| T3 | U2 repeticiones del broadcast → D | 28-30 oct | pendiente | — |
+| T3 | U3 toques desde el balón del vídeo sin filtrar | 26-27 oct | pendiente | — |
+| T3 | U4 balón fuera o en un punto de reanudación | 26-27 oct | pendiente | — |
+| T3 | U5 jugadores + equipo por color (portero, árbitro) | 28-30 oct (GPU) | pendiente | — |
+| T3 | U6 quién conduce (E044: 92,4 %) | 28-30 oct | pendiente | — |
+| T3 | U7 pose (saque de banda, portero con balón, barrera) | 28-30 oct (GPU) | pendiente | — |
+| T3 | U8 árbitro y asistentes | 28-30 oct | pendiente | — |
+| T3 | U9 energía de movimiento (flujo óptico) | 28-30 oct | pendiente | — |
+| T3 | U10 Ball Action Spotting (timebox de 1 día) | 4-7 nov | pendiente | — |
+| T4 | A1 mención → equipo | 26-27 oct | pendiente | E033: 0,706 global |
+| T4 | A2 palabras de evento (parón, tipo, robo) | 26-27 oct | pendiente | — |
+| T4 | A3 sonido del golpeo | 26-27 oct | pendiente | — |
+| T4 | A4 ritmo de habla / «replay» | 26-27 oct | pendiente | — |
+| T4 | A5 grada: ataque de quién | 28-30 oct | pendiente | — |
+| T4 | A6 marcadores de tiempo | 26-27 oct | pendiente | — |
+| T4 | silbato y grada como parón (E029, E045) | — | ❌ | sin señal |
+| T5 | M5a poseedor tipo PathCRF | 31 oct-3 nov | pendiente | — |
+| T5 | M5b Ball Radar en los huecos | 31 oct-3 nov | pendiente | — |
+| T5 | M5c MS-TCN / cabeza de fronteras | 4-7 nov | pendiente | — |
+| T5 | M5d CatBoost/XGBoost, multitarea | 4-7 nov | pendiente | — |
+| T5 | M5e bagging | 7-9 nov | pendiente | — |
+| T6 | combinación, ablación, artefacto, congelación | 8-14 nov | pendiente | — |
+| equipo | email Q2/Q3/Q6 (Q6 desbloquea el audio y el broadcast en la entrega) | ya | **Manel** | — |
+
 ## De dónde partimos y cuánto falta
 - **Banco v3**: 0,7206 con la decodificación de la entrega. **Reto estimado**: ~0,62-0,68. **Objetivo**: ≥ 0,75 en
   el reto, unos 0,79 en el banco si la distancia entre los dos fuera la de siempre.

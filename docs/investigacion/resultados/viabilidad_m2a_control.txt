@@ -1,0 +1,26 @@
+listo 1
+listo 2
+listo 3
+listo J03WMX
+listo J03WN1
+listo J03WPY
+listo J03WOH
+listo J03WQQ
+listo J03WOY
+listo J03WR9
+
+AUC de 'posee el local' (|AUC-0,5| es la fuerza; < 0,5 = senal invertida)
+senal                           vivo  en hueco 0-3 s tras robo
+ctrl_switch (h-a)              0.797     0.539           0.744
+ctrl_f75 (h-a)                 0.774     0.541           0.732
+ctrl_until (h-a)               0.200     0.366           0.275
+jugador mas cercano            0.732       nan           0.718
+ctrl_f25 (h-a)                 0.721     0.512           0.696
+ctrl_b25 (h-a)                 0.740     0.501           0.693
+ctrl_b75 (h-a)                 0.829     0.505           0.654
+ctrl_since (h-a)               0.140     0.429           0.368
+ctrl_run (h-a)                 0.629     0.500           0.612
+ctrl (h-a)                     0.628     0.500           0.611
+ctrl_chg75 (h-a)               0.456     0.536           0.594
+ctrl_chg25 (h-a)               0.484     0.511           0.513
+ctrl_press (h-a)                 nan       nan             nan

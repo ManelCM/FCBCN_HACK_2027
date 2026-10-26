@@ -36,3 +36,10 @@ BENCH_DEGRADE_V2_1 = replace(BENCH_DEGRADE_V2, ball_noise=0.02, ball_smooth_sigm
                              ball_corr_noise=0.8, ball_corr_tau=75.0)
 
 BENCH_DEGRADE = BENCH_DEGRADE_V2_1
+
+# v3.1 (E047, ADR-0017): el ruido del balon de v2.1 borraba el balon lento del juego vivo (tramos
+# lentos >= 1 s por minuto: limpio 1,08, v2.1 0,01, reto >= 0,55; E043) y el modelo aprendia "lento =
+# muerto" (D cortos x6 en el reto, E041-E042). Rejilla de 48 puntos (calibrate_ball): ruido blanco
+# casi nulo y error correlado suavizado; residuo 0,040, lento en vivo 7,9 % y 0,96 tramos/min.
+BENCH_DEGRADE_V3_1 = replace(BENCH_DEGRADE_V2_1, ball_noise=0.005, ball_smooth_sigma=6.0,
+                             ball_corr_noise=0.8, ball_corr_tau=75.0, ball_corr_smooth=10.0)

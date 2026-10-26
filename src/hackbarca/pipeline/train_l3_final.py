@@ -15,7 +15,7 @@ import os
 from dataclasses import asdict
 
 from hackbarca.models.l3 import DecodeParams, train, train_stacked
-from hackbarca.pipeline.tune_l3 import BENCHES, feature_spec, load_bench
+from hackbarca.pipeline.tune_l3 import BENCH_PARAMS, BENCHES, feature_spec, load_bench
 
 ARTIFACTS = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                          "models", "artifacts")
@@ -49,7 +49,7 @@ def main(argv=None) -> int:
     parser.add_argument("--features", type=feature_spec, default=1)
     parser.add_argument("--stack", action="store_true", help="dos capas con contexto temporal (E018)")
     parser.add_argument("--bench", choices=sorted(BENCHES), default="v2",
-                        help="partidos de entrenamiento: v2 = 3 Metrica; v3 = + 7 DFL")
+                        help="partidos de entrenamiento: v2 = 3 Metrica; v3 = + 7 DFL; v3_1 = v3 con el balon de E047")
     parser.add_argument("--deep-weight", type=float, default=0.0,
                         help="peso del modelo profundo en el promedio con LightGBM (E034); 0 = sin el")
     parser.add_argument("--alpha-switch", type=float, default=0.0, help="coste de cambio dinamico (E032)")
@@ -62,7 +62,8 @@ def main(argv=None) -> int:
     if args.video_fill:
         from hackbarca.io.video_fill import VIDEO_FILL
         fill = VIDEO_FILL
-    games = load_bench(use_tags=not args.no_tags, version=args.features, names=BENCHES[args.bench], fill=fill)
+    games = load_bench(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
+                       names=BENCHES[args.bench], fill=fill)
     os.makedirs(ARTIFACTS, exist_ok=True)
     features, labels = [df for df, _ in games], [gt for _, gt in games]
     if args.stack:

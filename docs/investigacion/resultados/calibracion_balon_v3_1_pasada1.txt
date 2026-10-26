@@ -1,0 +1,15 @@
+objetivo: resid_std=0.044, dv_p50=1.766, dv_p90=5.588, dv_p99=11.807, speed_p50=5.083, speed_p90=14.274, speed_p99=24.518, speed_before_gap_p50=2.004, touches_per_s=0.043, live_slow_share=0.088, live_slow_runs_per_min=1.080
+v3 actual  loss=160.2  resid_std=0.108, dv_p50=2.196, dv_p90=4.901, dv_p99=8.051, speed_p50=5.005, speed_p90=12.356, speed_p99=18.714, speed_before_gap_p50=0.806, touches_per_s=0.032, live_slow_share=0.032, live_slow_runs_per_min=0.006
+
+mejores 10:
+loss= 139.4  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 1.2, 'ball_corr_tau': 75.0, 'ball_corr_smooth': 10.0} | resid 0.045 dv 1.2/5.1/10.1 vel 4.7/13.1 antes-hueco 0.8 toques 0.062 lento 0.061 tramos/min 0.01
+loss= 139.5  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 0.4, 'ball_corr_tau': 75.0, 'ball_corr_smooth': 10.0} | resid 0.044 dv 1.1/5.1/10.1 vel 4.6/13.1 antes-hueco 0.7 toques 0.061 lento 0.069 tramos/min 0.01
+loss= 139.5  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 1.2, 'ball_corr_tau': 75.0, 'ball_corr_smooth': 25.0} | resid 0.044 dv 1.1/5.1/10.1 vel 4.6/13.1 antes-hueco 0.8 toques 0.061 lento 0.067 tramos/min 0.01
+loss= 139.5  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 0.4, 'ball_corr_tau': 150.0, 'ball_corr_smooth': 10.0} | resid 0.044 dv 1.1/5.1/10.1 vel 4.6/13.1 antes-hueco 0.7 toques 0.061 lento 0.069 tramos/min 0.01
+loss= 139.6  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 1.2, 'ball_corr_tau': 75.0, 'ball_corr_smooth': 50.0} | resid 0.044 dv 1.1/5.1/10.1 vel 4.6/13.1 antes-hueco 0.7 toques 0.061 lento 0.069 tramos/min 0.01
+loss= 139.6  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 1.2, 'ball_corr_tau': 150.0, 'ball_corr_smooth': 10.0} | resid 0.044 dv 1.2/5.1/10.1 vel 4.7/13.1 antes-hueco 0.7 toques 0.061 lento 0.065 tramos/min 0.01
+loss= 139.6  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 0.8, 'ball_corr_tau': 75.0, 'ball_corr_smooth': 25.0} | resid 0.044 dv 1.1/5.1/10.1 vel 4.6/13.1 antes-hueco 0.7 toques 0.061 lento 0.069 tramos/min 0.01
+loss= 139.7  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 0.4, 'ball_corr_tau': 150.0, 'ball_corr_smooth': 50.0} | resid 0.044 dv 1.1/5.1/10.1 vel 4.6/13.1 antes-hueco 0.7 toques 0.061 lento 0.070 tramos/min 0.01
+loss= 139.7  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 0.4, 'ball_corr_tau': 75.0, 'ball_corr_smooth': 50.0} | resid 0.044 dv 1.1/5.1/10.1 vel 4.6/13.1 antes-hueco 0.7 toques 0.061 lento 0.070 tramos/min 0.01
+loss= 139.7  {'ball_smooth_sigma': 6.0, 'ball_corr_noise': 0.4, 'ball_corr_tau': 75.0, 'ball_corr_smooth': 25.0} | resid 0.044 dv 1.1/5.1/10.1 vel 4.6/13.1 antes-hueco 0.7 toques 0.061 lento 0.070 tramos/min 0.01
+guardado docs\investigacion\resultados\calibracion_balon_v3_1.json
