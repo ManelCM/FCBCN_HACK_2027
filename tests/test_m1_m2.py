@@ -106,3 +106,24 @@ def test_broadcast_signal_follows_state():
     assert np.array_equal(c, simulate_broadcast_count(gt, seed=1))          # determinista
     f = broadcast_features(c)
     assert {"bc_n", "bc_wide_m75", "bc_wide_chg75"} <= set(f.columns) and len(f) == len(gt)
+
+
+def test_transition_sees_the_winner_go_forward():
+    from hackbarca.features.coach import extra_features, transition_features
+    n = 400
+    t = np.arange(n)
+    # 10 jugadores por equipo; el local ataca hacia x creciente. Hasta t=200 el visitante avanza
+    # (ataca hacia x decreciente) y el local repliega; luego roba el local y avanza
+    hx = np.where(t < 200, 50 - 0.04 * t, 42 + 0.08 * (t - 200))[:, None] + np.linspace(-20, 5, 10)[None, :]
+    ax = hx + 10
+    hy = np.tile(np.linspace(5, 63, 10), (n, 1))
+    m = _match(n, (hx[:, 0], hy[:, 0]), (ax[:, 0], hy[:, 0]))
+    from dataclasses import replace
+    m = replace(m, team_of_track=np.array([0] * 10 + [1] * 10, dtype=np.int8),
+                players_x=np.concatenate([hx, ax], 1), players_y=np.concatenate([hy, hy], 1),
+                players_speed=np.zeros((n, 20)), period=np.ones(n, dtype=np.int8))
+    signs = {"h": np.ones(n), "a": -np.ones(n)}
+    f = transition_features(m, np.full(n, np.nan), np.full(n, np.nan), signs)
+    assert f["tr_cen_v_chg75_h"][200] > 2.0           # el local pasa de replegar a salir
+    cols = extra_features(m, ("transition", "gamestate", "territory"))
+    assert len(cols) == n and "gs_speed_p0.8" in cols and not any("tilt" in c for c in cols)

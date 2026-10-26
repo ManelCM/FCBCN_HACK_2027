@@ -60,7 +60,8 @@ def _code_hash() -> str:
     return digest.hexdigest()
 
 
-def feature_path(game: str, index: int, version: int, use_tags: bool, params, fill=None, broadcast=None) -> str:
+def feature_path(game: str, index: int, version: int, use_tags: bool, params, fill=None, broadcast=None,
+                 extras=()) -> str:
     """Fichero de cache de las features de un partido degradado (semilla = posicion en el banco)."""
     parts = (game, index, version, use_tags, asdict(params), _code_hash())
     if fill is not None:  # solo entra en la clave si se usa: la cache sin relleno sigue valiendo
@@ -69,6 +70,9 @@ def feature_path(game: str, index: int, version: int, use_tags: bool, params, fi
     if broadcast is not None:  # E057: senal del broadcast simulada (io/broadcast_signal)
         with open(os.path.join(_REPO_ROOT, "src", "hackbarca", "io", "broadcast_signal.py"), "rb") as handle:
             parts += ("broadcast", asdict(broadcast), hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest())
+    if extras:  # familias de entrenador (features/coach.py, T2): solo entran en la clave si se usan
+        with open(os.path.join(_REPO_ROOT, "src", "hackbarca", "features", "coach.py"), "rb") as handle:
+            parts += ("extras", tuple(extras), hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest())
     key = hashlib.sha1(repr(parts).encode())
     return os.path.join(FEATURE_CACHE, "{}_v{}_{}.npz".format(game, version, key.hexdigest()[:12]))
 
@@ -80,7 +84,7 @@ def read_features(path: str):
 
 
 def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES, fill=None,
-                        broadcast=None):
+                        broadcast=None, extras=()):
     """[(ruta de features en cache, gt)] por partido; calcula y guarda solo lo que falte.
 
     fill: VideoFill para simular el relleno del balon con el detector de video (E063), o None.
@@ -90,7 +94,7 @@ def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, na
     out = []
     for i, game in enumerate(names):
         match, gt = load_bench_game(game)
-        path = feature_path(game, i, version, use_tags, params, fill, broadcast)
+        path = feature_path(game, i, version, use_tags, params, fill, broadcast, extras)
         if not os.path.exists(path):
             degraded = degrade(match, params, seed=i)
             if fill is not None:
@@ -106,6 +110,11 @@ def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, na
 
                 from hackbarca.io.broadcast_signal import broadcast_features, simulate_broadcast_count
                 df = pd.concat([df, broadcast_features(simulate_broadcast_count(gt, broadcast, seed=i))], axis=1)
+            if extras:
+                import pandas as pd
+
+                from hackbarca.features.coach import extra_features
+                df = pd.concat([df, extra_features(degraded, extras)], axis=1)
             tmp = path[:-4] + ".tmp.npz"  # escritura atomica: un proceso cortado no deja cache rota
             np.savez(tmp, columns=np.array(df.columns, dtype=str), values=df.to_numpy(np.float32))
             os.replace(tmp, path)
@@ -113,9 +122,10 @@ def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, na
     return out
 
 
-def load_bench(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES, fill=None, broadcast=None):
+def load_bench(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES, fill=None, broadcast=None,
+               extras=()):
     return [(read_features(path), gt)
-            for path, gt in bench_feature_paths(use_tags, version, params, names, fill, broadcast)]
+            for path, gt in bench_feature_paths(use_tags, version, params, names, fill, broadcast, extras)]
 
 
 def _materialize(item):
@@ -198,6 +208,8 @@ def main(argv=None) -> int:
                         help="v2: 3 Metrica; v3: 3 Metrica + 7 DFL; v3_1: v3 con el balon recalibrado (E047)")
     parser.add_argument("--eval-degrade", choices=sorted(BENCH_PARAMS), default=None,
                         help="entrena con la degradacion de --bench y evalua el partido retenido con la de este banco (E048)")
+    parser.add_argument("--extras", default="",
+                        help="T2: familias de entrenador anadidas, p. ej. transition+gamestate (features/coach.py)")
     parser.add_argument("--broadcast", action="store_true",
                         help="E057: familia broadcast (jugadores visibles en la tele), simulada en el banco")
     parser.add_argument("--extra-sc", type=int, default=0,
@@ -235,7 +247,8 @@ def main(argv=None) -> int:
             from hackbarca.io.broadcast_signal import BROADCAST_SIGNAL
             broadcast = BROADCAST_SIGNAL
         games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
-                                    names=names, fill=fill, broadcast=broadcast)
+                                    names=names, fill=fill, broadcast=broadcast,
+                                    extras=tuple(x for x in args.extras.split("+") if x))
     train_games = games
     if args.controlled:
         def t_of(game):
@@ -306,6 +319,8 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_sc{}.npz".format(args.extra_sc))
     if args.broadcast:
         name = name.replace(".npz", "_bc.npz")
+    if args.extras:
+        name = name.replace(".npz", "_x{}.npz".format(args.extras))
     if args.stack:
         name = name.replace(".npz", "_stack.npz")
     if args.dynamic:

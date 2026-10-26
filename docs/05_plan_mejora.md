@@ -28,34 +28,35 @@
 |---|---|---|---|---|
 | T0 | M1.1 objetivos del balón del reto | 26 oct | ✅ | reproducen E013; balón lento en vivo ≥ 0,55/min (ventana pública con GT: 1,86) |
 | T0 | M1.2-1.3 simulador v3.1 (E047, ADR-0017) | 26 oct | ✅ | pérdida 160 → 20,5; balón lento en vivo 0,006 → 0,96 tramos/min |
-| T0 | E048: E070 evaluado en v3.1 | 26 oct | ⏳ | — |
+| T0 | E048: E070 evaluado en v3.1 | 26 oct | ⏳ entrenando | — |
 | T0 | E049: reentrenar en v3.1 | 26-27 oct | ⏳ | — |
 | T0 | E053: curva de aprendizaje (5 frente a 9 partidos) | 27 oct | ⏳ | — |
 | T0 | E054: + 20 partidos de SkillCorner (GT completa H/A/D) | 27 oct | ⏳ | caché de los 20 partidos lista |
 | T0 | M1.6 artefacto + guardarraíl (ADR-0018, umbrales pre-registrados) | 27-28 oct | pendiente | — |
-| T1 | búsqueda ampliada → `investigacion/06_estado_del_arte_v3.md` | 26-27 oct | pendiente | — |
-| T2 | F1 roles y formación (Bialkowski, Shaw y Glickman, SoccerCPD) | 28-30 oct | pendiente | — |
-| T2 | F2 clusters de situaciones de juego | 28-30 oct | pendiente | — |
-| T2 | F3 firmas del robo y la contrapresión | 27-28 oct | pendiente | — |
-| T2 | F4 pressing intensity | 28-30 oct | pendiente | — |
-| T2 | F5 territorio e inclinación del campo | 27-28 oct | pendiente | — |
+| T1 | búsqueda ampliada → `investigacion/06_estado_del_arte_v3.md` | 26-27 oct | ✅ 26 oct | Lang 2022 (estado sin balón), Link 2017 (toques ≥ 4 m/s²), Bauer y Anzer, pressing intensity, SigLIP/color, sonido del golpeo |
+| T2 | F1 roles y formación (Bialkowski, Shaw y Glickman) (E073) | 26 oct | ❌ por poco | hueco 0,729; tras robo, invertida (va con retraso) |
+| T2 | F2 clusters de situaciones de juego | 27-28 oct | pendiente | — |
+| T2 | F3 firmas del robo y la contrapresión (E058) | 26 oct | ✅ puerta → ⏳ evaluación en cola | **AUC tras robo 0,902** (centroide hacia delante) |
+| T2 | F4 pressing intensity (E072) | 26 oct | ❌ | tras robo 0,695 |
+| T2 | F5 territorio e inclinación del campo (E059) | 26 oct | ❌ | hueco 0,664 |
+| T2 | F6 estado del juego sin balón, Lang 2022 (E071) | 26 oct | ✅ por poco → ⏳ evaluación en cola | hueco 0,879 frente a 0,867 |
 | T2 | familia «control» (E051) | 26 oct | ❌ | AUC tras un robo 0,744 < 0,80; se reevalúa junto al poseedor |
-| T3 | U1 tipo de plano del broadcast → D | 26-27 oct | pendiente | — |
+| T3 | U1 tipo de plano del broadcast → D (E055-E057) | 26 oct | ✅ puerta → ⏳ evaluación en cola | AUC 0,90 en la ventana pública; 0,91 en los huecos; el 60 % de los D cortos va con plano abierto |
 | T3 | U2 repeticiones del broadcast → D | 28-30 oct | pendiente | — |
-| T3 | U3 toques desde el balón del vídeo sin filtrar | 26-27 oct | pendiente | — |
-| T3 | U4 balón fuera o en un punto de reanudación | 26-27 oct | pendiente | — |
-| T3 | U5 jugadores + equipo por color (portero, árbitro) | 28-30 oct (GPU) | pendiente | — |
+| T3 | U3 toques desde el balón del vídeo sin filtrar | 26-27 oct | ⏳ pasada de GPU (~6,5 h) | — |
+| T3 | U4 balón fuera o en un punto de reanudación (E055) | 26 oct | ❌ | AUC 0,51-0,56 |
+| T3 | U5 jugadores + equipo por color (portero, árbitro) | 26-27 oct | ⏳ misma pasada de GPU | 24,6 personas por frame en la prueba |
 | T3 | U6 quién conduce (E044: 92,4 %) | 28-30 oct | pendiente | — |
 | T3 | U7 pose (saque de banda, portero con balón, barrera) | 28-30 oct (GPU) | pendiente | — |
 | T3 | U8 árbitro y asistentes | 28-30 oct | pendiente | — |
 | T3 | U9 energía de movimiento (flujo óptico) | 28-30 oct | pendiente | — |
 | T3 | U10 Ball Action Spotting (timebox de 1 día) | 4-7 nov | pendiente | — |
-| T4 | A1 mención → equipo | 26-27 oct | pendiente | E033: 0,706 global |
-| T4 | A2 palabras de evento (parón, tipo, robo) | 26-27 oct | pendiente | — |
+| T4 | A1 mención → equipo (E055) | 26 oct | ❌ | seguro 0,73; dudoso 0,50-0,52; hueco 0,58-0,60 |
+| T4 | A2 palabras de evento (E055) | 26 oct | ❌ | 0,50-0,53 |
 | T4 | A3 sonido del golpeo | 26-27 oct | pendiente | — |
-| T4 | A4 ritmo de habla / «replay» | 26-27 oct | pendiente | — |
+| T4 | A4 ritmo de habla / «replay» (E055) | 26 oct | ❌ | 0,51-0,55 |
 | T4 | A5 grada: ataque de quién | 28-30 oct | pendiente | — |
-| T4 | A6 marcadores de tiempo | 26-27 oct | pendiente | — |
+| T4 | A6 marcadores de tiempo (E055) | 26 oct | ❌ | 0,53 |
 | T4 | silbato y grada como parón (E029, E045) | — | ❌ | sin señal |
 | T5 | M5a poseedor tipo PathCRF | 31 oct-3 nov | pendiente | — |
 | T5 | M5b Ball Radar en los huecos | 31 oct-3 nov | pendiente | — |

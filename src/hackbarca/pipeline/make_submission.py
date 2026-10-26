@@ -59,6 +59,13 @@ def predict(model: str, data_dir: str | None, dump_proba: str | None = None) -> 
         # descanso entre las dos mitades evaluadas: los equipos cambian de campo
         halftime = (GRADED[0][1] + GRADED[1][0]) // 2
         df = features_for(match, windows, halftime, config.get("features", 1))
+        if config.get("extras"):
+            # T2: familias de entrenador (features/coach.py), sobre el ATD real
+            import pandas as pd
+
+            from hackbarca.features.coach import extra_features
+            from hackbarca.models.l3 import ensure_period
+            df = pd.concat([df, extra_features(ensure_period(match, halftime), config["extras"])], axis=1)
         if config.get("broadcast"):
             # E057: jugadores visibles en el broadcast real en el mismo instante (alineacion E023/E026)
             import pandas as pd
