@@ -59,6 +59,13 @@ def predict(model: str, data_dir: str | None, dump_proba: str | None = None) -> 
         # descanso entre las dos mitades evaluadas: los equipos cambian de campo
         halftime = (GRADED[0][1] + GRADED[1][0]) // 2
         df = features_for(match, windows, halftime, config.get("features", 1))
+        if config.get("broadcast"):
+            # E057: jugadores visibles en el broadcast real en el mismo instante (alineacion E023/E026)
+            import pandas as pd
+
+            from hackbarca.io.broadcast_signal import broadcast_features
+            from hackbarca.pipeline.real_signals import broadcast_players
+            df = pd.concat([df, broadcast_features(broadcast_players(match.n_frames))], axis=1)
         if config.get("stack"):
             proba = predict_stacked((load_model(), load_model(STAGE2_PATH)), df)
         else:

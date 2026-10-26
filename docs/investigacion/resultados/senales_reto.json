@@ -1,0 +1,125 @@
+{
+ "U1 jugadores visibles en el broadcast (menos = paron)": {
+  "kind": "dead",
+  "auc_seguro": 0.8002994358190602,
+  "auc_publica": 0.8979021368944817,
+  "media_vivo_seguro": -16.3081989866421,
+  "media_D_largo_seguro": -6.3541107832618025,
+  "media_D_cortos": -11.342274901226867,
+  "cobertura_D_cortos": 1.0,
+  "cobertura_dudosos": 1.0,
+  "D_cortos_entre_vivo0_y_paron1": 0.4988828694253343
+ },
+ "U4 balon fuera": {
+  "kind": "dead",
+  "auc_seguro": 0.5603913129884887,
+  "auc_publica": 0.5517062193126023,
+  "media_vivo_seguro": 0.009168927172068084,
+  "media_D_largo_seguro": 0.1299515531490453,
+  "media_D_cortos": 0.17946210268948656,
+  "cobertura_D_cortos": 0.8504886670825536,
+  "cobertura_dudosos": 0.6700352526439483,
+  "D_cortos_entre_vivo0_y_paron1": 1.4099144983805754
+ },
+ "U4 balon quieto en punto de reanudacion": {
+  "kind": "dead",
+  "auc_seguro": 0.5130845416429933,
+  "auc_publica": 0.5,
+  "media_vivo_seguro": 0.0015438062152001142,
+  "media_D_largo_seguro": 0.026531775434596748,
+  "media_D_cortos": 0.00023471882640586797,
+  "cobertura_D_cortos": 0.8504886670825536,
+  "cobertura_dudosos": 0.6700352526439483,
+  "D_cortos_entre_vivo0_y_paron1": -0.052388706633193775
+ },
+ "U4 balon quieto en una linea": {
+  "kind": "dead",
+  "auc_seguro": 0.5564248958305884,
+  "auc_publica": 0.49427495908346974,
+  "media_vivo_seguro": 0.0014549723187233302,
+  "media_D_largo_seguro": 0.10421202621829583,
+  "media_D_cortos": 0.05124694376528117,
+  "cobertura_D_cortos": 0.8504886670825536,
+  "cobertura_dudosos": 0.6700352526439483,
+  "D_cortos_entre_vivo0_y_paron1": 0.4845601304920731
+ },
+ "A1 equipo nombrado en los 2 s siguientes": {
+  "kind": "team",
+  "acuerdo_seguro": 0.7350427350427351,
+  "n_seguro": 8658.0,
+  "acuerdo_dudoso": 0.5045045045045045,
+  "cobertura_dudosos": 0.14242068155111634,
+  "acuerdo_hueco": 0.5827564505978603,
+  "cobertura_huecos": 0.13385826771653545,
+  "acuerdo_publica": 0.442051282051282,
+  "n_publica": 975.0,
+  "cuota_local_predicha": 0.6411484722861969
+ },
+ "A1 equipo nombrado en los 4 s siguientes": {
+  "kind": "team",
+  "acuerdo_seguro": 0.7337738048970074,
+  "n_seguro": 15438.0,
+  "acuerdo_dudoso": 0.5235807860262008,
+  "cobertura_dudosos": 0.24433999216607913,
+  "acuerdo_hueco": 0.5977768629065459,
+  "cobertura_huecos": 0.22997076249555248,
+  "acuerdo_publica": 0.45670731707317075,
+  "n_publica": 1640.0,
+  "cuota_local_predicha": 0.6411484722861969
+ },
+ "A2 palabras de paron en 5 s": {
+  "kind": "dead",
+  "auc_seguro": 0.5344016410168273,
+  "auc_publica": 0.5516233406726919,
+  "media_vivo_seguro": 0.036296637494242286,
+  "media_D_largo_seguro": 0.10509991952789699,
+  "media_D_cortos": 0.10542732376793512,
+  "cobertura_D_cortos": 1.0,
+  "cobertura_dudosos": 1.0,
+  "D_cortos_entre_vivo0_y_paron1": 1.0047585555566665
+ },
+ "A2 palabras de robo en 5 s": {
+  "kind": "dead",
+  "auc_seguro": 0.4978959452751809,
+  "auc_publica": 0.4895539711490632,
+  "media_vivo_seguro": 0.006018731767234761,
+  "media_D_largo_seguro": 0.0018106223175965665,
+  "media_D_cortos": 0.0,
+  "cobertura_D_cortos": 1.0,
+  "cobertura_dudosos": 1.0,
+  "D_cortos_entre_vivo0_y_paron1": 1.4302697777388467
+ },
+ "A4 palabras por segundo (5 s)": {
+  "kind": "dead",
+  "auc_seguro": 0.5463892416759416,
+  "auc_publica": 0.4835129119020753,
+  "media_vivo_seguro": 2.7281222171042527,
+  "media_D_largo_seguro": 2.905009388412017,
+  "media_D_cortos": 2.6185069661052194,
+  "cobertura_D_cortos": 1.0,
+  "cobertura_dudosos": 1.0,
+  "D_cortos_entre_vivo0_y_paron1": -0.6196902250662083
+ },
+ "A4 'replay/again/look' en 5 s": {
+  "kind": "dead",
+  "auc_seguro": 0.5077547609366114,
+  "auc_publica": 0.5425459496255957,
+  "media_vivo_seguro": 0.049454936281283585,
+  "media_D_largo_seguro": 0.06496445815450644,
+  "media_D_cortos": 0.07485963817841547,
+  "cobertura_D_cortos": 1.0,
+  "cobertura_dudosos": 1.0,
+  "D_cortos_entre_vivo0_y_paron1": 1.6380067744701423
+ },
+ "A6 marcador de tiempo o gol en 10 s": {
+  "kind": "dead",
+  "auc_seguro": 0.5268598648382502,
+  "auc_publica": 0.4231470734538219,
+  "media_vivo_seguro": 0.11971441731920773,
+  "media_D_largo_seguro": 0.17343414699570817,
+  "media_D_cortos": 0.10667498440424204,
+  "cobertura_D_cortos": 1.0,
+  "cobertura_dudosos": 1.0,
+  "D_cortos_entre_vivo0_y_paron1": -0.24273079915868898
+ }
+}

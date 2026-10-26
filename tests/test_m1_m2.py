@@ -72,3 +72,37 @@ def test_skillcorner_resample_10_to_25_fps():
     assert np.allclose(out[ok, 0], grid[ok] * 10)
     assert not ok[(grid > 0.4) & (grid < 0.6)].any()    # junto al hueco no se inventa
     assert np.allclose(out[:, 1], 3.0)
+
+
+def test_real_signal_gates_on_synthetic_prediction():
+    from hackbarca.pipeline import real_signals as rs
+    n = 200000
+    pred = np.full(n, 3, dtype=np.int8)
+    for a, b in rs.GRADED:
+        pred[a:b] = 0
+    pred[20000:21000] = 2                               # D largo
+    pred[30000:30050] = 2                               # D corto entre vivos
+    pmax = np.full(n, 0.95)
+    known = np.ones(n, bool)
+    public = np.full(n, 3, dtype=np.int8)
+    ctx = rs.contexts(pred, pmax, known, public)
+    s = np.where(pred == 2, 1.0, 0.0)
+    row = rs.gate_dead("x", s, ctx)
+    assert row["auc_seguro"] == 1.0 and row["D_cortos_entre_vivo0_y_paron1"] == 1.0
+    team = np.where(pred == 0, 1.0, np.nan)
+    assert rs.gate_team("t", team, ctx, pred, public)["acuerdo_seguro"] == 1.0
+
+
+def test_broadcast_signal_follows_state():
+    from hackbarca.io.broadcast_signal import broadcast_features, shape, simulate_broadcast_count
+    rng = np.random.default_rng(0)
+    parts = []
+    for _ in range(80):                               # 80 ciclos de juego (40 s) y paron (20 s)
+        parts += [np.full(1000, rng.integers(0, 2)), np.full(500, 2)]
+    gt = np.concatenate(parts).astype(np.int8)
+    c = simulate_broadcast_count(gt, seed=1)
+    s = shape(c, gt)
+    assert s["vivo"]["ge10"] > 0.8 and s["D"]["ge10"] < 0.45 and s["D"]["le3"] > 0.5
+    assert np.array_equal(c, simulate_broadcast_count(gt, seed=1))          # determinista
+    f = broadcast_features(c)
+    assert {"bc_n", "bc_wide_m75", "bc_wide_chg75"} <= set(f.columns) and len(f) == len(gt)

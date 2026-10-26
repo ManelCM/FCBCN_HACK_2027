@@ -54,6 +54,8 @@ def main(argv=None) -> int:
                         help="peso del modelo profundo en el promedio con LightGBM (E034); 0 = sin el")
     parser.add_argument("--alpha-switch", type=float, default=0.0, help="coste de cambio dinamico (E032)")
     parser.add_argument("--alpha-dead", type=float, default=0.0)
+    parser.add_argument("--broadcast", action="store_true",
+                        help="E057: familia broadcast (simulada en el banco; la entrega usa la senal real)")
     parser.add_argument("--video-fill", action="store_true",
                         help="banco con el relleno de balon por video simulado; la entrega lo aplica (E063)")
     args = parser.parse_args(argv)
@@ -62,8 +64,12 @@ def main(argv=None) -> int:
     if args.video_fill:
         from hackbarca.io.video_fill import VIDEO_FILL
         fill = VIDEO_FILL
+    broadcast = None
+    if args.broadcast:
+        from hackbarca.io.broadcast_signal import BROADCAST_SIGNAL
+        broadcast = BROADCAST_SIGNAL
     games = load_bench(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
-                       names=BENCHES[args.bench], fill=fill)
+                       names=BENCHES[args.bench], fill=fill, broadcast=broadcast)
     os.makedirs(ARTIFACTS, exist_ok=True)
     features, labels = [df for df, _ in games], [gt for _, gt in games]
     if args.stack:
@@ -91,7 +97,7 @@ def main(argv=None) -> int:
     with open(DECODE_PATH, "w") as handle:
         json.dump({"decode": asdict(decode), "use_tags": not args.no_tags, "features": args.features,
                    "stack": args.stack, "bench": args.bench, "deep_weight": args.deep_weight,
-                   "video_fill": args.video_fill},
+                   "video_fill": args.video_fill, "broadcast": args.broadcast},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)
     return 0
