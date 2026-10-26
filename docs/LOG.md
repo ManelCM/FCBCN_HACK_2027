@@ -11,6 +11,37 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-26 — Manel (con agente) · plan completo en marcha
+- Plan aprobado: el **plan completo** (T0-T6), que suma todo lo pedido. Tabla de estado por línea en
+  `docs/05_plan_mejora.md`.
+- **T0** (rama `banco-v3-1`):
+  - banco v3.1 calibrado (E047, ADR-0017): pérdida 160 → 20,5; el balón lento en vivo vuelve (0,96 tramos/min);
+  - guardarraíl (ADR-0018) con los umbrales escritos antes de entrenar;
+  - SkillCorner: 20 partidos con GT completa y sus features listas;
+  - cola en serie (`scripts/cola.sh`, `external_data/cola.txt`): E048 → E049 → E057 → E058 → E071 → E053 → E054.
+- **T1**: `docs/investigacion/06_estado_del_arte_v3.md`.
+  - Lang 2022: el estado del juego sin balón, 92 %.
+  - Link y Hoernig 2017: toques como picos de aceleración ≥ 4 m/s².
+  - Bauer y Anzer, pressing intensity, equipo por color con SigLIP, sonido del golpeo.
+- **T2, puertas en el banco v3.1**:
+  - ✅ **F3 firmas del robo: AUC 0,902 tras un robo** (el centroide sale hacia delante);
+  - ✅ F6 estado sin balón (por poco: 0,879 frente a 0,867 en hueco);
+  - ❌ F1 formación (hueco 0,729), F2 situaciones, F4 pressing, F5 territorio, «control».
+- **T3/T4, señales del reto**:
+  - ✅ **U1, broadcast: AUC 0,90 en la ventana pública** y 0,91 en los huecos. El 60 % de los D cortos va con
+    plano abierto. Simulada en el banco con desajuste ≤ 0,10;
+  - ❌ U4, A1 (comentario → equipo: 0,50 donde dudamos), A2, A3 (golpeo: 0,518), A4, A6.
+  - Pasada de vídeo en GPU (balón en todos los frames + jugadores con el color del torso), unas 6,5 h.
+- **T5**: código del poseedor tipo PathCRF (E078, entrenando 10 pliegues) y de MS-TCN (E079, en cola).
+- Incidencias:
+  - en esta consola, los escapes de barra invertida dentro de los heredoc se interpretan dos veces (rompió
+    `tune_l3` un momento; corregido antes de que lo usara la cola). Para código, usar Edit o Write;
+  - `data/` no se puede borrar (regla de permisos).
+- Pendiente:
+  - resultados de la cola (E048 → E054), del poseedor y de MS-TCN y de la pasada de vídeo (U3, U5, U6, U8);
+  - después, artefacto + guardarraíl con lo que haya pasado.
+- Bloqueos (personas): email Q2/Q3/Q6 (Q6 decide el audio y el broadcast), PR, reproducibilidad, inscripción.
+
 ## 2026-10-25 (noche) — Manel (con agente) · PUNTO DE PARADA
 - **Plan aprobado**: «plan de máxima mejora». Copia de trabajo en `C:\Users\manel\.claude\plans\lucky-cuddling-hellman.md`;
   la versión del equipo está en `docs/05_plan_mejora.md`. Fases:

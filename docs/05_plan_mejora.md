@@ -58,9 +58,9 @@
 | T4 | A5 grada: ataque de quién | 28-30 oct | pendiente | — |
 | T4 | A6 marcadores de tiempo (E055) | 26 oct | ❌ | 0,53 |
 | T4 | silbato y grada como parón (E029, E045) | — | ❌ | sin señal |
-| T5 | M5a poseedor tipo PathCRF | 31 oct-3 nov | pendiente | — |
-| T5 | M5b Ball Radar en los huecos | 31 oct-3 nov | pendiente | — |
-| T5 | M5c MS-TCN / cabeza de fronteras | 4-7 nov | pendiente | — |
+| T5 | M5a poseedor tipo PathCRF (E078) | 26 oct | ⏳ entrenando 10 pliegues | — |
+| T5 | M5b Ball Radar en los huecos | con E078 | ⏳ se mide con el poseedor (equipo en los huecos) | — |
+| T5 | M5c MS-TCN (E079) | 26 oct | ⏳ en cola tras E078 | — |
 | T5 | M5d CatBoost/XGBoost, multitarea | 4-7 nov | pendiente | — |
 | T5 | M5e bagging | 7-9 nov | pendiente | — |
 | T6 | combinación, ablación, artefacto, congelación | 8-14 nov | pendiente | — |
