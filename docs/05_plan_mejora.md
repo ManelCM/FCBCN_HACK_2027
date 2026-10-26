@@ -35,7 +35,7 @@
 | T0 | M1.6 artefacto + guardarraíl (ADR-0018, umbrales pre-registrados) | 27-28 oct | pendiente | — |
 | T1 | búsqueda ampliada → `investigacion/06_estado_del_arte_v3.md` | 26-27 oct | ✅ 26 oct | Lang 2022 (estado sin balón), Link 2017 (toques ≥ 4 m/s²), Bauer y Anzer, pressing intensity, SigLIP/color, sonido del golpeo |
 | T2 | F1 roles y formación (Bialkowski, Shaw y Glickman) (E073) | 26 oct | ❌ por poco | hueco 0,729; tras robo, invertida (va con retraso) |
-| T2 | F2 clusters de situaciones de juego | 27-28 oct | pendiente | — |
+| T2 | F2 clusters de situaciones de juego (E077) | 26 oct | ❌ | hueco 0,67; tras robo 0,68 |
 | T2 | F3 firmas del robo y la contrapresión (E058) | 26 oct | ✅ puerta → ⏳ evaluación en cola | **AUC tras robo 0,902** (centroide hacia delante) |
 | T2 | F4 pressing intensity (E072) | 26 oct | ❌ | tras robo 0,695 |
 | T2 | F5 territorio e inclinación del campo (E059) | 26 oct | ❌ | hueco 0,664 |
@@ -53,7 +53,7 @@
 | T3 | U10 Ball Action Spotting (timebox de 1 día) | 4-7 nov | pendiente | — |
 | T4 | A1 mención → equipo (E055) | 26 oct | ❌ | seguro 0,73; dudoso 0,50-0,52; hueco 0,58-0,60 |
 | T4 | A2 palabras de evento (E055) | 26 oct | ❌ | 0,50-0,53 |
-| T4 | A3 sonido del golpeo | 26-27 oct | pendiente | — |
+| T4 | A3 sonido del golpeo (E076) | 26 oct | ❌ | AUC 0,518 en los toques |
 | T4 | A4 ritmo de habla / «replay» (E055) | 26 oct | ❌ | 0,51-0,55 |
 | T4 | A5 grada: ataque de quién | 28-30 oct | pendiente | — |
 | T4 | A6 marcadores de tiempo (E055) | 26 oct | ❌ | 0,53 |

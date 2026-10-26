@@ -272,7 +272,7 @@ def formation_features(match: MatchTracking, bx: np.ndarray, by: np.ndarray, sig
 
 # ----------------------------------------------------------------------------- columnas extra
 
-EXTRA_FAMILIES = ("transition", "gamestate", "pressing", "formation", "territory")
+EXTRA_FAMILIES = ("transition", "gamestate", "pressing", "formation", "territory", "situation")
 
 
 def extra_features(match: MatchTracking, names) -> "pd.DataFrame":
@@ -297,6 +297,64 @@ def extra_features(match: MatchTracking, names) -> "pd.DataFrame":
         f.update(pressing_features(match, bx, by))
     if "formation" in names:
         f.update(formation_features(match, bx, by, signs))
+    if "situation" in names:
+        f.update(situation_features(match, bx, signs))
     if "territory" in names:
         f.update({k: v for k, v in territory_features(match, signs).items() if "tilt" not in k})
     return pd.DataFrame(f).astype(np.float32)
+
+
+# ----------------------------------------------------------------------------- F2 situaciones de juego
+
+N_SITUATIONS = 6
+
+
+def _kmeans(z: np.ndarray, k: int, iters: int = 25) -> np.ndarray:
+    """k-medias determinista: centros iniciales en cuantiles de la primera componente."""
+    order = np.argsort(z[:, 0])
+    centers = np.stack([z[order[int((i + 0.5) * len(z) / k)]] for i in range(k)])
+    for _ in range(iters):
+        lab = np.argmin(((z[:, None, :] - centers[None]) ** 2).sum(-1), axis=1)
+        new = np.stack([z[lab == j].mean(0) if (lab == j).any() else centers[j] for j in range(k)])
+        if np.allclose(new, centers):
+            break
+        centers = new
+    return centers
+
+
+def situation_features(match: MatchTracking, bx: np.ndarray, signs: dict, step: int = 25) -> dict:
+    """F2 (E077): situacion de juego desde la perspectiva de cada equipo (salida, ataque posicional,
+    repliegue, bloque bajo, balon parado...). k-medias por partido sobre descriptores de 1 s, sin GT;
+    los clusters se ordenan por la altura media del equipo para que cada columna signifique lo mismo
+    en todos los partidos. Feature: pertenencia blanda (softmax de -distancia) a cada cluster."""
+    axes = _team_axes(match, signs)
+    half = match.pitch_length / 2
+    out = {}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        desc = {}
+        for name in ("h", "a"):
+            adv, lat = axes[name]
+            speed = np.nanmean(np.hypot(_velocity(adv, match.fps), _velocity(lat, match.fps)), axis=1)
+            ball_adv = (bx - half) * signs[name]
+            desc[name] = dict(height=np.nanmean(adv, axis=1), width=np.nanmax(lat, 1) - np.nanmin(lat, 1),
+                              length=np.nanmax(adv, 1) - np.nanmin(adv, 1), speed=speed,
+                              ball=np.where(np.isnan(ball_adv), 0.0, ball_adv), known=np.isfinite(ball_adv) * 1.0)
+        for name, other in (("h", "a"), ("a", "h")):
+            d, o = desc[name], desc[other]
+            cols = [d["height"], d["width"], d["length"], -o["height"], o["width"], d["speed"], d["ball"], d["known"]]
+            z = np.column_stack([_span_mean(c, -12, 12) for c in cols])
+            ok = np.isfinite(z).all(1)
+            probs = np.full((match.n_frames, N_SITUATIONS), np.nan)
+            if ok.sum() > 1000:
+                mu, sd = z[ok].mean(0), z[ok].std(0) + 1e-6
+                zs = (z - mu) / sd
+                centers = _kmeans(zs[ok][::step], N_SITUATIONS)
+                centers = centers[np.argsort(centers[:, 0])]       # orden canonico: altura del equipo
+                dist = np.sqrt(((zs[:, None, :] - centers[None]) ** 2).sum(-1))
+                e = np.exp(-(dist - np.nanmin(dist, axis=1, keepdims=True)))
+                probs = e / np.nansum(e, axis=1, keepdims=True)
+            for j in range(N_SITUATIONS):
+                out["si%d_%s" % (j, name)] = probs[:, j]
+                out["si%d_chg75_%s" % (j, name)] = _change(probs[:, j], 75)
+    return out
