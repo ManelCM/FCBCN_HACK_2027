@@ -58,7 +58,7 @@
 | T4 | A5 grada: ataque de quién | 28-30 oct | pendiente | — |
 | T4 | A6 marcadores de tiempo (E055) | 26 oct | ❌ | 0,53 |
 | T4 | silbato y grada como parón (E029, E045) | — | ❌ | sin señal |
-| T5 | M5a poseedor tipo PathCRF (E078) | 26 oct | ⚠️ solo, peor que LightGBM; falta la combinación con E049 | equipo en hueco 0,728 frente a 0,842 |
+| T5 | M5a poseedor tipo PathCRF (E078, E078b) | 26 oct | ❌ solo, peor que LightGBM; combinado con E049, 0,7236 frente a 0,7254 (2 de 10) | equipo en hueco 0,728 frente a 0,842 |
 | T5 | M5b Ball Radar en los huecos | 26 oct | ❌ | equipo en hueco 0,728 < 0,85 |
 | T5 | M5c MS-TCN (E079) | 26 oct | ⏳ en cola tras E078 | — |
 | T5 | M5d CatBoost/XGBoost, multitarea | 4-7 nov | pendiente | — |
