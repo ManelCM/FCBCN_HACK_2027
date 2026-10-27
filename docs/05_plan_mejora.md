@@ -47,7 +47,7 @@
 | T3 | U4 balón fuera o en un punto de reanudación (E055) | 26 oct | ❌ | AUC 0,51-0,56 |
 | T3 | U5 jugadores + equipo por color (portero, árbitro) (E074) | 27 oct | ✅ como pieza de U6 | equipo por color 0,926; 20,4 % árbitros o porteros |
 | T3 | U6 quién conduce (E074 puerta, E075 banco) | 27 oct | ✅ puerta; ✅ **E075 pasa** (0,7692, 10 de 10); ✅ **estrés E075s pasa** (0,7605, 10 de 10); ❌ guardarraíl E075c (D cortos, L1) → ⏳ combinación con F3 (E075b) | acierto implícito 0,90 (dudosos 0,95, huecos 0,87); cobertura 0,40-0,57 |
-| T3 | U7 pose (saque de banda, portero con balón, barrera) (E091) | 27-28 oct (GPU) | ⏳ pasada de pose en marcha (YOLO-pose, mosaicos ×2, ~6 h); puerta `pipeline/pose_gate.py` lista | prueba: 20 personas por frame, 92 % con muñecas |
+| T3 | U7 pose (saque de banda, portero con balón, barrera) (E091) | 27-28 oct (GPU) | ❌ E091: saque de banda con lift 1,65 pero solo el 6,3 % de los dudosos; portero no dice el equipo (0,40) | prueba: 20 personas por frame, 92 % con muñecas |
 | T3 | U8 árbitro y asistentes (E094) | 27 oct | ❌ | AUC del árbitro 0,715 frente a 0,913 de los jugadores del ATD; juntos no suben |
 | T3 | U9 energía de movimiento (flujo óptico) | 27 oct | ⏸ descartada por análisis | el ritmo colectivo ya lo da el ATD (AUC D/vivo 0,913, E094) y el ATD solo pierde jugadores en el 3 % de los frames (U5b, E074); el flujo óptico no tiene dónde añadir |
 | T3 | U10 Ball Action Spotting (timebox de 1 día) | 27 oct-7 nov | ⏳ preparado: T-DEED de SoccerNet Team Ball 2025 sobre el broadcast (`vision/ball_action_pass.py`); falta permiso para ejecutar código y pesos de terceros (GPL-3.0) | `resultados/u10_ball_actions.md` |
