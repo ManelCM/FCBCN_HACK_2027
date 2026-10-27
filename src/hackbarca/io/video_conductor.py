@@ -38,9 +38,14 @@ class VideoConductor:
     dead_keep: float = 0.32   # con el balon muerto, cuota con conductor (el que va a sacar; reto, D seguro)
     dead_next: float = 0.70   # ... y cuota en la que es del equipo de la posesion siguiente (reto: 0,704)
     dead_run_s: float = 2.0   # rachas de conductor durante un paron
+    change_err: float = 0.0   # prueba de estres (E075s): error extra cerca de un cambio H<->A (duelos)
+    change_s: float = 1.5     # ... a menos de estos segundos del cambio
 
 
 VIDEO_CONDUCTOR = VideoConductor()
+# E075s: pesimista frente a lo medido en el reto: menos cobertura (~0,44 en vivo), el doble de errores
+# sueltos, un 35 % de error cerca de cada robo y el lanzador del equipo siguiente solo el 60 %
+VIDEO_CONDUCTOR_STRESS = VideoConductor(keep=0.80, err=0.06, change_err=0.35, dead_next=0.60)
 
 
 def _nearest_team(px, py, team, bx, by, radius):
@@ -87,6 +92,14 @@ def simulate_conductor(match, gt: np.ndarray, sim: VideoConductor = VIDEO_CONDUC
                          match.ball_x[grid], match.ball_y[grid], sim.radius)
     seen = _runs(rng, len(grid), sim.keep, sim.vis_run_s * FPS / sim.every)
     wrong = _runs(rng, len(grid), sim.err, sim.err_run_s * FPS / sim.every)
+    if sim.change_err > 0:
+        # los errores del video se juntan en los duelos: cerca de cada cambio de equipo de la GT
+        live = np.flatnonzero(np.isin(gt, (H, A)))
+        chg = live[1:][gt[live[1:]] != gt[live[:-1]]]
+        if len(chg):
+            k = np.searchsorted(chg, grid)
+            d = np.minimum(np.abs(grid - chg[np.maximum(k - 1, 0)]), np.abs(chg[np.minimum(k, len(chg) - 1)] - grid))
+            wrong |= (d <= sim.change_s * FPS) & (rng.random(len(grid)) < sim.change_err)
     team = np.where(seen, team, np.nan)
     team = np.where(wrong & np.isfinite(team), 1 - team, team)
     dead = gt[grid] == 2
@@ -181,10 +194,16 @@ def calibrate() -> int:
     from hackbarca.io.external import load_bench_game
     from hackbarca.pipeline.bench_config import BENCH_DEGRADE_V3_1, BENCH_GAMES_V3
     print("reto: cobertura 0,52 en vivo seguro, 0,57 en huecos, 0,32 en D seguro; acierto implicito ~0,90 (0,87 en huecos)")
+    for label, sim in (("base", VIDEO_CONDUCTOR), ("estres", VIDEO_CONDUCTOR_STRESS)):
+        _calibrate(label, sim, degrade, load_bench_game, BENCH_DEGRADE_V3_1, BENCH_GAMES_V3)
+    return 0
+
+
+def _calibrate(label, sim, degrade, load_bench_game, BENCH_DEGRADE_V3_1, BENCH_GAMES_V3):
     cov_live, cov_gap, cov_dead, hit = [], [], [], []
     for i, name in enumerate(BENCH_GAMES_V3):
         match, gt = load_bench_game(name)
-        team = simulate_conductor(match, gt, seed=i)
+        team = simulate_conductor(match, gt, sim, seed=i)
         known = ~np.isnan(degrade(match, BENCH_DEGRADE_V3_1, seed=i).ball_x)
         grid = np.zeros(match.n_frames, dtype=bool)
         grid[::VIDEO_CONDUCTOR.every] = True
@@ -194,10 +213,9 @@ def calibrate() -> int:
         cov_dead.append(np.isfinite(team[grid & (gt == 2)]))
         ok = live & np.isfinite(team)
         hit.append(team[ok] == gt[ok])
-    print("banco: cobertura %.3f en vivo con balon visible, %.3f en huecos, %.3f en D; acierto frente a la GT %.3f" % (
+    print("banco %s: cobertura %.3f en vivo con balon visible, %.3f en huecos, %.3f en D; acierto frente a la GT %.3f" % (label,
         np.mean(np.concatenate(cov_live)), np.mean(np.concatenate(cov_gap)), np.mean(np.concatenate(cov_dead)),
         np.mean(np.concatenate(hit))))
-    return 0
 
 
 def shift_report() -> int:

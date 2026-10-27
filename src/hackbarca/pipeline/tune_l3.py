@@ -223,6 +223,8 @@ def main(argv=None) -> int:
                         help="E057: familia broadcast (jugadores visibles en la tele), simulada en el banco")
     parser.add_argument("--video-conductor", action="store_true",
                         help="E075: familia conductor segun el video (U6), simulada en el banco")
+    parser.add_argument("--vc-stress", action="store_true",
+                        help="E075s: con --video-conductor, simulacion pesimista (io/video_conductor.VIDEO_CONDUCTOR_STRESS)")
     parser.add_argument("--extra-sc", type=int, default=0,
                         help="M3 (E054): anade a todos los pliegues los k primeros partidos de SkillCorner (solo entrenar)")
     parser.add_argument("--train-subset", type=int, default=0,
@@ -259,8 +261,8 @@ def main(argv=None) -> int:
             broadcast = BROADCAST_SIGNAL
         conductor = None
         if args.video_conductor:
-            from hackbarca.io.video_conductor import VIDEO_CONDUCTOR
-            conductor = VIDEO_CONDUCTOR
+            from hackbarca.io.video_conductor import VIDEO_CONDUCTOR, VIDEO_CONDUCTOR_STRESS
+            conductor = VIDEO_CONDUCTOR_STRESS if args.vc_stress else VIDEO_CONDUCTOR
         games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
                                     names=names, fill=fill, broadcast=broadcast,
                                     extras=tuple(x for x in args.extras.split("+") if x), conductor=conductor)
@@ -335,7 +337,7 @@ def main(argv=None) -> int:
     if args.broadcast:
         name = name.replace(".npz", "_bc.npz")
     if args.video_conductor:
-        name = name.replace(".npz", "_vc.npz")
+        name = name.replace(".npz", "_vcs.npz" if args.vc_stress else "_vc.npz")
     if args.extras:
         name = name.replace(".npz", "_x{}.npz".format(args.extras))
     if args.stack:
