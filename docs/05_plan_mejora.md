@@ -43,11 +43,11 @@
 | T2 | familia «control» (E051) | 26 oct | ❌ | AUC tras un robo 0,744 < 0,80; se reevalúa junto al poseedor |
 | T3 | U1 tipo de plano del broadcast → D (E055-E057) | 27 oct | ✅ puerta; ❌ E057 no pasa (0,7311, 6 de 10) | AUC 0,90 en la ventana pública; 0,91 en los huecos; el 60 % de los D cortos va con plano abierto |
 | T3 | U2 repeticiones del broadcast → D | 28-30 oct | pendiente | — |
-| T3 | U3 toques desde el balón del vídeo sin filtrar | 26-27 oct | ⏳ pasada de GPU (~6,5 h) | — |
+| T3 | U3 toques desde el balón del vídeo sin filtrar (E092) | 27 oct | ❌ | lift 1,38 < 1,5 (ATD: 2,24); el balón del vídeo es demasiado ruidoso |
 | T3 | U4 balón fuera o en un punto de reanudación (E055) | 26 oct | ❌ | AUC 0,51-0,56 |
 | T3 | U5 jugadores + equipo por color (portero, árbitro) (E074) | 27 oct | ✅ como pieza de U6 | equipo por color 0,926; 20,4 % árbitros o porteros |
 | T3 | U6 quién conduce (E074 puerta, E075 banco) | 27 oct | ✅ puerta; ✅ **E075 pasa** (0,7692, 10 de 10); ✅ **estrés E075s pasa** (0,7605, 10 de 10); ❌ guardarraíl E075c (D cortos, L1) → ⏳ combinación con F3 (E075b) | acierto implícito 0,90 (dudosos 0,95, huecos 0,87); cobertura 0,40-0,57 |
-| T3 | U7 pose (saque de banda, portero con balón, barrera) | 28-30 oct (GPU) | pendiente | — |
+| T3 | U7 pose (saque de banda, portero con balón, barrera) (E091) | 27-28 oct (GPU) | ⏳ pasada de pose en marcha (YOLO-pose, mosaicos ×2, ~6 h) | prueba: 20 personas por frame, 92 % con muñecas |
 | T3 | U8 árbitro y asistentes | 28-30 oct | pendiente | — |
 | T3 | U9 energía de movimiento (flujo óptico) | 28-30 oct | pendiente | — |
 | T3 | U10 Ball Action Spotting (timebox de 1 día) | 4-7 nov | pendiente | — |
