@@ -11,30 +11,47 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
-## 2026-10-27 (tarde) — Manel (con agente) · U6 pasa también con estrés; guardarraíl relativo; la entrega pasa a E075
+## 2026-10-27 (tarde) — Manel (con agente) · guardarraíl relativo; la entrega pasa a E075 + regla de D cortos
 - Hecho (rama `banco-v3-1`):
   - Cola de la noche frente a E049 (0,7254):
     - **E075, U6 conductor por vídeo: 0,7692 (10 de 10)**;
     - **E058b, F3 firmas del robo: 0,7410 (9 de 10)**;
-    - E057 broadcast: 0,7311 (6 de 10) ❌;
+    - E057 broadcast: 0,7311 ❌;
     - E071b estado del juego: 0,7271 ❌.
-  - **E075c**: el artefacto con vídeo da el mismo sha dos veces. Frente a E070 mejora las cuatro medidas de
-    forma (D cortos 0,680 → 0,529/min, cambios directos 1,397 → 1,586), pero no los umbrales de ADR-0018.
-  - **Comprobación de la simulación** (`pipeline/vc_near_report.py`): en el reto, el acuerdo entre vídeo y
-    predicción cerca de los robos queda entre la simulación base y una pesimista, y más cerca de la pesimista.
-  - **E075s** (simulación pesimista: el doble de errores, un 35 % de error en los duelos, menos cobertura):
+  - **Comprobación de la simulación de U6** (`pipeline/vc_near_report.py`): en el reto, el acuerdo entre vídeo
+    y predicción cerca de los robos queda entre la simulación base y una pesimista. **E075s** (pesimista):
     **0,7605, 10 de 10**. U6 es sólida.
-  - **ADR-0020** (decidido por Manel): el guardarraíl pasa a ser relativo, sin empeorar ninguna medida frente
-    a la entrega vigente. Los umbrales de ADR-0018 quedan como objetivo de L1.
-  - **E075d: la entrega pasa a E075** (sha `9cb9f1d33262a71a`). Humo en la ventana pública: formato bien,
-    macroF1 0,773, spellF1 0,493 (E070: 0,651). No decide (ADR-0019), pero se apunta.
+  - **ADR-0020** (decidido por Manel): guardarraíl relativo, sin empeorar ninguna medida frente a la entrega
+    vigente. **E075d**: la entrega pasa a E075 (sha `9cb9f1d33262a71a`).
+  - **E090/E090b, regla de D cortos**: un D de menos de 3 s entre dos tramos vivos pasa al tramo anterior.
+    - k se fija solo con el banco: +0,001 en el banco limpio y +0,023 con el defecto del reto inyectado.
+    - En el reto, D cortos **0,529 → 0,198/min** y cambios directos 1,586 → 1,775.
+    - El exceso de D cortos cae sobre todo en campo abierto (0,19/min frente a 0,004 en la GT del banco).
+  - **ADR-0021** (aceptada por Manel). **E090c: la entrega es E075 + regla de 3 s**, sha `d976e575374b00d5`.
+    Frente a E070: D cortos 0,680 → 0,198, tramos D 1,775 → 1,313, cambios 1,397 → 1,775.
+  - Humo en la ventana pública (ADR-0019, no decide): E070 0,651, E075 0,493, E075 + regla 0,502.
+  - Líneas cerradas:
+    - **E092**, U3 toques del vídeo: lift 1,38 ❌;
+    - **E094**, U8 árbitro: AUC 0,715 ❌;
+    - **E095**, A5 grada: AUC 0,47-0,54 ❌;
+    - U9 descartada por análisis;
+    - U2 pasa a L3 de la otra sesión.
+  - Código nuevo:
+    - **M5e**, bagging (`--bag`) → E093 en cola;
+    - **M5d**, mezcla LightGBM + XGBoost (`--xgb-mix`, xgboost añadido a `pyproject.toml`) → E096 en cola;
+    - **U7**, pasada de pose (`vision/pose_pass.py`, YOLO-pose con mosaicos ×2) en marcha en la GPU, unas 6 h.
 - Pendiente:
-  - cola: E075b (U6 + F3) → E053 → E054;
-  - L1, los D cortos (0,53/min frente al objetivo de 0,25): U7 pose y la línea de la otra sesión;
-  - U3, U2, U8, U9, U10, A5, M5d, M5e; T6.
+  - cola: E075b (U6 + F3) → E093 → E096 → E054 → E053;
+  - puerta de U7 cuando acabe la pasada de pose;
+  - U10, con un timebox de 1 día;
+  - T6.
 - Bloqueos / preguntas para el equipo:
-  - **revisar ADR-0020** (si no se aprueba, se vuelve a E070), además de ADR-0019;
-  - el spellF1 de la ventana pública ha bajado con E075: no decide, pero conviene que una persona lo sepa.
+  - **revisar ADR-0020 y ADR-0021**. Si no se aprueban, se vuelve a E075 (`short_dead_frames: 0`) o a E070;
+  - **numeración**: el plan de parones de la otra sesión reservaba ADR-0020 para «banco v3.2». Ese número ya
+    es el guardarraíl relativo, así que v3.2 debe usar ADR-0022 o siguiente. Mis experimentos nuevos van de
+    E090 en adelante;
+  - el spellF1 de la ventana pública baja con E075 (humo; no decide, pero que una persona lo sepa);
+  - `xgboost` es una dependencia nueva: `uv sync`.
 
 ---
 
