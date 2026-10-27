@@ -50,7 +50,7 @@
 | T3 | U7 pose (saque de banda, portero con balón, barrera) (E091) | 27-28 oct (GPU) | ❌ E091: saque de banda con lift 1,65 pero solo el 6,3 % de los dudosos; portero no dice el equipo (0,40) | prueba: 20 personas por frame, 92 % con muñecas |
 | T3 | U8 árbitro y asistentes (E094) | 27 oct | ❌ | AUC del árbitro 0,715 frente a 0,913 de los jugadores del ATD; juntos no suben |
 | T3 | U9 energía de movimiento (flujo óptico) | 27 oct | ⏸ descartada por análisis | el ritmo colectivo ya lo da el ATD (AUC D/vivo 0,913, E094) y el ATD solo pierde jugadores en el 3 % de los frames (U5b, E074); el flujo óptico no tiene dónde añadir |
-| T3 | U10 Ball Action Spotting (timebox de 1 día) | 27 oct-7 nov | ⏳ preparado: T-DEED de SoccerNet Team Ball 2025 sobre el broadcast (`vision/ball_action_pass.py`); falta permiso para ejecutar código y pesos de terceros (GPL-3.0) | `resultados/u10_ball_actions.md` |
+| T3 | U10 Ball Action Spotting (timebox de 1 día) | 27 oct-7 nov | ✅ **puerta E097 pasa**: el equipo de las acciones del broadcast acuerda 0,86-0,93 con la predicción segura y cubre el 11-31 % de los dudosos → ⏳ simulación en el banco y protocolo | `resultados/u10_ball_actions.md` |
 | T4 | A1 mención → equipo (E055) | 26 oct | ❌ | seguro 0,73; dudoso 0,50-0,52; hueco 0,58-0,60 |
 | T4 | A2 palabras de evento (E055) | 26 oct | ❌ | 0,50-0,53 |
 | T4 | A3 sonido del golpeo (E076) | 26 oct | ❌ | AUC 0,518 en los toques |
