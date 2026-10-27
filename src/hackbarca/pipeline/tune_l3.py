@@ -61,7 +61,7 @@ def _code_hash() -> str:
 
 
 def feature_path(game: str, index: int, version: int, use_tags: bool, params, fill=None, broadcast=None,
-                 extras=(), conductor=None) -> str:
+                 extras=(), conductor=None, actions=None) -> str:
     """Fichero de cache de las features de un partido degradado (semilla = posicion en el banco)."""
     parts = (game, index, version, use_tags, asdict(params), _code_hash())
     if fill is not None:  # solo entra en la clave si se usa: la cache sin relleno sigue valiendo
@@ -76,6 +76,9 @@ def feature_path(game: str, index: int, version: int, use_tags: bool, params, fi
     if conductor is not None:  # E075: conductor segun el video, simulado (io/video_conductor)
         with open(os.path.join(_REPO_ROOT, "src", "hackbarca", "io", "video_conductor.py"), "rb") as handle:
             parts += ("conductor", asdict(conductor), hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest())
+    if actions is not None:  # E098: acciones con balon del broadcast, simuladas (io/ball_action_signal)
+        with open(os.path.join(_REPO_ROOT, "src", "hackbarca", "io", "ball_action_signal.py"), "rb") as handle:
+            parts += ("actions", asdict(actions), hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest())
     key = hashlib.sha1(repr(parts).encode())
     return os.path.join(FEATURE_CACHE, "{}_v{}_{}.npz".format(game, version, key.hexdigest()[:12]))
 
@@ -87,7 +90,7 @@ def read_features(path: str):
 
 
 def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES, fill=None,
-                        broadcast=None, extras=(), conductor=None):
+                        broadcast=None, extras=(), conductor=None, actions=None):
     """[(ruta de features en cache, gt)] por partido; calcula y guarda solo lo que falte.
 
     fill: VideoFill para simular el relleno del balon con el detector de video (E063), o None.
@@ -97,7 +100,7 @@ def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, na
     out = []
     for i, game in enumerate(names):
         match, gt = load_bench_game(game)
-        path = feature_path(game, i, version, use_tags, params, fill, broadcast, extras, conductor)
+        path = feature_path(game, i, version, use_tags, params, fill, broadcast, extras, conductor, actions)
         if not os.path.exists(path):
             degraded = degrade(match, params, seed=i)
             if fill is not None:
@@ -124,6 +127,12 @@ def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, na
 
                 from hackbarca.io.video_conductor import conductor_features, simulate_conductor
                 df = pd.concat([df, conductor_features(simulate_conductor(match, gt, conductor, seed=i))], axis=1)
+            if actions is not None:
+                # E098: equipo de las acciones con balon del broadcast, simulado con la GT y lo medido en el reto
+                import pandas as pd
+
+                from hackbarca.io.ball_action_signal import ball_action_features, simulate_ball_actions
+                df = pd.concat([df, ball_action_features(simulate_ball_actions(gt, actions, seed=i))], axis=1)
             tmp = path[:-4] + ".tmp.npz"  # escritura atomica: un proceso cortado no deja cache rota
             np.savez(tmp, columns=np.array(df.columns, dtype=str), values=df.to_numpy(np.float32))
             os.replace(tmp, path)
@@ -132,9 +141,10 @@ def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, na
 
 
 def load_bench(use_tags: bool = True, version: int = 1, params=None, names=BENCH_GAMES, fill=None, broadcast=None,
-               extras=(), conductor=None):
+               extras=(), conductor=None, actions=None):
     return [(read_features(path), gt)
-            for path, gt in bench_feature_paths(use_tags, version, params, names, fill, broadcast, extras, conductor)]
+            for path, gt in bench_feature_paths(use_tags, version, params, names, fill, broadcast, extras, conductor,
+                                                actions)]
 
 
 def _materialize(item):
@@ -225,6 +235,8 @@ def main(argv=None) -> int:
                         help="E057: familia broadcast (jugadores visibles en la tele), simulada en el banco")
     parser.add_argument("--video-conductor", action="store_true",
                         help="E075: familia conductor segun el video (U6), simulada en el banco")
+    parser.add_argument("--ball-actions", action="store_true",
+                        help="E098: familia acciones con balon del broadcast (U10), simulada en el banco")
     parser.add_argument("--bag", type=int, default=1,
                         help="M5e (E093): modelos por capa con desfases del submuestreo, promediados")
     parser.add_argument("--xgb-mix", action="store_true",
@@ -269,9 +281,14 @@ def main(argv=None) -> int:
         if args.video_conductor:
             from hackbarca.io.video_conductor import VIDEO_CONDUCTOR, VIDEO_CONDUCTOR_STRESS
             conductor = VIDEO_CONDUCTOR_STRESS if args.vc_stress else VIDEO_CONDUCTOR
+        actions = None
+        if args.ball_actions:
+            from hackbarca.io.ball_action_signal import BALL_ACTIONS
+            actions = BALL_ACTIONS
         games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
                                     names=names, fill=fill, broadcast=broadcast,
-                                    extras=tuple(x for x in args.extras.split("+") if x), conductor=conductor)
+                                    extras=tuple(x for x in args.extras.split("+") if x), conductor=conductor,
+                                    actions=actions)
     train_games = games
     if args.controlled:
         def t_of(game):
@@ -345,6 +362,8 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_bc.npz")
     if args.video_conductor:
         name = name.replace(".npz", "_vcs.npz" if args.vc_stress else "_vc.npz")
+    if args.ball_actions:
+        name = name.replace(".npz", "_ba.npz")
     if args.extras:
         name = name.replace(".npz", "_x{}.npz".format(args.extras))
     if args.stack:

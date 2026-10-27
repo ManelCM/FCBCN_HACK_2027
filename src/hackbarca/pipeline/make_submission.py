@@ -80,6 +80,12 @@ def predict(model: str, data_dir: str | None, dump_proba: str | None = None,
 
             from hackbarca.io.video_conductor import conductor_features, real_conductor
             df = pd.concat([df, conductor_features(real_conductor(match))], axis=1)
+        if config.get("ball_actions"):
+            # E098: equipo de las acciones con balon del broadcast (vision/ball_action_pass, data/derived/ball_actions)
+            import pandas as pd
+
+            from hackbarca.io.ball_action_signal import ball_action_features, real_ball_actions
+            df = pd.concat([df, ball_action_features(real_ball_actions(match))], axis=1)
         if config.get("stack"):
             proba = predict_stacked((load_model(), load_model(STAGE2_PATH)), df)
         else:
