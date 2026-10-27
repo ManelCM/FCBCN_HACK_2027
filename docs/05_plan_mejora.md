@@ -42,20 +42,20 @@
 | T2 | F6 estado del juego sin balón, Lang 2022 (E071) | 27 oct | ✅ por poco; ❌ E071b no pasa (0,7271, +0,002) | hueco 0,879 frente a 0,867 |
 | T2 | familia «control» (E051) | 26 oct | ❌ | AUC tras un robo 0,744 < 0,80; se reevalúa junto al poseedor |
 | T3 | U1 tipo de plano del broadcast → D (E055-E057) | 27 oct | ✅ puerta; ❌ E057 no pasa (0,7311, 6 de 10) | AUC 0,90 en la ventana pública; 0,91 en los huecos; el 60 % de los D cortos va con plano abierto |
-| T3 | U2 repeticiones del broadcast → D | 28-30 oct | pendiente | — |
+| T3 | U2 repeticiones del broadcast → D | — | → L3 de `06_plan_parones.md` (E085, otra sesión) | depende de Q6; U1, su base, no pasó (E057) |
 | T3 | U3 toques desde el balón del vídeo sin filtrar (E092) | 27 oct | ❌ | lift 1,38 < 1,5 (ATD: 2,24); el balón del vídeo es demasiado ruidoso |
 | T3 | U4 balón fuera o en un punto de reanudación (E055) | 26 oct | ❌ | AUC 0,51-0,56 |
 | T3 | U5 jugadores + equipo por color (portero, árbitro) (E074) | 27 oct | ✅ como pieza de U6 | equipo por color 0,926; 20,4 % árbitros o porteros |
 | T3 | U6 quién conduce (E074 puerta, E075 banco) | 27 oct | ✅ puerta; ✅ **E075 pasa** (0,7692, 10 de 10); ✅ **estrés E075s pasa** (0,7605, 10 de 10); ❌ guardarraíl E075c (D cortos, L1) → ⏳ combinación con F3 (E075b) | acierto implícito 0,90 (dudosos 0,95, huecos 0,87); cobertura 0,40-0,57 |
 | T3 | U7 pose (saque de banda, portero con balón, barrera) (E091) | 27-28 oct (GPU) | ⏳ pasada de pose en marcha (YOLO-pose, mosaicos ×2, ~6 h) | prueba: 20 personas por frame, 92 % con muñecas |
 | T3 | U8 árbitro y asistentes (E094) | 27 oct | ❌ | AUC del árbitro 0,715 frente a 0,913 de los jugadores del ATD; juntos no suben |
-| T3 | U9 energía de movimiento (flujo óptico) | 28-30 oct | pendiente | — |
+| T3 | U9 energía de movimiento (flujo óptico) | 27 oct | ⏸ descartada por análisis | el ritmo colectivo ya lo da el ATD (AUC D/vivo 0,913, E094) y el ATD solo pierde jugadores en el 3 % de los frames (U5b, E074); el flujo óptico no tiene dónde añadir |
 | T3 | U10 Ball Action Spotting (timebox de 1 día) | 4-7 nov | pendiente | — |
 | T4 | A1 mención → equipo (E055) | 26 oct | ❌ | seguro 0,73; dudoso 0,50-0,52; hueco 0,58-0,60 |
 | T4 | A2 palabras de evento (E055) | 26 oct | ❌ | 0,50-0,53 |
 | T4 | A3 sonido del golpeo (E076) | 26 oct | ❌ | AUC 0,518 en los toques |
 | T4 | A4 ritmo de habla / «replay» (E055) | 26 oct | ❌ | 0,51-0,55 |
-| T4 | A5 grada: ataque de quién | 28-30 oct | pendiente | — |
+| T4 | A5 grada: ataque de quién (E095) | 27 oct | ❌ | AUC 0,47-0,54: sin señal |
 | T4 | A6 marcadores de tiempo (E055) | 26 oct | ❌ | 0,53 |
 | T4 | silbato y grada como parón (E029, E045) | — | ❌ | sin señal |
 | T5 | M5a poseedor tipo PathCRF (E078, E078b) | 26 oct | ❌ solo, peor que LightGBM; combinado con E049, 0,7236 frente a 0,7254 (2 de 10) | equipo en hueco 0,728 frente a 0,842 |
