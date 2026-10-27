@@ -11,6 +11,33 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-27 (tarde) — Manel (con agente) · U6 pasa también con estrés; guardarraíl relativo; la entrega pasa a E075
+- Hecho (rama `banco-v3-1`):
+  - Cola de la noche frente a E049 (0,7254):
+    - **E075, U6 conductor por vídeo: 0,7692 (10 de 10)**;
+    - **E058b, F3 firmas del robo: 0,7410 (9 de 10)**;
+    - E057 broadcast: 0,7311 (6 de 10) ❌;
+    - E071b estado del juego: 0,7271 ❌.
+  - **E075c**: el artefacto con vídeo da el mismo sha dos veces. Frente a E070 mejora las cuatro medidas de
+    forma (D cortos 0,680 → 0,529/min, cambios directos 1,397 → 1,586), pero no los umbrales de ADR-0018.
+  - **Comprobación de la simulación** (`pipeline/vc_near_report.py`): en el reto, el acuerdo entre vídeo y
+    predicción cerca de los robos queda entre la simulación base y una pesimista, y más cerca de la pesimista.
+  - **E075s** (simulación pesimista: el doble de errores, un 35 % de error en los duelos, menos cobertura):
+    **0,7605, 10 de 10**. U6 es sólida.
+  - **ADR-0020** (decidido por Manel): el guardarraíl pasa a ser relativo, sin empeorar ninguna medida frente
+    a la entrega vigente. Los umbrales de ADR-0018 quedan como objetivo de L1.
+  - **E075d: la entrega pasa a E075** (sha `9cb9f1d33262a71a`). Humo en la ventana pública: formato bien,
+    macroF1 0,773, spellF1 0,493 (E070: 0,651). No decide (ADR-0019), pero se apunta.
+- Pendiente:
+  - cola: E075b (U6 + F3) → E053 → E054;
+  - L1, los D cortos (0,53/min frente al objetivo de 0,25): U7 pose y la línea de la otra sesión;
+  - U3, U2, U8, U9, U10, A5, M5d, M5e; T6.
+- Bloqueos / preguntas para el equipo:
+  - **revisar ADR-0020** (si no se aprueba, se vuelve a E070), además de ADR-0019;
+  - el spellF1 de la ventana pública ha bajado con E075: no decide, pero conviene que una persona lo sepa.
+
+---
+
 ## 2026-10-27 — Manel (con agente) · E049 pasa; guardarraíl no; U6 vídeo pasa la puerta
 - Hecho (rama `banco-v3-1`):
   - **E049**: reentrenado en v3.1, **0,7254 frente a 0,7059 (10 de 10)**; con la decodificación de la entrega

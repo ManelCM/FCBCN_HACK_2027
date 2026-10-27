@@ -10,7 +10,10 @@
   "use_tags": false,
   "features": "touch+ball+players+blocks+structure+restart",
   "stack": true,
-  "bench": "v3",
+  "bench": "v3_1",
   "deep_weight": 0.0,
-  "video_fill": false
+  "video_fill": false,
+  "broadcast": false,
+  "video_conductor": true,
+  "extras": []
 }
