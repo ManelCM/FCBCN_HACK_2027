@@ -26,6 +26,7 @@ vision = [
     "opencv-python>=4.10",
     "torch>=2.5",
     "torchvision>=0.20",
+    "timm>=1.0.30",
 ]
 
 [build-system]
