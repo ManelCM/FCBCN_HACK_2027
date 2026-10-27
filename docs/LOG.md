@@ -11,6 +11,14 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-27 (tarde, 2) — Manel (con agente) · E075b no pasa; U7 y U10 preparados
+- **E075b (U6 + F3):** 0,7714 frente a 0,7692 de E075 (+0,002, 7 de 10). No pasa ADR-0008. Con el vídeo dentro, F3 apenas suma. La entrega no cambia: E075 + regla de 3 s.
+- **M5d/M5e:** `train_l3_final --bag N / --xgb-mix` guarda los modelos compuestos en el artefacto (JSON con cabecera dentro del .gz, idéntico byte a byte). Test de ida y vuelta añadido; 76 tests pasan.
+- **U7:** `pipeline/pose_gate.py` está listo (saque de banda y portero con el balón, con pseudoetiquetas). Se lanza al terminar la pasada de pose de la GPU.
+- **U10:** el baseline oficial de SoccerNet Team Ball 2025 (T-DEED) da 12 acciones con el balón y el equipo que las hace, y se aplica sobre el broadcast. El código está en `vision/ball_action_pass.py`; el código y los pesos de terceros, en `external_data/tdeed` (GPL-3.0, fuera de git); `timm` entra en el grupo `vision`. **No se ha ejecutado**: el modo automático pide permiso explícito para ejecutar código y pesos descargados. Detalle en `docs/investigacion/resultados/u10_ball_actions.md`.
+- **Cola:** E093 (bagging ×3, desde las 14:57) → E096 (mezcla con XGBoost) → E054 → E053.
+- **Bloquea:** el permiso para U10.
+
 ## 2026-10-27 (tarde) — Manel (con agente) · guardarraíl relativo; la entrega pasa a E075 + regla de D cortos
 - Hecho (rama `banco-v3-1`):
   - Cola de la noche frente a E049 (0,7254):
