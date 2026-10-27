@@ -91,6 +91,26 @@ class XgbModel:
         return self.names
 
 
+def model_to_dict(model) -> dict:
+    """Bag / XgbModel / lgb.Booster a un dict de texto, para guardarlo en el artefacto."""
+    if isinstance(model, Bag):
+        return {"bag": [model_to_dict(m) for m in model.boosters]}
+    if isinstance(model, XgbModel):
+        return {"xgb": bytes(model.booster.save_raw("json")).decode(), "names": model.names}
+    return {"lgb": model.model_to_string().replace("\r\n", "\n")}
+
+
+def model_from_dict(data: dict):
+    if "bag" in data:
+        return Bag(model_from_dict(m) for m in data["bag"])
+    if "xgb" in data:
+        import xgboost as xgb
+        booster = xgb.Booster()
+        booster.load_model(bytearray(data["xgb"].encode()))
+        return XgbModel(booster, data["names"])
+    return lgb.Booster(model_str=data["lgb"])
+
+
 def _train_one(features, labels, offset: int):
     xs, ys = [], []
     for df, y in zip(features, labels):

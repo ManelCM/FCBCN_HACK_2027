@@ -23,19 +23,29 @@ MODEL_PATH = os.path.join(ARTIFACTS, "l3_lgbm.txt.gz")
 STAGE2_PATH = os.path.join(ARTIFACTS, "l3_stage2.txt.gz")  # solo si el modelo esta apilado (E018)
 SEQ_PATH = os.path.join(ARTIFACTS, "seq_state.npz")       # modelo profundo (E034)
 CHANGE_PATHS = (os.path.join(ARTIFACTS, "change_team.txt.gz"), os.path.join(ARTIFACTS, "change_dead.txt.gz"))
+BUNDLE = "hackbarca-bundle\n"   # cabecera de los modelos que no son un solo Booster (M5d, M5e)
 
 
 def save_model(model, path: str = MODEL_PATH) -> None:
     # mtime=0 y LF: el .gz es identico byte a byte entre ejecuciones y sistemas
-    text = model.model_to_string().replace("\r\n", "\n").encode()
+    import lightgbm as lgb
+    if isinstance(model, lgb.Booster):
+        text = model.model_to_string().replace("\r\n", "\n").encode()
+    else:
+        from hackbarca.models.l3 import model_to_dict
+        text = (BUNDLE + json.dumps(model_to_dict(model), sort_keys=True)).encode()
     with open(path, "wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0, filename="") as gz:
         gz.write(text)
 
 
 def load_model(path: str = MODEL_PATH):
     import lightgbm as lgb
-    with gzip.open(path, "rt") as handle:
-        return lgb.Booster(model_str=handle.read())
+    with gzip.open(path, "rt", newline="") as handle:
+        text = handle.read()
+    if text.startswith(BUNDLE):
+        from hackbarca.models.l3 import model_from_dict
+        return model_from_dict(json.loads(text[len(BUNDLE):]))
+    return lgb.Booster(model_str=text)
 DECODE_PATH = os.path.join(ARTIFACTS, "l3_decode.json")
 
 
@@ -61,10 +71,14 @@ def main(argv=None) -> int:
                         help="familia conductor segun el video, simulada en el banco; la entrega usa el video real (E075)")
     parser.add_argument("--short-dead", type=int, default=75,
                         help="regla de D cortos de la entrega en frames (ADR-0021, E090); 0 = sin regla")
+    parser.add_argument("--bag", type=int, default=1, help="M5e: media de N modelos con desfases del submuestreo")
+    parser.add_argument("--xgb-mix", action="store_true", help="M5d: media de LightGBM y XGBoost en cada modelo")
     parser.add_argument("--video-fill", action="store_true",
                         help="banco con el relleno de balon por video simulado; la entrega lo aplica (E063)")
     args = parser.parse_args(argv)
 
+    from hackbarca.models import l3
+    l3.BAGS, l3.XGB_MIX = args.bag, args.xgb_mix
     fill = None
     if args.video_fill:
         from hackbarca.io.video_fill import VIDEO_FILL
@@ -109,6 +123,7 @@ def main(argv=None) -> int:
                    "stack": args.stack, "bench": args.bench, "deep_weight": args.deep_weight,
                    "video_fill": args.video_fill, "broadcast": args.broadcast,
                    "video_conductor": args.video_conductor, "short_dead_frames": args.short_dead,
+                   "bag": args.bag, "xgb_mix": args.xgb_mix,
                    "extras": [x for x in args.extras.split("+") if x]},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)

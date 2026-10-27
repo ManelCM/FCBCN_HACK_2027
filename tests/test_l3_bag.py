@@ -36,3 +36,18 @@ def test_xgb_mix(monkeypatch):
     p = l3.predict_proba(model, feats[0])
     assert p.shape == (3000, 3) and np.allclose(p.sum(1), 1)
     assert len(model.feature_importance("gain")) == 2
+
+
+def test_bundle_roundtrip(monkeypatch, tmp_path):
+    from hackbarca.pipeline import train_l3_final as final
+    monkeypatch.setattr(l3, "N_ROUNDS", 20)
+    monkeypatch.setattr(l3, "BAGS", 2)
+    monkeypatch.setattr(l3, "XGB_MIX", True)
+    feats, labels = zip(*(_toy(s) for s in range(2)))
+    model = l3.train(list(feats), list(labels))
+    path = str(tmp_path / "m.txt.gz")
+    final.save_model(model, path)
+    first = open(path, "rb").read()
+    final.save_model(final.load_model(path), path)
+    assert open(path, "rb").read() == first      # identico byte a byte
+    np.testing.assert_allclose(final.load_model(path).predict(feats[0]), model.predict(feats[0]), rtol=1e-6)
