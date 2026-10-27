@@ -40,10 +40,8 @@ def load_model(device: str = "cuda"):
                            feature_arch="rny002_gsf", event_team=True, clip_len=CLIP, n_layers=2, sgp_ks=9,
                            sgp_r=4, num_classes=len(CLASSES), crop_dim=None)
     model = TDEEDModel(device=device, args=args)
-    heads = sorted(k for k in state if k.startswith("_pred_fine") and k.endswith("weight"))
-    if len(heads) > 2:   # dos cabezas (entrenado junto con SoccerNet): tamanos de la ultima capa de cada una
-        sizes = [state[k].shape[0] for k in heads if state[k].shape[0] != state[k].shape[1]]
-        model._model.update_pred_head(sizes)
+    if "_pred_fine._fc1._fc_out.weight" in state:   # dos cabezas (entrenado junto con SoccerNet)
+        model._model.update_pred_head([state["_pred_fine._fc%d._fc_out.weight" % i].shape[0] for i in (1, 2)])
     model.load(state)
     return model
 
