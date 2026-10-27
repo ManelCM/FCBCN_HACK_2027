@@ -104,8 +104,13 @@ def main() -> int:
             agree["dudoso"].append(ok)
         if np.isnan(match.ball_x[f]):
             agree["hueco"].append(ok)
+    # cobertura: frames de la pasada, puntuados y con H/A predicho, de cada contexto
+    fs = frames[graded[frames] & np.isin(pred[frames], (H, A))]
+    total = {"seguro": np.sum(pmax[fs] >= 0.9), "dudoso": np.sum(pmax[fs] < 0.7),
+             "hueco": np.sum(np.isnan(match.ball_x[fs]))}
     for k, v in agree.items():
-        print("U6 conductor por video vs equipo predicho (%s): acuerdo %.3f (n=%d)" % (k, np.mean(v) if v else np.nan, len(v)))
+        print("U6 conductor por video vs equipo predicho (%s): acuerdo %.3f (n=%d, cobertura %.3f de %d)" % (
+            k, np.mean(v) if v else np.nan, len(v), len(v) / max(total[k], 1), total[k]))
     graded_frames = np.flatnonzero(graded)
     cover = np.mean([f in best for f in graded_frames[::25]])
     print("U3 frames puntuados con algun candidato de balon: %.3f" % cover)

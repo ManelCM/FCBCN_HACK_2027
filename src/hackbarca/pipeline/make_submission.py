@@ -73,6 +73,12 @@ def predict(model: str, data_dir: str | None, dump_proba: str | None = None) -> 
             from hackbarca.io.broadcast_signal import broadcast_features
             from hackbarca.pipeline.real_signals import broadcast_players
             df = pd.concat([df, broadcast_features(broadcast_players(match.n_frames))], axis=1)
+        if config.get("video_conductor"):
+            # E075: quien conduce segun la pasada de video (vision/video_pass, data/derived/video_pass_full)
+            import pandas as pd
+
+            from hackbarca.io.video_conductor import conductor_features, real_conductor
+            df = pd.concat([df, conductor_features(real_conductor(match))], axis=1)
         if config.get("stack"):
             proba = predict_stacked((load_model(), load_model(STAGE2_PATH)), df)
         else:

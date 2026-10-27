@@ -45,8 +45,8 @@
 | T3 | U2 repeticiones del broadcast → D | 28-30 oct | pendiente | — |
 | T3 | U3 toques desde el balón del vídeo sin filtrar | 26-27 oct | ⏳ pasada de GPU (~6,5 h) | — |
 | T3 | U4 balón fuera o en un punto de reanudación (E055) | 26 oct | ❌ | AUC 0,51-0,56 |
-| T3 | U5 jugadores + equipo por color (portero, árbitro) | 26-27 oct | ⏳ misma pasada de GPU | 24,6 personas por frame en la prueba |
-| T3 | U6 quién conduce (E044: 92,4 %) | 28-30 oct | pendiente | — |
+| T3 | U5 jugadores + equipo por color (portero, árbitro) (E074) | 27 oct | ✅ como pieza de U6 | equipo por color 0,926; 20,4 % árbitros o porteros |
+| T3 | U6 quién conduce (E074 puerta, E075 banco) | 27 oct | ✅ puerta; ⏳ E075 en cola | acierto implícito 0,90 (dudosos 0,95, huecos 0,87); cobertura 0,40-0,57 |
 | T3 | U7 pose (saque de banda, portero con balón, barrera) | 28-30 oct (GPU) | pendiente | — |
 | T3 | U8 árbitro y asistentes | 28-30 oct | pendiente | — |
 | T3 | U9 energía de movimiento (flujo óptico) | 28-30 oct | pendiente | — |
@@ -60,7 +60,7 @@
 | T4 | silbato y grada como parón (E029, E045) | — | ❌ | sin señal |
 | T5 | M5a poseedor tipo PathCRF (E078, E078b) | 26 oct | ❌ solo, peor que LightGBM; combinado con E049, 0,7236 frente a 0,7254 (2 de 10) | equipo en hueco 0,728 frente a 0,842 |
 | T5 | M5b Ball Radar en los huecos | 26 oct | ❌ | equipo en hueco 0,728 < 0,85 |
-| T5 | M5c MS-TCN (E079) | 26 oct | ⏳ en cola tras E078 | — |
+| T5 | M5c MS-TCN (E079, E079b) | 27 oct | ❌ combinado con E049, 0,7207 frente a 0,7254 (4 de 10) | acierto parecido al LightGBM |
 | T5 | M5d CatBoost/XGBoost, multitarea | 4-7 nov | pendiente | — |
 | T5 | M5e bagging | 7-9 nov | pendiente | — |
 | T6 | combinación, ablación, artefacto, congelación | 8-14 nov | pendiente | — |

@@ -57,6 +57,8 @@ def main(argv=None) -> int:
     parser.add_argument("--extras", default="", help="T2: familias de entrenador (features/coach.py)")
     parser.add_argument("--broadcast", action="store_true",
                         help="E057: familia broadcast (simulada en el banco; la entrega usa la senal real)")
+    parser.add_argument("--video-conductor", action="store_true",
+                        help="familia conductor segun el video, simulada en el banco; la entrega usa el video real (E075)")
     parser.add_argument("--video-fill", action="store_true",
                         help="banco con el relleno de balon por video simulado; la entrega lo aplica (E063)")
     args = parser.parse_args(argv)
@@ -69,9 +71,13 @@ def main(argv=None) -> int:
     if args.broadcast:
         from hackbarca.io.broadcast_signal import BROADCAST_SIGNAL
         broadcast = BROADCAST_SIGNAL
+    conductor = None
+    if args.video_conductor:
+        from hackbarca.io.video_conductor import VIDEO_CONDUCTOR
+        conductor = VIDEO_CONDUCTOR
     games = load_bench(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
                        names=BENCHES[args.bench], fill=fill, broadcast=broadcast,
-                       extras=tuple(x for x in args.extras.split("+") if x))
+                       extras=tuple(x for x in args.extras.split("+") if x), conductor=conductor)
     os.makedirs(ARTIFACTS, exist_ok=True)
     features, labels = [df for df, _ in games], [gt for _, gt in games]
     if args.stack:
@@ -100,6 +106,7 @@ def main(argv=None) -> int:
         json.dump({"decode": asdict(decode), "use_tags": not args.no_tags, "features": args.features,
                    "stack": args.stack, "bench": args.bench, "deep_weight": args.deep_weight,
                    "video_fill": args.video_fill, "broadcast": args.broadcast,
+                   "video_conductor": args.video_conductor,
                    "extras": [x for x in args.extras.split("+") if x]},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)
