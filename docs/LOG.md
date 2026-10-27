@@ -11,6 +11,37 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-27 — Manel (con agente) · E049 pasa; guardarraíl no; U6 vídeo pasa la puerta
+- Hecho (rama `banco-v3-1`):
+  - **E049**: reentrenado en v3.1, **0,7254 frente a 0,7059 (10 de 10)**; con la decodificación de la entrega
+    0,7229, y D cortos en el banco 0,180 → 0,107/min. Es la base nueva de T2-T5.
+  - **E049c**: artefacto v3.1 + guardarraíl en el reto: **no pasa** (3 de 4 umbrales). D cortos 0,680 → 0,529/min
+    (umbral 0,25), tramos D 1,78 → 1,61 y cambios 1,40 → 1,48. **La entrega sigue con E070**; el artefacto v3.1
+    está en `external_data/artefactos/v3_1/`. Lo que queda es balón visible y quieto en juego vivo con el mismo
+    equipo a los dos lados, y el banco aún no tiene bastantes tramos así (línea L1 de `docs/06_plan_parones.md`).
+  - **E078b** (poseedor + E049, 0,7236) y **E079/E079b** (MS-TCN + E049, 0,7207): no aportan. M5a y M5c se cierran.
+  - **E074**, pasada de vídeo completa:
+    - equipo por color 0,926;
+    - **U6, quién conduce: acierto implícito ~0,90 en todos los contextos** (0,95 en los frames dudosos, donde
+      el modelo acierta 0,66), con una cobertura de 0,40-0,57. Pasa la puerta.
+  - **E075 preparado**: `io/video_conductor.py`, que simula U6 en el banco con la cobertura y el acierto del reto,
+    también en los parones: 32 % con conductor, del equipo siguiente el 70 % de las veces. El desajuste
+    reto/banco es ≤ 0,17. Va en cabeza de la cola.
+  - Arreglada la espera de `scripts/cola.sh`, que buscaba una línea que tune_l3 ya no imprime y dejó la cola
+    parada unas horas.
+- Pendiente:
+  - en la cola: E057 (broadcast, corriendo) → E075 (U6) → E058 → E071 → E053 → E054;
+  - con lo que pase, un artefacto nuevo y el guardarraíl otra vez;
+  - U3, toques desde el balón del vídeo: falta su medida.
+- Bloqueos / preguntas para el equipo:
+  - **Hay otra sesión de agente trabajando en la misma carpeta y rama**, con E080-E083, ADR-0019 y el plan de
+    parones sin commit. Mis commits solo llevan mis cambios, pero conviene darle su propia rama o worktree.
+  - **ADR-0019** (ventana pública solo como humo, tras las reglas del 22-23 oct) necesita revisión del equipo.
+  - Q6 sigue sin respuesta: si la organización no permite las señales de broadcast y audio, E057 no puede
+    entrar. U6 usa el vídeo táctico, que es dato del reto.
+
+---
+
 ## 2026-10-26 — Manel (con agente) · plan completo en marcha
 - Plan aprobado: el **plan completo** (T0-T6), que suma todo lo pedido. Tabla de estado por línea en
   `docs/05_plan_mejora.md`.
