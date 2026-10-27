@@ -1,7 +1,8 @@
 """Agregado (E075s): acuerdo del conductor por video con el equipo predicho segun la distancia al cambio
-predicho mas cercano, en el reto (video real) y en el banco (video simulado, base y estres). Solo cuotas."""
+predicho mas cercano, en el reto (video real) y en el banco (video simulado, base y estres). Solo cuotas.
 
     scripts/run_aggregate.sh vc_near uv run python -m hackbarca.pipeline.vc_near_report
+"""
 import os
 import numpy as np
 from hackbarca.io.external import load_bench_game
