@@ -24,3 +24,15 @@ def test_bag_matches_single_when_one(monkeypatch):
     p = l3.predict_proba(bag, feats[0])
     assert p.shape == (3000, 3) and np.allclose(p.sum(1), 1)
     np.testing.assert_allclose(bag.boosters[0].predict(feats[0]), single.predict(feats[0]))
+
+
+def test_xgb_mix(monkeypatch):
+    monkeypatch.setattr(l3, "N_ROUNDS", 20)
+    monkeypatch.setattr(l3, "BAGS", 1)
+    monkeypatch.setattr(l3, "XGB_MIX", True)
+    feats, labels = zip(*(_toy(s) for s in range(2)))
+    model = l3.train(list(feats), list(labels))
+    assert isinstance(model, l3.Bag) and isinstance(model.boosters[1], l3.XgbModel)
+    p = l3.predict_proba(model, feats[0])
+    assert p.shape == (3000, 3) and np.allclose(p.sum(1), 1)
+    assert len(model.feature_importance("gain")) == 2

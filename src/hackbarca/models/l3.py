@@ -27,6 +27,10 @@ LGB_PARAMS = dict(objective="multiclass", num_class=3, learning_rate=0.05, num_l
 N_ROUNDS = 400
 SUBSAMPLE = 5  # un frame de cada 5 para entrenar: los vecinos son casi identicos
 BAGS = 1       # M5e (E093): modelos por capa con desfases distintos del submuestreo, promediados
+XGB_MIX = False  # M5d (E096): cada capa promedia LightGBM con un XGBoost de capacidad parecida
+XGB_PARAMS = dict(objective="multi:softprob", num_class=3, eta=0.05, grow_policy="lossguide", max_leaves=127,
+                  max_depth=0, min_child_weight=20, subsample=0.8, colsample_bytree=0.8, reg_lambda=1.0,
+                  tree_method="hist", nthread=4, seed=SEED)
 
 
 @dataclass(frozen=True)
@@ -69,14 +73,37 @@ class Bag:
         return self.boosters[0].feature_name()
 
 
-def _train_one(features, labels, offset: int) -> lgb.Booster:
+class XgbModel:
+    """XGBoost con la interfaz de lgb.Booster que usa el pipeline (M5d)."""
+
+    def __init__(self, booster, names):
+        self.booster, self.names = booster, list(names)
+
+    def predict(self, df):
+        import xgboost as xgb
+        return self.booster.predict(xgb.DMatrix(df[self.names]))
+
+    def feature_importance(self, kind: str = "split"):
+        score = self.booster.get_score(importance_type="gain" if kind == "gain" else "weight")
+        return np.array([score.get(n, 0.0) for n in self.names])
+
+    def feature_name(self):
+        return self.names
+
+
+def _train_one(features, labels, offset: int):
     xs, ys = [], []
     for df, y in zip(features, labels):
         keep = np.flatnonzero(y != 3)[offset::SUBSAMPLE]
         xs += [df.iloc[keep], swap_teams(df.iloc[keep])]
         ys += [y[keep], _swap_labels(y[keep])]
-    data = lgb.Dataset(pd.concat(xs, ignore_index=True), np.concatenate(ys))
-    return lgb.train(dict(LGB_PARAMS, seed=LGB_PARAMS["seed"] + offset), data, num_boost_round=N_ROUNDS)
+    x, y = pd.concat(xs, ignore_index=True), np.concatenate(ys)
+    model = lgb.train(dict(LGB_PARAMS, seed=LGB_PARAMS["seed"] + offset), lgb.Dataset(x, y), num_boost_round=N_ROUNDS)
+    if not XGB_MIX:
+        return model
+    import xgboost as xgb
+    other = xgb.train(dict(XGB_PARAMS, seed=XGB_PARAMS["seed"] + offset), xgb.DMatrix(x, y), num_boost_round=N_ROUNDS)
+    return Bag([model, XgbModel(other, x.columns)])
 
 
 def train(features: list[pd.DataFrame], labels: list[np.ndarray]):
