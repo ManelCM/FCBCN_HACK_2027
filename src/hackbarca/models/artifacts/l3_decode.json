@@ -15,5 +15,6 @@
   "video_fill": false,
   "broadcast": false,
   "video_conductor": true,
-  "extras": []
+  "extras": [],
+  "short_dead_frames": 75
 }

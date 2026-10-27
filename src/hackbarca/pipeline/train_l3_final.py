@@ -59,6 +59,8 @@ def main(argv=None) -> int:
                         help="E057: familia broadcast (simulada en el banco; la entrega usa la senal real)")
     parser.add_argument("--video-conductor", action="store_true",
                         help="familia conductor segun el video, simulada en el banco; la entrega usa el video real (E075)")
+    parser.add_argument("--short-dead", type=int, default=75,
+                        help="regla de D cortos de la entrega en frames (ADR-0021, E090); 0 = sin regla")
     parser.add_argument("--video-fill", action="store_true",
                         help="banco con el relleno de balon por video simulado; la entrega lo aplica (E063)")
     args = parser.parse_args(argv)
@@ -106,7 +108,7 @@ def main(argv=None) -> int:
         json.dump({"decode": asdict(decode), "use_tags": not args.no_tags, "features": args.features,
                    "stack": args.stack, "bench": args.bench, "deep_weight": args.deep_weight,
                    "video_fill": args.video_fill, "broadcast": args.broadcast,
-                   "video_conductor": args.video_conductor,
+                   "video_conductor": args.video_conductor, "short_dead_frames": args.short_dead,
                    "extras": [x for x in args.extras.split("+") if x]},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)

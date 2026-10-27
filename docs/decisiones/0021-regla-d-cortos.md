@@ -1,6 +1,6 @@
 # 0021 — Regla de D cortos (3 s) en la decodificación de la entrega
 
-- **Estado**: Propuesta (27 oct)
+- **Estado**: Aceptada por Manel el 27 oct (falta la revisión de las otras dos personas)
 - **Fecha**: 2026-10-27
 - **Autor/a**: Manel (con agente)
 - **Revisado por**: ☐ ☐
@@ -26,7 +26,7 @@
 
    Después, el guardarraíl de ADR-0020.
 
-## Decisión (propuesta)
+## Decisión
 - La entrega aplica la regla con **k = 3 s** (75 frames), la mayor que cumple el criterio sin daño:
   - banco limpio: +0,001, con 5 partidos mejor y 4 peor, y el peor partido a −0,004;
   - con 4 s, el peor partido baja −0,009.
