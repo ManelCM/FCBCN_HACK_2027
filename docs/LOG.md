@@ -11,6 +11,14 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-10-27 (noche) — Manel (con agente) · U7 cerrada, U10 pasa la puerta; dos fallos de la cola
+- **U7 (E091):** no pasa. El saque de banda tiene lift 1,65, pero solo cubre el 6,3 % de los frames dudosos, y el equipo del portero acuerda 0,404. Cerrada.
+- **U10 (E097):** pasa la puerta de equipo: acuerdo 0,86-0,93 con la predicción segura y cobertura del 20-31 % de los dudosos. La de paradas no pasa (lift 1,37-1,48). E098 la lleva al banco con la fiabilidad medida.
+- **Fallo 1:** E093 (bagging ×3) se colgó desde las 15:04 sin consumir CPU. El pool de procesos arrancó mientras `models/l3.py` tenía el error de sintaxis que se corrigió a las 15:02, y sus workers no llegaron a cargar. Lo maté a las 22:50 y está otra vez en cola; el log antiguo es `external_data/logs/E093_colgado.log`.
+  - **Lección:** no tocar código que importan los workers mientras arranca una evaluación, o comprobar `import` antes de guardar.
+- **Fallo 2:** E098 cayó a los 6 min con `KeyError: 'ba_m25_a'`. `swap_teams` exige las columnas en pares `_h`/`_a`. Arreglado en d7e316a, con un test de intercambio de equipos (80 tests pasan). E098 vuelve al principio de la cola.
+- **Cola:** E096 (en marcha desde las 22:56) → E098 → E093 → E054 → E053.
+
 ## 2026-10-27 (tarde, 2) — Manel (con agente) · E075b no pasa; U7 y U10 preparados
 - **E075b (U6 + F3):** 0,7714 frente a 0,7692 de E075 (+0,002, 7 de 10). No pasa ADR-0008. Con el vídeo dentro, F3 apenas suma. La entrega no cambia: E075 + regla de 3 s.
 - **M5d/M5e:** `train_l3_final --bag N / --xgb-mix` guarda los modelos compuestos en el artefacto (JSON con cabecera dentro del .gz, idéntico byte a byte). Test de ida y vuelta añadido; 76 tests pasan.
