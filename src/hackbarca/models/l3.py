@@ -26,6 +26,7 @@ LGB_PARAMS = dict(objective="multiclass", num_class=3, learning_rate=0.05, num_l
                   force_col_wise=True)
 N_ROUNDS = 400
 SUBSAMPLE = 5  # un frame de cada 5 para entrenar: los vecinos son casi identicos
+BAGS = 1       # M5e (E093): modelos por capa con desfases distintos del submuestreo, promediados
 
 
 @dataclass(frozen=True)
@@ -52,15 +53,38 @@ def _swap_labels(y: np.ndarray) -> np.ndarray:
     return np.where(y == 0, 1, np.where(y == 1, 0, y))
 
 
-def train(features: list[pd.DataFrame], labels: list[np.ndarray]) -> lgb.Booster:
-    """features/labels por partido; labels 0/1/2 (H/A/D) y 3 (X, se descarta)."""
+class Bag:
+    """Media de varios Booster (M5e): misma interfaz que lgb.Booster para predecir."""
+
+    def __init__(self, boosters):
+        self.boosters = list(boosters)
+
+    def predict(self, df):
+        return np.mean([b.predict(df) for b in self.boosters], axis=0)
+
+    def feature_importance(self, kind: str = "split"):
+        return np.sum([b.feature_importance(kind) for b in self.boosters], axis=0)
+
+    def feature_name(self):
+        return self.boosters[0].feature_name()
+
+
+def _train_one(features, labels, offset: int) -> lgb.Booster:
     xs, ys = [], []
     for df, y in zip(features, labels):
-        keep = np.flatnonzero(y != 3)[::SUBSAMPLE]
+        keep = np.flatnonzero(y != 3)[offset::SUBSAMPLE]
         xs += [df.iloc[keep], swap_teams(df.iloc[keep])]
         ys += [y[keep], _swap_labels(y[keep])]
     data = lgb.Dataset(pd.concat(xs, ignore_index=True), np.concatenate(ys))
-    return lgb.train(LGB_PARAMS, data, num_boost_round=N_ROUNDS)
+    return lgb.train(dict(LGB_PARAMS, seed=LGB_PARAMS["seed"] + offset), data, num_boost_round=N_ROUNDS)
+
+
+def train(features: list[pd.DataFrame], labels: list[np.ndarray]):
+    """features/labels por partido; labels 0/1/2 (H/A/D) y 3 (X, se descarta). Con BAGS > 1, un Bag
+    de modelos con desfases repartidos en el submuestreo (y semillas distintas)."""
+    if BAGS == 1:
+        return _train_one(features, labels, 0)
+    return Bag(_train_one(features, labels, round(k * SUBSAMPLE / BAGS)) for k in range(BAGS))
 
 
 def predict_proba(model: lgb.Booster, df: pd.DataFrame) -> np.ndarray:

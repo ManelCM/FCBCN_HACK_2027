@@ -147,12 +147,13 @@ def _fit_predict(job):
     Los partidos llegan como rutas de la cache (o DataFrames si son degradaciones extra): asi un
     worker no recibe copias de todo el banco y solo carga lo que usa.
     """
-    items, eval_item, stack, lgb_params, n_rounds, dynamic = job
+    items, eval_item, stack, lgb_params, n_rounds, dynamic, bags = job
     train_sets = [(_materialize(x), gt) for x, gt in items]
     eval_df = _materialize(eval_item)
     from hackbarca.models import l3
     l3.LGB_PARAMS.update(lgb_params)
     l3.N_ROUNDS = n_rounds
+    l3.BAGS = bags
     features, labels = [df for df, _ in train_sets], [gt for _, gt in train_sets]
     p_change = None
     if dynamic:  # E032: detector de cambio entrenado con los mismos partidos del pliegue
@@ -223,6 +224,8 @@ def main(argv=None) -> int:
                         help="E057: familia broadcast (jugadores visibles en la tele), simulada en el banco")
     parser.add_argument("--video-conductor", action="store_true",
                         help="E075: familia conductor segun el video (U6), simulada en el banco")
+    parser.add_argument("--bag", type=int, default=1,
+                        help="M5e (E093): modelos por capa con desfases del submuestreo, promediados")
     parser.add_argument("--vc-stress", action="store_true",
                         help="E075s: con --video-conductor, simulacion pesimista (io/video_conductor.VIDEO_CONDUCTOR_STRESS)")
     parser.add_argument("--extra-sc", type=int, default=0,
@@ -304,7 +307,8 @@ def main(argv=None) -> int:
         if args.train_subset:
             others = sorted(np.random.default_rng(1000 + g).choice(others, args.train_subset, replace=False).tolist())
         train_sets = [train_games[o] for o in others] + [e for o in others for e in extra.get(o, [])] + sc_games
-        jobs.append((train_sets, eval_games[g][0], args.stack, dict(l3.LGB_PARAMS), l3.N_ROUNDS, args.dynamic))
+        jobs.append((train_sets, eval_games[g][0], args.stack, dict(l3.LGB_PARAMS), l3.N_ROUNDS, args.dynamic,
+                     args.bag))
     if jobs:
         if args.jobs > 1:
             from concurrent.futures import ProcessPoolExecutor
@@ -342,6 +346,8 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_x{}.npz".format(args.extras))
     if args.stack:
         name = name.replace(".npz", "_stack.npz")
+    if args.bag > 1:
+        name = name.replace(".npz", "_bag{}.npz".format(args.bag))
     if args.dynamic:
         name = name.replace(".npz", "_dyn.npz")
     if args.video_fill:
