@@ -46,7 +46,7 @@
 | T3 | U3 toques desde el balón del vídeo sin filtrar | 26-27 oct | ⏳ pasada de GPU (~6,5 h) | — |
 | T3 | U4 balón fuera o en un punto de reanudación (E055) | 26 oct | ❌ | AUC 0,51-0,56 |
 | T3 | U5 jugadores + equipo por color (portero, árbitro) (E074) | 27 oct | ✅ como pieza de U6 | equipo por color 0,926; 20,4 % árbitros o porteros |
-| T3 | U6 quién conduce (E074 puerta, E075 banco) | 27 oct | ✅ puerta; ✅ **E075 pasa** (0,7692, 10 de 10) → ⏳ guardarraíl (E075c), estrés (E075s) | acierto implícito 0,90 (dudosos 0,95, huecos 0,87); cobertura 0,40-0,57 |
+| T3 | U6 quién conduce (E074 puerta, E075 banco) | 27 oct | ✅ puerta; ✅ **E075 pasa** (0,7692, 10 de 10); ✅ **estrés E075s pasa** (0,7605, 10 de 10); ❌ guardarraíl E075c (D cortos, L1) → ⏳ combinación con F3 (E075b) | acierto implícito 0,90 (dudosos 0,95, huecos 0,87); cobertura 0,40-0,57 |
 | T3 | U7 pose (saque de banda, portero con balón, barrera) | 28-30 oct (GPU) | pendiente | — |
 | T3 | U8 árbitro y asistentes | 28-30 oct | pendiente | — |
 | T3 | U9 energía de movimiento (flujo óptico) | 28-30 oct | pendiente | — |
