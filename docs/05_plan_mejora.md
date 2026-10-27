@@ -36,7 +36,7 @@
 | T1 | búsqueda ampliada → `investigacion/06_estado_del_arte_v3.md` | 26-27 oct | ✅ 26 oct | Lang 2022 (estado sin balón), Link 2017 (toques ≥ 4 m/s²), Bauer y Anzer, pressing intensity, SigLIP/color, sonido del golpeo |
 | T2 | F1 roles y formación (Bialkowski, Shaw y Glickman) (E073) | 26 oct | ❌ por poco | hueco 0,729; tras robo, invertida (va con retraso) |
 | T2 | F2 clusters de situaciones de juego (E077) | 26 oct | ❌ | hueco 0,67; tras robo 0,68 |
-| T2 | F3 firmas del robo y la contrapresión (E058) | 27 oct | ✅ puerta; ✅ **E058b pasa** (0,7410, 9 de 10) → ⏳ combinación con U6 (E075b) | **AUC tras robo 0,902** (centroide hacia delante) |
+| T2 | F3 firmas del robo y la contrapresión (E058) | 27 oct | ✅ puerta; ✅ **E058b pasa** (0,7410, 9 de 10) → ❌ combinación con U6 (E075b: 0,7714, +0,002 sobre E075; con el vídeo, F3 apenas suma) | **AUC tras robo 0,902** (centroide hacia delante) |
 | T2 | F4 pressing intensity (E072) | 26 oct | ❌ | tras robo 0,695 |
 | T2 | F5 territorio e inclinación del campo (E059) | 26 oct | ❌ | hueco 0,664 |
 | T2 | F6 estado del juego sin balón, Lang 2022 (E071) | 27 oct | ✅ por poco; ❌ E071b no pasa (0,7271, +0,002) | hueco 0,879 frente a 0,867 |
@@ -61,8 +61,8 @@
 | T5 | M5a poseedor tipo PathCRF (E078, E078b) | 26 oct | ❌ solo, peor que LightGBM; combinado con E049, 0,7236 frente a 0,7254 (2 de 10) | equipo en hueco 0,728 frente a 0,842 |
 | T5 | M5b Ball Radar en los huecos | 26 oct | ❌ | equipo en hueco 0,728 < 0,85 |
 | T5 | M5c MS-TCN (E079, E079b) | 27 oct | ❌ combinado con E049, 0,7207 frente a 0,7254 (4 de 10) | acierto parecido al LightGBM |
-| T5 | M5d CatBoost/XGBoost, multitarea | 4-7 nov | pendiente | — |
-| T5 | M5e bagging | 7-9 nov | pendiente | — |
+| T5 | M5d CatBoost/XGBoost, multitarea | 4-7 nov | ⏳ E096 (mezcla LightGBM + XGBoost) en cola | — |
+| T5 | M5e bagging | 7-9 nov | ⏳ E093 (3 bolsas) en marcha | — |
 | T6 | combinación, ablación, artefacto, congelación | 8-14 nov | pendiente | — |
 | equipo | email Q2/Q3/Q6 (Q6 desbloquea el audio y el broadcast en la entrega) | ya | **Manel** | — |
 
