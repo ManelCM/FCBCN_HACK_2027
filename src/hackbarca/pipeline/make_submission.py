@@ -29,7 +29,8 @@ def video_ball_path(data_dir: str | None) -> str:
     return os.path.join(data_dir or os.environ.get("MTAH_DATA_DIR", "data"), "derived", "video_ball.npz")
 
 
-def predict(model: str, data_dir: str | None, dump_proba: str | None = None) -> np.ndarray:
+def predict(model: str, data_dir: str | None, dump_proba: str | None = None,
+            short_dead: int | None = None) -> np.ndarray:
     """dump_proba: ruta (en data/derived/) donde guardar P(H/A/D) por frame y si el ATD ve el balon,
     para los agregados de `real_vs_bench` (ADR-0004: se queda en data/, no lo lee ningun agente)."""
     from hackbarca.io.load_match import load_match
@@ -104,7 +105,13 @@ def predict(model: str, data_dir: str | None, dump_proba: str | None = None) -> 
             from hackbarca.models.change import predict_change
             from hackbarca.pipeline.train_l3_final import CHANGE_PATHS
             p_change = predict_change(tuple(load_model(p) for p in CHANGE_PATHS), df)
-        return decode(proba, list(GRADED), params, p_change)
+        codes = decode(proba, list(GRADED), params, p_change)
+        k = config.get("short_dead_frames", 0) if short_dead is None else short_dead
+        if k:
+            # E090: D de menos de k frames entre dos tramos vivos -> tramo anterior (failure_analysis)
+            from hackbarca.pipeline.failure_analysis import drop_short_dead
+            codes = drop_short_dead(codes, list(GRADED), k)
+        return codes
     raise ValueError("modelo desconocido: " + model)
 
 
@@ -124,11 +131,13 @@ def main(argv=None) -> int:
     parser.add_argument("--team-name", required=True)
     parser.add_argument("--out-dir", default=os.path.join(_REPO_ROOT, "submissions"))
     parser.add_argument("--data-dir", default=None)
+    parser.add_argument("--short-dead", type=int, default=None,
+                        help="E090: candidato con la regla de D cortos de k frames (por defecto, la del artefacto)")
     parser.add_argument("--dump-proba", default=None,
                         help="guarda las probabilidades (solo l3) en esta ruta de data/derived/; no cambia el CSV")
     args = parser.parse_args(argv)
 
-    codes = predict(args.model, args.data_dir, args.dump_proba)
+    codes = predict(args.model, args.data_dir, args.dump_proba, args.short_dead)
     path = os.path.join(args.out_dir, "{}.csv".format(args.team_name))
     write_csv(path, codes)
     result = validate_csv(path)
