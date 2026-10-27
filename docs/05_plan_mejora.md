@@ -48,7 +48,7 @@
 | T3 | U5 jugadores + equipo por color (portero, árbitro) (E074) | 27 oct | ✅ como pieza de U6 | equipo por color 0,926; 20,4 % árbitros o porteros |
 | T3 | U6 quién conduce (E074 puerta, E075 banco) | 27 oct | ✅ puerta; ✅ **E075 pasa** (0,7692, 10 de 10); ✅ **estrés E075s pasa** (0,7605, 10 de 10); ❌ guardarraíl E075c (D cortos, L1) → ⏳ combinación con F3 (E075b) | acierto implícito 0,90 (dudosos 0,95, huecos 0,87); cobertura 0,40-0,57 |
 | T3 | U7 pose (saque de banda, portero con balón, barrera) (E091) | 27-28 oct (GPU) | ⏳ pasada de pose en marcha (YOLO-pose, mosaicos ×2, ~6 h) | prueba: 20 personas por frame, 92 % con muñecas |
-| T3 | U8 árbitro y asistentes | 28-30 oct | pendiente | — |
+| T3 | U8 árbitro y asistentes (E094) | 27 oct | ❌ | AUC del árbitro 0,715 frente a 0,913 de los jugadores del ATD; juntos no suben |
 | T3 | U9 energía de movimiento (flujo óptico) | 28-30 oct | pendiente | — |
 | T3 | U10 Ball Action Spotting (timebox de 1 día) | 4-7 nov | pendiente | — |
 | T4 | A1 mención → equipo (E055) | 26 oct | ❌ | seguro 0,73; dudoso 0,50-0,52; hueco 0,58-0,60 |

@@ -120,10 +120,13 @@ def _data(*parts):
     return os.path.join(os.environ.get("MTAH_DATA_DIR", "data"), *parts)
 
 
-def real_conductor(match) -> np.ndarray:
-    """Equipo del conductor en el reto, de data/derived/video_pass_full/ (mismo criterio que video_report)."""
+def video_people(match):
+    """Personas de la pasada de video con su equipo por color: (people, fr, team_color, far).
+
+    Centroides de color de cada equipo con las personas emparejadas a un slot del ATD (< 1,5 m; sin
+    etiquetas: el equipo es el del slot); far = lejos de los dos colores (arbitros, porteros).
+    """
     files = sorted(glob.glob(_data("derived", "video_pass_full", "block*.npz")))
-    ball = np.concatenate([np.load(f)["ball"] for f in files])
     people = np.concatenate([np.load(f)["people"] for f in files])
     fr = people[:, 0].astype(int)
     d = np.hypot(match.players_x[fr] - people[:, 1:2], match.players_y[fr] - people[:, 2:3])
@@ -138,6 +141,14 @@ def real_conductor(match) -> np.ndarray:
     team_color = np.argmin(dc, axis=1)
     spread = np.median(np.linalg.norm(color[matched] - cents[team[matched]], axis=1))
     far = np.min(dc, axis=1) > 3 * spread
+    return people, fr, team_color, far
+
+
+def real_conductor(match) -> np.ndarray:
+    """Equipo del conductor en el reto, de data/derived/video_pass_full/ (mismo criterio que video_report)."""
+    files = sorted(glob.glob(_data("derived", "video_pass_full", "block*.npz")))
+    ball = np.concatenate([np.load(f)["ball"] for f in files])
+    people, fr, team_color, far = video_people(match)
     best = {}
     for f, x, y, c in ball:
         f = int(f)
