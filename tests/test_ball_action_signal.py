@@ -36,3 +36,14 @@ def test_pick_events():
     p[100, 2], p[101, 2], p[300, 13] = 0.6, 0.5, 0.4
     keep, cls, side = pick_events(fr, p, 0.3)
     assert list(fr[keep]) == [200, 600] and list(cls) == [0, 6] and list(side) == [1, 0]
+
+
+def test_features_swap_teams():
+    # el entrenamiento duplica cada partido con los equipos cambiados: las columnas tienen que ir en pares
+    from hackbarca.features.frame_features import swap_teams
+    team = simulate_ball_actions(_gt(), BallActions(), seed=3)
+    swapped = np.where(np.isfinite(team), 1 - team, np.nan)
+    a = swap_teams(ball_action_features(team))
+    b = ball_action_features(swapped)
+    assert list(a.columns) == list(b.columns)
+    assert np.allclose(a.to_numpy(), b.to_numpy(), equal_nan=True)

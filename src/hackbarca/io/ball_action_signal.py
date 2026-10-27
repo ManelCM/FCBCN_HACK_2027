@@ -166,11 +166,13 @@ def ball_action_features(team: np.ndarray) -> pd.DataFrame:
     n = len(team)
     obs = np.isfinite(team).astype(float)
     is_h = (team == H).astype(float)
-    f = {}
+    is_a = (team == A).astype(float)
+    f = {}   # siempre en pares _h/_a: swap_teams los intercambia al aumentar los datos
     for half in (25, 75, 150):
         k = _window_sum(obs, half)
         with np.errstate(invalid="ignore", divide="ignore"):
             f["ba_m%d_h" % half] = np.where(k > 0, _window_sum(is_h, half) / k, np.nan)
+            f["ba_m%d_a" % half] = np.where(k > 0, _window_sum(is_a, half) / k, np.nan)
         if half == 25:   # los recuentos de ventanas largas no casan: en el reto llegan en rachas (E098, desajuste 1,0)
             f["ba_n_m%d" % half] = k
     idx = np.arange(n)
@@ -187,6 +189,8 @@ def ball_action_features(team: np.ndarray) -> pd.DataFrame:
     f["ba_next_s"] = np.where(has_next, np.minimum(nxt - idx, 750) / FPS, np.nan)
     f["ba_last_h"] = np.where(has_last, f["ba_last_h"], np.nan)
     f["ba_next_h"] = np.where(has_next, f["ba_next_h"], np.nan)
+    f["ba_last_a"] = np.where(has_last, last_team == A, np.nan)
+    f["ba_next_a"] = np.where(has_next, next_team == A, np.nan)
     with np.errstate(invalid="ignore"):
         f["ba_flip"] = np.where(has_last & has_next, (last_team != next_team).astype(float), np.nan)
     return pd.DataFrame(f).astype(np.float32)
