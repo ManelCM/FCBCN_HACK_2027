@@ -50,7 +50,7 @@
 | T3 | U7 pose (saque de banda, portero con balón, barrera) (E091) | 27-28 oct (GPU) | ❌ E091: saque de banda con lift 1,65 pero solo el 6,3 % de los dudosos; portero no dice el equipo (0,40) | prueba: 20 personas por frame, 92 % con muñecas |
 | T3 | U8 árbitro y asistentes (E094) | 27 oct | ❌ | AUC del árbitro 0,715 frente a 0,913 de los jugadores del ATD; juntos no suben |
 | T3 | U9 energía de movimiento (flujo óptico) | 27 oct | ⏸ descartada por análisis | el ritmo colectivo ya lo da el ATD (AUC D/vivo 0,913, E094) y el ATD solo pierde jugadores en el 3 % de los frames (U5b, E074); el flujo óptico no tiene dónde añadir |
-| T3 | U10 Ball Action Spotting (timebox de 1 día) | 27 oct-7 nov | ✅ **puerta E097 pasa**: el equipo de las acciones del broadcast acuerda 0,86-0,93 con la predicción segura y cubre el 11-31 % de los dudosos → ✅ calibrada y simulada (E098: lado por geometría 0,886) → ⏳ E098 en la cola, la primera | `resultados/u10_ball_actions.md` |
+| T3 | U10 Ball Action Spotting (timebox de 1 día) | 27 oct-7 nov | ✅ **puerta E097 pasa**: el equipo de las acciones del broadcast acuerda 0,86-0,93 con la predicción segura y cubre el 11-31 % de los dudosos → ✅ calibrada y simulada (E098: lado por geometría 0,886) → ❌ E098 0,7740 y E098b 0,7746 frente a 0,7692 (+0,005, 6 de 10): no pasa ADR-0008; candidata para T6 | `resultados/u10_ball_actions.md` |
 | T4 | A1 mención → equipo (E055) | 26 oct | ❌ | seguro 0,73; dudoso 0,50-0,52; hueco 0,58-0,60 |
 | T4 | A2 palabras de evento (E055) | 26 oct | ❌ | 0,50-0,53 |
 | T4 | A3 sonido del golpeo (E076) | 26 oct | ❌ | AUC 0,518 en los toques |
@@ -61,8 +61,8 @@
 | T5 | M5a poseedor tipo PathCRF (E078, E078b) | 26 oct | ❌ solo, peor que LightGBM; combinado con E049, 0,7236 frente a 0,7254 (2 de 10) | equipo en hueco 0,728 frente a 0,842 |
 | T5 | M5b Ball Radar en los huecos | 26 oct | ❌ | equipo en hueco 0,728 < 0,85 |
 | T5 | M5c MS-TCN (E079, E079b) | 27 oct | ❌ combinado con E049, 0,7207 frente a 0,7254 (4 de 10) | acierto parecido al LightGBM |
-| T5 | M5d CatBoost/XGBoost, multitarea | 4-7 nov | ⏳ E096 (mezcla LightGBM + XGBoost) en cola | — |
-| T5 | M5e bagging | 7-9 nov | ⏳ E093 (3 bolsas) en marcha | — |
+| T5 | M5d CatBoost/XGBoost, multitarea | 4-7 nov | ❌ E096 (mezcla LightGBM + XGBoost) 0,7610 (−0,008, 1 de 10) | — |
+| T5 | M5e bagging | 7-9 nov | ❌ E093 (3 bolsas) 0,7586 (−0,011, 2 de 10) | — |
 | T6 | combinación, ablación, artefacto, congelación | 8-14 nov | pendiente | — |
 | equipo | email Q2/Q3/Q6 (Q6 desbloquea el audio y el broadcast en la entrega) | ya | **Manel** | — |
 
