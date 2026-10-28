@@ -85,7 +85,8 @@ def predict(model: str, data_dir: str | None, dump_proba: str | None = None,
             import pandas as pd
 
             from hackbarca.io.ball_action_signal import ball_action_features, real_ball_actions
-            df = pd.concat([df, ball_action_features(real_ball_actions(match))], axis=1)
+            df = pd.concat([df, ball_action_features(real_ball_actions(match),
+                                                           lite=config.get("ball_actions_lite", False))], axis=1)
         if config.get("stack"):
             proba = predict_stacked((load_model(), load_model(STAGE2_PATH)), df)
         else:

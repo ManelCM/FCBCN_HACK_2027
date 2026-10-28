@@ -71,6 +71,7 @@ def main(argv=None) -> int:
                         help="familia conductor segun el video, simulada en el banco; la entrega usa el video real (E075)")
     parser.add_argument("--ball-actions", action="store_true",
                         help="familia acciones con balon del broadcast, simulada en el banco; la entrega usa la real (E098)")
+    parser.add_argument("--ba-lite", action="store_true", help="E098b: familia de acciones reducida")
     parser.add_argument("--short-dead", type=int, default=75,
                         help="regla de D cortos de la entrega en frames (ADR-0021, E090); 0 = sin regla")
     parser.add_argument("--bag", type=int, default=1, help="M5e: media de N modelos con desfases del submuestreo")
@@ -95,8 +96,8 @@ def main(argv=None) -> int:
         conductor = VIDEO_CONDUCTOR
     actions = None
     if args.ball_actions:
-        from hackbarca.io.ball_action_signal import BALL_ACTIONS
-        actions = BALL_ACTIONS
+        from hackbarca.io.ball_action_signal import BALL_ACTIONS, BALL_ACTIONS_LITE
+        actions = BALL_ACTIONS_LITE if args.ba_lite else BALL_ACTIONS
     games = load_bench(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
                        names=BENCHES[args.bench], fill=fill, broadcast=broadcast,
                        extras=tuple(x for x in args.extras.split("+") if x), conductor=conductor, actions=actions)
@@ -128,7 +129,8 @@ def main(argv=None) -> int:
         json.dump({"decode": asdict(decode), "use_tags": not args.no_tags, "features": args.features,
                    "stack": args.stack, "bench": args.bench, "deep_weight": args.deep_weight,
                    "video_fill": args.video_fill, "broadcast": args.broadcast,
-                   "video_conductor": args.video_conductor, "ball_actions": args.ball_actions, "short_dead_frames": args.short_dead,
+                   "video_conductor": args.video_conductor, "ball_actions": args.ball_actions,
+                   "ball_actions_lite": args.ba_lite, "short_dead_frames": args.short_dead,
                    "bag": args.bag, "xgb_mix": args.xgb_mix,
                    "extras": [x for x in args.extras.split("+") if x]},
                   handle, indent=2)

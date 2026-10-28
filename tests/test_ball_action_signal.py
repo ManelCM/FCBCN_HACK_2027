@@ -47,3 +47,10 @@ def test_features_swap_teams():
     b = ball_action_features(swapped)
     assert list(a.columns) == list(b.columns)
     assert np.allclose(a.to_numpy(), b.to_numpy(), equal_nan=True)
+
+
+def test_features_lite():
+    team = simulate_ball_actions(_gt(), BallActions(), seed=3)
+    full, lite = ball_action_features(team), ball_action_features(team, lite=True)
+    assert set(lite.columns) == set(full.columns) - {"ba_m25_h", "ba_m25_a", "ba_n_m25", "ba_flip"}
+    assert np.allclose(lite.to_numpy(), full[lite.columns].to_numpy(), equal_nan=True)

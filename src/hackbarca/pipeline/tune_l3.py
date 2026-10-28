@@ -132,7 +132,8 @@ def bench_feature_paths(use_tags: bool = True, version: int = 1, params=None, na
                 import pandas as pd
 
                 from hackbarca.io.ball_action_signal import ball_action_features, simulate_ball_actions
-                df = pd.concat([df, ball_action_features(simulate_ball_actions(gt, actions, seed=i))], axis=1)
+                df = pd.concat([df, ball_action_features(simulate_ball_actions(gt, actions, seed=i),
+                                                                         lite=actions.lite)], axis=1)
             tmp = path[:-4] + ".tmp.npz"  # escritura atomica: un proceso cortado no deja cache rota
             np.savez(tmp, columns=np.array(df.columns, dtype=str), values=df.to_numpy(np.float32))
             os.replace(tmp, path)
@@ -237,6 +238,8 @@ def main(argv=None) -> int:
                         help="E075: familia conductor segun el video (U6), simulada en el banco")
     parser.add_argument("--ball-actions", action="store_true",
                         help="E098: familia acciones con balon del broadcast (U10), simulada en el banco")
+    parser.add_argument("--ba-lite", action="store_true",
+                        help="E098b: con --ball-actions, sin la ventana de 1 s, su recuento ni ba_flip")
     parser.add_argument("--bag", type=int, default=1,
                         help="M5e (E093): modelos por capa con desfases del submuestreo, promediados")
     parser.add_argument("--xgb-mix", action="store_true",
@@ -283,8 +286,8 @@ def main(argv=None) -> int:
             conductor = VIDEO_CONDUCTOR_STRESS if args.vc_stress else VIDEO_CONDUCTOR
         actions = None
         if args.ball_actions:
-            from hackbarca.io.ball_action_signal import BALL_ACTIONS
-            actions = BALL_ACTIONS
+            from hackbarca.io.ball_action_signal import BALL_ACTIONS, BALL_ACTIONS_LITE
+            actions = BALL_ACTIONS_LITE if args.ba_lite else BALL_ACTIONS
         games = bench_feature_paths(use_tags=not args.no_tags, version=args.features, params=BENCH_PARAMS[args.bench],
                                     names=names, fill=fill, broadcast=broadcast,
                                     extras=tuple(x for x in args.extras.split("+") if x), conductor=conductor,
@@ -363,7 +366,7 @@ def main(argv=None) -> int:
     if args.video_conductor:
         name = name.replace(".npz", "_vcs.npz" if args.vc_stress else "_vc.npz")
     if args.ball_actions:
-        name = name.replace(".npz", "_ba.npz")
+        name = name.replace(".npz", "_bal.npz" if args.ba_lite else "_ba.npz")
     if args.extras:
         name = name.replace(".npz", "_x{}.npz".format(args.extras))
     if args.stack:
