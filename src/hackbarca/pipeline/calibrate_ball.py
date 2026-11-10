@@ -25,11 +25,12 @@ import numpy as np
 from hackbarca.io.degrade import _long_ball, _nearest_distance
 from hackbarca.io.external import controlled_possession, is_dfl, load_bench_game
 from hackbarca.pipeline.atd_stats import ball_dynamics
-from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_GAMES_V3
+from hackbarca.pipeline.bench_config import BENCH_DEGRADE, BENCH_DEGRADE_V3_1, BENCH_GAMES_V3
 
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 TARGETS = os.path.join(_REPO_ROOT, "docs", "investigacion", "resultados", "objetivos_balon_reto.json")
 OUT = os.path.join(_REPO_ROOT, "docs", "investigacion", "resultados", "calibracion_balon_v3_1.json")
+OUT_CROWD = os.path.join(_REPO_ROOT, "docs", "investigacion", "resultados", "calibracion_huecos_v3_2.json")
 H, A, X = 0, 1, 3
 
 # (clave de ball_dynamics, escala del error). El balon lento en vivo apunta al limpio del banco
@@ -44,6 +45,65 @@ SLOW_FLOOR = 0.55     # nunca por debajo de lo que ya se ve en el reto
 # corta cualquier racha de 25 frames por debajo de 0,05 m. 2.ª pasada: ball_noise entra en la rejilla.
 GRID = dict(ball_noise=(0.0, 0.005, 0.01, 0.02), ball_smooth_sigma=(6.0, 10.0), ball_corr_noise=(0.4, 0.8),
             ball_corr_tau=(75.0,), ball_corr_smooth=(0.0, 10.0, 25.0))
+
+
+# v3.2 (L1, docs/06_plan_parones.md): sobre v3.1, los huecos con el balon visible se abren donde esta
+# rodeado (peso crowd^power + floor, crowd = jugadores a < radius m del balon limpio) en vez de al azar
+# (occlusion_boost 1). Objetivo principal: velocidad antes de un hueco 2,0 (reto) frente a 0,7 (v3.1),
+# sin perder lo calibrado en E047. Aqui solo se calibra: degrade.py no se toca hasta que la cola de
+# evaluaciones de v3.1 acabe, porque su codigo entra en la clave de la cache de features.
+CROWD_GRID = dict(crowd_radius=(2.0, 3.0), crowd_power=(1.0, 2.0, 3.0), crowd_floor=(0.05, 0.2, 1.0),
+                  dead_weight=(30.0, 100.0, 300.0))
+# E080b: la aglomeracion apenas mueve la velocidad antes de un hueco (0,68 -> 0,86; el balon rodeado va
+# lento). Variante: el tracker pierde el balon cuando va rapido o por el aire (pases largos, despejes);
+# sin altura del balon en el banco, se usa su velocidad limpia (peso (v / 5 m/s)^power + floor).
+SPEED_GRID = dict(speed_power=(1.0, 2.0, 3.0, 4.0), speed_floor=(0.05, 0.2, 1.0), dead_weight=(30.0, 100.0, 300.0))
+SPEED_REF = 5.0
+# E080c: ni la aglomeracion ni la velocidad mueven la mediana porque ~62 % de los huecos del banco empiezan
+# con el balon ya muerto y quieto. Variante: el tracker pierde el balon antes del paron, mientras aun
+# vuela hacia fuera tras el ultimo golpeo. Los frames vivos a menos de lead_s del inicio de un D (GT del
+# banco) reciben el peso de balon muerto.
+LEAD_GRID = dict(lead_s=(0.0, 0.5, 1.0, 1.5, 2.0, 3.0), dead_weight=(30.0, 100.0, 300.0))
+OUT_LEAD = os.path.join(_REPO_ROOT, "docs", "investigacion", "resultados", "calibracion_huecos_v3_2_adelanto.json")
+CROWD_SCALES = {"ball_missing": 0.02}
+OUT_SPEED = os.path.join(_REPO_ROOT, "docs", "investigacion", "resultados", "calibracion_huecos_v3_2_velocidad.json")
+
+
+def crowd_weight(crowd: np.ndarray, visible: np.ndarray, power: float, floor: float) -> np.ndarray:
+    """Peso de abrir un hueco con el balon visible, normalizado a media 1 (dead_weight conserva su escala)."""
+    w = crowd ** power + floor
+    return np.where(visible, w / max(float(w[visible].mean()), 1e-9), 1.0)
+
+
+def _crowd(match, radius: float) -> np.ndarray:
+    dx = match.players_x - match.ball_x[:, None]
+    dy = match.players_y - match.ball_y[:, None]
+    with np.errstate(invalid="ignore"):
+        return np.sum(dx * dx + dy * dy < radius * radius, axis=1).astype(np.float64)
+
+
+def _clean_speed(match) -> np.ndarray:
+    v = np.zeros(match.n_frames)
+    v[4:] = np.hypot(match.ball_x[4:] - match.ball_x[:-4], match.ball_y[4:] - match.ball_y[:-4]) * match.fps / 4
+    return np.nan_to_num(v) / SPEED_REF
+
+
+def _pre_dead(graded: np.ndarray, live: np.ndarray, lead: int) -> np.ndarray:
+    """Frames vivos a menos de `lead` frames del inicio de un tramo D."""
+    dead = graded & ~live
+    starts = np.flatnonzero(np.diff(dead.astype(np.int8)) == 1) + 1
+    out = np.zeros(len(dead), dtype=bool)
+    for s in starts:
+        out[max(0, s - lead):s] = True
+    return out & live
+
+
+def gap_live_share(bx: np.ndarray, graded: np.ndarray, live: np.ndarray) -> float:
+    """Fraccion de huecos que empiezan con el balon vivo (GT del banco): diagnostico, no objetivo."""
+    missing = np.isnan(bx)
+    starts = np.flatnonzero(np.diff(missing.astype(np.int8)) == 1)
+    starts = starts[graded[starts]]
+    return float(live[starts].mean()) if len(starts) else float("nan")
 
 
 def targets() -> dict:
@@ -74,19 +134,84 @@ def bench_inputs():
     return out
 
 
-def pooled_stats(params, inputs) -> dict:
+def pooled_stats(params, inputs, game_weights=None) -> dict:
     """Media ponderada por frames puntuados de ball_dynamics sobre los 10 partidos."""
     rows, weights = [], []
     for i, (match, visible, weight, graded, live) in enumerate(inputs):
         rng = np.random.default_rng(i)          # misma semilla que bench_feature_paths / degrade
+        if game_weights is not None:
+            weight = game_weights[i]
         bx, by = _long_ball(rng, match, params, visible, weight)
-        rows.append(ball_dynamics(bx, by, graded, live, match.fps))
+        row = ball_dynamics(bx, by, graded, live, match.fps)
+        row["gap_live_share"] = gap_live_share(bx, graded, live)
+        rows.append(row)
         weights.append(graded.sum())
     w = np.array(weights, dtype=float)
     return {k: float(np.average([r[k] for r in rows], weights=w)) for k in rows[0]}
 
 
-def main() -> int:
+def main_crowd(mode: str = "crowd") -> int:
+    """L1: rejilla de huecos por aglomeracion (E080) o por velocidad del balon (E080b) sobre v3.1."""
+    goal = targets()
+    goal["ball_missing"] = 0.407                 # ATD real (atd_stats, E005)
+    scales = {**SCALES, **CROWD_SCALES}
+
+    def crowd_loss(stats):
+        total = sum(((stats[k] - goal[k]) / scales[k]) ** 2 for k in scales if k in goal and np.isfinite(stats[k]))
+        return float(total + (100.0 if stats["live_slow_runs_per_min"] < SLOW_FLOOR else 0.0))
+
+    inputs = bench_inputs()
+    grid = {"crowd": CROWD_GRID, "speed": SPEED_GRID, "lead": LEAD_GRID}[mode]
+    if mode == "lead":
+        drivers = {}
+    elif mode == "crowd":
+        drivers = {r: [_crowd(m, r) for m, *_ in inputs] for r in CROWD_GRID["crowd_radius"]}
+    else:
+        drivers = {None: [_clean_speed(m) for m, *_ in inputs]}
+    print("objetivo: " + ", ".join("%s=%.3f" % kv for kv in goal.items()))
+    ref = pooled_stats(BENCH_DEGRADE_V3_1, inputs)
+    print("v3.1 actual  loss=%.1f  antes-hueco %.2f  huecos en vivo %.3f" % (
+        crowd_loss(ref), ref["speed_before_gap_p50"], ref["gap_live_share"]))
+    results = []
+    for combo in itertools.product(*grid.values()):
+        p = dict(zip(grid, combo))
+        params = replace(BENCH_DEGRADE_V3_1, dead_weight=p["dead_weight"])
+        if mode == "lead":
+            gw = [np.where(_pre_dead(inp[3], inp[4], int(round(p["lead_s"] * inp[0].fps))) & inp[1],
+                           p["dead_weight"], inp[2]) for inp in inputs]
+        else:
+            if mode == "crowd":
+                driver, power, floor = drivers[p["crowd_radius"]], p["crowd_power"], p["crowd_floor"]
+            else:
+                driver, power, floor = drivers[None], p["speed_power"], p["speed_floor"]
+            gw = [crowd_weight(c, inp[1], power, floor) for c, inp in zip(driver, inputs)]
+        stats = pooled_stats(params, inputs, gw)
+        results.append(dict(params=p, loss=crowd_loss(stats), stats=stats))
+    results.sort(key=lambda r: r["loss"])
+    print("\nmejores 10:")
+    for r in results[:10]:
+        s = r["stats"]
+        print("loss=%6.1f  %s | antes-hueco %.2f huecos en vivo %.3f ausente %.3f resid %.3f dv %.1f/%.1f/%.1f "
+              "toques %.3f lento %.3f tramos/min %.2f" % (
+                  r["loss"], r["params"], s["speed_before_gap_p50"], s["gap_live_share"], s["ball_missing"],
+                  s["resid_std"], s["dv_p50"], s["dv_p90"], s["dv_p99"], s["touches_per_s"],
+                  s["live_slow_share"], s["live_slow_runs_per_min"]))
+    with open({"crowd": OUT_CROWD, "speed": OUT_SPEED, "lead": OUT_LEAD}[mode], "w", encoding="utf-8") as handle:
+        json.dump(dict(goal=goal, v3_1=dict(params=asdict(BENCH_DEGRADE_V3_1), loss=crowd_loss(ref), stats=ref),
+                       grid=results), handle, indent=1, ensure_ascii=False)
+    print("guardado", os.path.relpath({"crowd": OUT_CROWD, "speed": OUT_SPEED, "lead": OUT_LEAD}[mode], _REPO_ROOT))
+    return 0
+
+
+def main(argv=None) -> int:
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--crowd", action="store_true", help="L1: huecos por aglomeracion sobre v3.1 (E080)")
+    parser.add_argument("--gap-speed", action="store_true", help="L1: huecos por velocidad del balon (E080b)")
+    parser.add_argument("--gap-lead", action="store_true", help="L1: huecos de paron adelantados (E080c)")
+    args = parser.parse_args(argv)
+    if args.crowd or args.gap_speed or args.gap_lead:
+        return main_crowd("crowd" if args.crowd else ("speed" if args.gap_speed else "lead"))
     goal = targets()
     inputs = bench_inputs()
     results = []
