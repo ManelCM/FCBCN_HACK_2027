@@ -127,9 +127,11 @@ truth has 0.09. Most of them split one possession in two (H D H), which costs tw
 spellF1. The rule (a D under 3 s between two live spells takes the previous label) was fixed on the
 bench, where it is neutral on clean predictions (+0.001) and recovers +0.023 when the challenge's
 excess is injected. On the challenge, the shape of our prediction moved as follows (aggregates of our
-own prediction, no ground truth; the first two columns are earlier tracking-only versions):
+own prediction, no ground truth; the first two columns are earlier tracking-only versions, **without**
+the short dead-ball rule or the kick-off rule; the last one is the submitted model, which also adds the
+steal signatures):
 
-| per minute of graded play | model trained on bench v3 | retrained on bench v3.1 | submitted model + rule |
+| per minute of graded play | model trained on bench v3, no rules | retrained on bench v3.1, no rules | submitted model + both rules |
 |---|---|---|---|
 | dead-ball spells under 5 s | 0.680 | 0.529 | **0.274** |
 | dead-ball spells | 1.775 | 1.605 | **1.360** |
