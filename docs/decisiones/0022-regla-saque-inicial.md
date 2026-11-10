@@ -54,3 +54,6 @@ Opción 3, en `pipeline/kickoff_rule.py`. `make_submission` la aplica si `l3_dec
   - 2.ª parte, −79 frames (3,2 s antes): el balón se mueve más de 1 m dentro de la ventana antes del
     saque. La regla pone a D 2.855 de los 2.934 frames del tramo, y los 3 s restantes los decide el modelo.
   - El umbral de 1 m **no se ajusta** para cuadrar con el FAQ.
+- **Sobre la entrega E110 (10 nov, sha `df01cd02b266e933`)**: `kickoff_report` da, en los 2.934 frames
+  anteriores al saque de la 2.ª parte, **0,973 de D**, 0,027 de A y 0 de H. Antes de la regla, con E075,
+  era 0,464.

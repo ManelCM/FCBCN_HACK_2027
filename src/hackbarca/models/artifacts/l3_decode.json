@@ -14,8 +14,18 @@
   "deep_weight": 0.0,
   "video_fill": false,
   "broadcast": false,
-  "video_conductor": true,
-  "extras": [],
+  "video_conductor": false,
+  "ball_actions": false,
+  "ball_actions_lite": false,
   "short_dead_frames": 75,
-  "kickoff_dead": true
+  "kickoff_dead": true,
+  "bag": 1,
+  "xgb_mix": false,
+  "spell_weight": false,
+  "two_heads": false,
+  "extra_sc": 0,
+  "sc_team_only": false,
+  "extras": [
+    "transition"
+  ]
 }

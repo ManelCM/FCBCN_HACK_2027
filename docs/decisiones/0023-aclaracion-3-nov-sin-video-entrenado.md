@@ -78,3 +78,7 @@ Las tres copias coinciden. **Falta confirmarlo con el email original**, que debe
 - El artefacto de E075 se conserva en `external_data/artefactos/e075/`.
 - El documento técnico quita la variante A (U6) y añade una sección de cumplimiento con esta tabla.
 - Se revisa al recibir el email original o una respuesta de la organización a Q2.
+- **10 nov: E110 es la entrega provisional** (`La MasIA.csv`, sha `df01cd02b266e933`): el artefacto de E058b
+  con la regla de 3 s y la del saque. Se reproduce igual en dos ejecuciones y el artefacto queda en
+  `external_data/artefactos/e058b/`. En el reto, frente a las entregas anteriores sin vídeo, mejora las
+  cuatro medidas del guardarraíl (E110 en `docs/experimentos.md`).
