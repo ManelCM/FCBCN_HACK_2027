@@ -73,6 +73,9 @@ def feature_path(game: str, index: int, version: int, use_tags: bool, params, fi
     if extras:  # familias de entrenador (features/coach.py, T2): solo entran en la clave si se usan
         with open(os.path.join(_REPO_ROOT, "src", "hackbarca", "features", "coach.py"), "rb") as handle:
             parts += ("extras", tuple(extras), hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest())
+        if "control40" in extras:  # E099: su codigo vive fuera de coach.py
+            with open(os.path.join(_REPO_ROOT, "src", "hackbarca", "features", "control40.py"), "rb") as handle:
+                parts += (hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest(),)
     if conductor is not None:  # E075: conductor segun el video, simulado (io/video_conductor)
         with open(os.path.join(_REPO_ROOT, "src", "hackbarca", "io", "video_conductor.py"), "rb") as handle:
             parts += ("conductor", asdict(conductor), hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest())

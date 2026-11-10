@@ -272,7 +272,7 @@ def formation_features(match: MatchTracking, bx: np.ndarray, by: np.ndarray, sig
 
 # ----------------------------------------------------------------------------- columnas extra
 
-EXTRA_FAMILIES = ("transition", "gamestate", "pressing", "formation", "territory", "situation")
+EXTRA_FAMILIES = ("transition", "gamestate", "pressing", "formation", "territory", "situation", "control40")
 
 
 def extra_features(match: MatchTracking, names) -> "pd.DataFrame":
@@ -301,6 +301,9 @@ def extra_features(match: MatchTracking, names) -> "pd.DataFrame":
         f.update(situation_features(match, bx, signs))
     if "territory" in names:
         f.update({k: v for k, v in territory_features(match, signs).items() if "tilt" not in k})
+    if "control40" in names:  # E099: control sostenido + respuesta colectiva (features/control40.py)
+        from hackbarca.features.control40 import control40_features
+        f.update(control40_features(match, bx, by))
     return pd.DataFrame(f).astype(np.float32)
 
 
