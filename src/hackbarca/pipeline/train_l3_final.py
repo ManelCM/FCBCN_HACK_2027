@@ -72,6 +72,8 @@ def main(argv=None) -> int:
     parser.add_argument("--ball-actions", action="store_true",
                         help="familia acciones con balon del broadcast, simulada en el banco; la entrega usa la real (E098)")
     parser.add_argument("--ba-lite", action="store_true", help="E098b: familia de acciones reducida")
+    parser.add_argument("--no-kickoff-dead", action="store_true",
+                        help="sin la regla del saque inicial (ADR-0022): la entrega la aplica por defecto")
     parser.add_argument("--short-dead", type=int, default=75,
                         help="regla de D cortos de la entrega en frames (ADR-0021, E090); 0 = sin regla")
     parser.add_argument("--bag", type=int, default=1, help="M5e: media de N modelos con desfases del submuestreo")
@@ -131,6 +133,7 @@ def main(argv=None) -> int:
                    "video_fill": args.video_fill, "broadcast": args.broadcast,
                    "video_conductor": args.video_conductor, "ball_actions": args.ball_actions,
                    "ball_actions_lite": args.ba_lite, "short_dead_frames": args.short_dead,
+                   "kickoff_dead": not args.no_kickoff_dead,
                    "bag": args.bag, "xgb_mix": args.xgb_mix,
                    "extras": [x for x in args.extras.split("+") if x]},
                   handle, indent=2)

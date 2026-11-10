@@ -118,6 +118,11 @@ def predict(model: str, data_dir: str | None, dump_proba: str | None = None,
             # E090: D de menos de k frames entre dos tramos vivos -> tramo anterior (failure_analysis)
             from hackbarca.pipeline.failure_analysis import drop_short_dead
             codes = drop_short_dead(codes, list(GRADED), k)
+        if config.get("kickoff_dead"):
+            # ADR-0022: antes del saque inicial de cada parte, D (Smart Tagging "Kick Off (Start)")
+            from hackbarca.pipeline.kickoff_rule import apply_kickoff_dead, kickoff_frames, load_events
+            codes = apply_kickoff_dead(codes, kickoff_frames(load_events(data_dir), match, list(GRADED)),
+                                       list(GRADED))
         return codes
     raise ValueError("modelo desconocido: " + model)
 

@@ -16,5 +16,6 @@
   "broadcast": false,
   "video_conductor": true,
   "extras": [],
-  "short_dead_frames": 75
+  "short_dead_frames": 75,
+  "kickoff_dead": true
 }
