@@ -126,7 +126,17 @@ On the challenge our prediction had about 0.68 dead-ball spells under 5 s per mi
 truth has 0.09. Most of them split one possession in two (H D H), which costs two possessions in
 spellF1. The rule (a D under 3 s between two live spells takes the previous label) was fixed on the
 bench, where it is neutral on clean predictions (+0.001) and recovers +0.023 when the challenge's
-excess is injected. TODO: its effect on the final model's shape on the challenge.
+excess is injected. On the challenge, the shape of our prediction moved as follows (aggregates of our
+own prediction, no ground truth; the first two columns are earlier tracking-only versions):
+
+| per minute of graded play | model trained on bench v3 | retrained on bench v3.1 | submitted model + rule |
+|---|---|---|---|
+| dead-ball spells under 5 s | 0.680 | 0.529 | **0.274** |
+| dead-ball spells | 1.775 | 1.605 | **1.360** |
+| direct H↔A changes | 1.397 | 1.482 | **1.539** |
+| share of D | 0.448 | 0.428 | **0.436** |
+
+The submitted model predicts 2.88 possessions per minute; the bench ground truth has 3.03.
 
 ## 4. Possession rules implemented
 
@@ -145,7 +155,8 @@ excess is injected. TODO: its effect on the final model's shape on the challenge
   the Smart Tagging instance `Kick Off (Start)`, a ~5 s window that contains it, used as an input.
   Inside that window, the kick-off is the first frame where the tracked ball moves more than 1 m.
   Compared with the kick-off frames published in the FAQ, this detection is 0.16 s late in the first
-  half and 3.2 s early in the second.
+  half and 3.2 s early in the second. With the rule, 97.3 % of the frames before the second-half
+  kick-off are D.
 - **No X on graded frames.** X appears only outside the two halves.
 
 ## 5. Assets used and dropped
@@ -244,7 +255,16 @@ uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La M
 ```
 
 The trained model is committed in `src/hackbarca/models/artifacts/`. It can be retrained from open data
-with `hackbarca.pipeline.train_l3_final` (TODO: the exact flags of the final artifact). LightGBM runs
-with `deterministic=True` and forced column-wise histograms, the model files are written byte for byte
-identically, and `make_submission` prints the sha256 of the file. TODO: sha256, commit and the
-second-machine check.
+with:
+
+```bash
+uv run python -m hackbarca.pipeline.train_l3_final --bench v3_1 --no-tags --stack \
+  --features touch+ball+players+blocks+structure+restart --extras transition \
+  --temperature 1 --switch 20 --to-dead 10 --from-dead 10
+```
+
+The short dead-ball rule and the kick-off rule are on by default. LightGBM runs with
+`deterministic=True` and forced column-wise histograms, the model files are written byte for byte
+identically, and `make_submission` prints the sha256 of the file. Two runs of the current model give
+the same file, sha256 prefix `df01cd02b266e933` (305 possessions, mean 11.7 s). TODO: final model if
+E113-E115 change it, full sha256, commit and the second-machine check.
