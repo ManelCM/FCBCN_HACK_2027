@@ -11,6 +11,32 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-11-10 (tarde) — Manel (con agente) · ideas de otros equipos y entrega sin vídeo entrenado (rama `competidores`)
+- **Investigación de competidores** (`docs/investigacion/07_competidores.md`). Hay 210 repos públicos; tres de ellos copian el email de la organización del 3 nov.
+- **ADR-0023 (Aceptada por Manel):** no se entrena, ajusta ni calibra nada con la GT o con el vídeo del reto.
+  - U6 y E075 salen de la entrega.
+  - La base pasa a ser **E058b** (0,7410, sin vídeo).
+  - Documento técnico reescrito sin la variante A, con una sección de cumplimiento.
+- **E111 (I1, traspaso más barato que parada + reanudación):** no pasa (≤ +0,005). `pipeline/decode_variants.py` hace Viterbi por lotes.
+- **E118, retención de 2 s sobre E058b:** +0,0051, mejor en 6 de 10. No pasa.
+- **E119:** el `dead_weight` del banco queda justificado sin la GT pública (objetivo solo de tracking; 100 está en la meseta). Cierra la zona gris de ADR-0023.
+- **Código de E113-E115** (commit 09bb0d7, 93 tests en verde):
+  - pesos por posesión (`--spell-weight`);
+  - dos cabezas (`--two-heads`);
+  - SkillCorner solo con H/A y el balón visto (`--extra-sc --sc-team-only`).
+  - El humo de `tune_l3` con las tres banderas lo mató la gestión de memoria. Las evaluaciones se lanzan sin él: si fallan, `cola.sh` apunta rc=1 y sigue.
+- **En marcha:** script del agente en segundo plano. Cuando termina la cola actual (E099nv):
+  - entrena **E110** (artefacto de E058b, sobrescribe `models/artifacts/`);
+  - lo copia a `external_data/artefactos/e058b/`;
+  - vuelve a lanzar `cola.sh` con E113 → E115 → E114.
+- Pendiente:
+  - E110: `make_submission` dos veces, `kickoff_report --csv`, `real_vs_bench` y guardarraíl. Es la entrega provisional.
+  - Leer E099nv, E113, E115 y E114 frente a E058b; después E116 (combinación) y E117 (artefacto final).
+- Bloqueos / preguntas para el equipo:
+  - **Confirmar el email original del 3 nov.**
+  - Revisar ADR-0023.
+  - Reproducción en una segunda máquina.
+
 ## 2026-11-10 — Manel (con agente) · informe de las 40 features recalculado; regla del saque inicial
 - **E099, las 40 features del informe del compañero sobre E075:** 0,7677 frente a 0,7692 (−0,0015, 5 de 10). No pasa ADR-0008. El +0,017 del informe se medía frente a E035, sin vídeo.
 - **E099b, retención mínima de 2 s:** E075 + retención da 0,7678 frente a 0,7606 de la entrega (+0,0072, 7 de 10). Con E099, +0,0094 (7 de 10). No pasa por poco. Queda como candidata para T6.
