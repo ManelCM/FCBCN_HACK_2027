@@ -91,3 +91,15 @@ def test_decode_batch_matches_decode():
     got = decode_batch(p, runs, cands, batch=2)
     for c, params in enumerate(cands):
         np.testing.assert_array_equal(got[c], l3.decode(p, runs, params))
+
+
+def test_stacked_team_only_at_the_end(monkeypatch):
+    """E114: los partidos de SkillCorner (team_only) van al final; ningun pliegue interno puede quedarse
+    solo con ellos."""
+    monkeypatch.setattr(l3, "N_ROUNDS", 5)
+    monkeypatch.setattr(l3, "BAGS", 1)
+    monkeypatch.setattr(l3, "HEADS", 2)
+    feats, labels = zip(*(_toy(s, n=600) for s in range(7)))
+    flags = [False] * 3 + [True] * 4
+    stage1, stage2 = l3.train_stacked(list(feats), list(labels), team_only=flags)
+    assert l3.predict_stacked((stage1, stage2), feats[0]).shape == (600, 3)

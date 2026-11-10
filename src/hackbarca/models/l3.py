@@ -163,6 +163,8 @@ def _train_two_heads(x, y, w, team_only, offset: int):
     params = {k: v for k, v in LGB_PARAMS.items() if k != "num_class"}
     params.update(objective="binary", seed=LGB_PARAMS["seed"] + offset)
     rows = ~team_only
+    if not rows.any():
+        raise ValueError("cabeza de vivo sin filas: todos los partidos del entrenamiento son team_only")
     alive = lgb.train(params, lgb.Dataset(x[rows], (y[rows] != 2).astype(int),
                                           weight=None if w is None else w[rows]), num_boost_round=N_ROUNDS)
     live = y != 2
@@ -282,7 +284,14 @@ def train_stacked(features: list[pd.DataFrame], labels: list[np.ndarray], inner_
         return None if xs is None else [xs[j] for j in idx]
 
     inner = [None] * n
-    for group in np.array_split(np.arange(n), min(inner_folds, n)):
+    k = min(inner_folds, n)
+    if team_only is not None and any(team_only):
+        # E114: los partidos solo de equipo van al final; con bloques contiguos un pliegue interno se
+        # entrenaria solo con ellos y la cabeza de vivo se quedaria sin filas. Se intercalan.
+        groups = [np.arange(n)[g::k] for g in range(k)]
+    else:
+        groups = np.array_split(np.arange(n), k)   # como siempre: E058b/E110 se reproducen igual
+    for group in groups:
         rest = [j for j in range(n) if j not in group]
         m = train([features[j] for j in rest], [labels[j] for j in rest], pick(weights, rest), pick(team_only, rest))
         for i in group:
