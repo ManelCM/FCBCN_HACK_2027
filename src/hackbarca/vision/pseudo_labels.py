@@ -108,10 +108,11 @@ def _checkpoint_epoch(path: str) -> int:
     return int(torch.load(path, map_location="cpu", weights_only=False).get("epoch", -1))
 
 
-def train(epochs: int = 30) -> None:
+def train(epochs: int = 30, name: str = "atd_pl") -> None:
+    """name: carpeta del entrenamiento en runs/ (otra que atd_pl para comprobar la reproducibilidad)."""
     from ultralytics import YOLO
     root = out_dir()
-    weights = os.path.join(root, "runs", "atd_pl", "weights")
+    weights = os.path.join(root, "runs", name, "weights")
     last = os.path.join(weights, "last.pt")
     # Ultralytics deja epoch=-1 en last.pt al terminar. Con resume=True sobre un entrenamiento ya
     # terminado entrena de cero con sus valores por defecto (coco8), asi que se distinguen los casos.
@@ -126,7 +127,7 @@ def train(epochs: int = 30) -> None:
     else:
         model = YOLO("yolov8n.pt")
         model.train(data=os.path.join(root, "data.yaml"), imgsz=TILE, epochs=epochs, batch=16, seed=SEED,
-                    deterministic=True, project=os.path.join(root, "runs"), name="atd_pl", exist_ok=True,
+                    deterministic=True, project=os.path.join(root, "runs"), name=name, exist_ok=True,
                     workers=2, plots=False, verbose=False)
     metrics = model.val(data=os.path.join(root, "data.yaml"), imgsz=TILE, verbose=False, plots=False)
     print("validacion (recortes apartados): precision %.3f recall %.3f mAP50 %.3f" % (
@@ -137,5 +138,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("step", choices=("build", "train"))
     parser.add_argument("--epochs", type=int, default=30)
+    parser.add_argument("--name", default="atd_pl")
     args = parser.parse_args()
-    build() if args.step == "build" else train(args.epochs)
+    build() if args.step == "build" else train(args.epochs, args.name)

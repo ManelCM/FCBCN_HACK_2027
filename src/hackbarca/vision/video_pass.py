@@ -58,6 +58,8 @@ def main(argv=None) -> int:
     parser.add_argument("--person-weights", default="yolov8s.pt")
     parser.add_argument("--ball-conf", type=float, default=0.01)
     parser.add_argument("--limit", type=int, default=0, help="prueba: solo los primeros N frames puntuados")
+    parser.add_argument("--out-dir", default=None,
+                        help="carpeta de salida dentro de data/derived (por defecto video_pass_full o video_pass)")
     args = parser.parse_args(argv)
 
     import cv2
@@ -76,7 +78,8 @@ def main(argv=None) -> int:
     wanted = np.concatenate([np.arange(a, b) for a, b in GRADED])
     if args.limit:
         wanted = wanted[:args.limit]
-    out_dir = os.path.join(os.environ.get("MTAH_DATA_DIR", "data"), "derived", "video_pass_full" if not args.limit else "video_pass")
+    out_dir = os.path.join(os.environ.get("MTAH_DATA_DIR", "data"), "derived",
+                           args.out_dir or ("video_pass_full" if not args.limit else "video_pass"))
     os.makedirs(out_dir, exist_ok=True)
     ball_model, person_model = YOLO(args.ball_weights), YOLO(args.person_weights)
     video = cv2.VideoCapture(require(["video"])[0])
