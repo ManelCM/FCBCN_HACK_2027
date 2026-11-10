@@ -65,7 +65,7 @@ Las tres copias coinciden. **Falta confirmarlo con el email original**, que debe
 | pieza | qué usa del reto | lectura |
 |---|---|---|
 | simulador del banco (E006, E013, E047; ADR-0006, 0009, 0017) | agregados del ATD (p. ej. 41 % sin balón, dinámica del balón) para dar forma a la degradación de los partidos **externos** | no es la GT ni el vídeo, y no se ajusta ningún parámetro del modelo con el reto; otros equipos hacen lo mismo y lo declaran. Se explica |
-| E006, `dead_weight` del banco v2 | uno de los objetivos fue el «56 % de D en los huecos largos» de la **GT pública** (ya señalado en ADR-0019) | ❌ con esta aclaración es calibrar con la GT. Pendiente: justificarlo sin la GT, o quitar ese objetivo y comprobar que el banco v3.1 apenas cambia |
+| E006, `dead_weight` del banco v2 | uno de los objetivos fue el «56 % de D en los huecos largos» de la **GT pública** (ya señalado en ADR-0019) | con esta aclaración, ese objetivo era calibrar con la GT. **E119 lo justifica sin ella**: con un objetivo que solo sale del tracking (velocidad de los jugadores en los huecos frente a con balón) se elige 100 o más, y de 100 a 1.000 el banco apenas cambia. El banco v3.1 tampoco reproduce ya el 56 % (da 0,716). Se declara en el documento técnico |
 | features relativas al partido (umbral de toque por partido, bloques en z-score por parte) | se calculan sobre el propio ATD en inferencia | cálculo fijo en inferencia, no ajuste |
 | guardarraíles ADR-0018/0020 | agregados de nuestra predicción en el reto | comprobación automática de paso/fallo; no ajusta parámetros |
 | k de la regla de D cortos (ADR-0021) | elegido solo con el banco | conforme |
