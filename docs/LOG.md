@@ -11,6 +11,25 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-11-10 (noche) — Manel (con agente) · E110 entrega provisional; E113 pasa el banco pero no el veto
+- **E110** (artefacto de E058b, sin vídeo) es la entrega provisional: `La MasIA.csv`, sha `df01cd02b266e933`.
+  - Es reproducible y da 97,3 % de D antes del saque.
+  - Mejora las cuatro medidas de forma frente a E070 y E049c.
+  - E110b (la decodificación del banco) no pasa el guardarraíl.
+- **E113 (el mismo peso para cada posesión) pasa ADR-0008:** 0,7555 frente a 0,7410, mejor en 8 de 10. Solo funciona con su propia decodificación.
+- **E117, artefacto de E113:** el orden de las decodificaciones se fijó antes de mirar el reto. Ninguna pasa el veto de ADR-0020 frente a E110:
+  - la de la LOGO pierde cambios directos (1,416);
+  - 1/30/20/20 deja +0,009 D cortos/min (unos 1 tramo en el partido) y mejora las otras tres medidas.
+  - **La entrega sigue con E110.** Artefactos en `external_data/artefactos/{e058b,e117}/`.
+- E115 y E114 fallaron: memoria y pliegues internos con SkillCorner. Arreglado en 999df51. Se relanzaron sobre E113 con `--jobs 1`, y se pararon a las 23:03 por el apagado del PC.
+- Pendiente:
+  - **Al volver: `bash scripts/cola.sh` en una terminal aparte.** `cola.txt` ya tiene E115 y E114, que tardan unas 4-5 h y 8 h.
+  - Si alguno pasa, artefacto y veto frente a E110, con el mismo pre-registro.
+  - Rellenar las filas TODO del documento técnico.
+- Bloqueos / preguntas para el equipo:
+  - **¿Aceptamos E117 con 1/30/20/20?** Falla el veto por un tramo D corto. Haría falta un ADR con una tolerancia que valga para todos los candidatos.
+  - Confirmar el email original del 3 nov.
+
 ## 2026-11-10 (tarde) — Manel (con agente) · ideas de otros equipos y entrega sin vídeo entrenado (rama `competidores`)
 - **Investigación de competidores** (`docs/investigacion/07_competidores.md`). Hay 210 repos públicos; tres de ellos copian el email de la organización del 3 nov.
 - **ADR-0023 (Aceptada por Manel):** no se entrena, ajusta ni calibra nada con la GT o con el vídeo del reto.
