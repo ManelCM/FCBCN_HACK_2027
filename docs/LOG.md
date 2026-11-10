@@ -11,6 +11,22 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-11-10 — Manel (con agente) · informe de las 40 features recalculado; regla del saque inicial
+- **E099, las 40 features del informe del compañero sobre E075:** 0,7677 frente a 0,7692 (−0,0015, 5 de 10). No pasa ADR-0008. El +0,017 del informe se medía frente a E035, sin vídeo.
+- **E099b, retención mínima de 2 s:** E075 + retención da 0,7678 frente a 0,7606 de la entrega (+0,0072, 7 de 10). Con E099, +0,0094 (7 de 10). No pasa por poco. Queda como candidata para T6.
+- **E054 (M3, SkillCorner):** apuntado; corrió el 28 oct. 0,6856, −0,040. M3 se cierra.
+- **ADR-0022 (Propuesta), regla del saque inicial:** antes del `Kick Off (Start)` del Smart Tagging de cada parte se predice D. Antes, la entrega daba 46,4 % de D en los 2.934 frames anteriores al saque de la 2.ª parte. `l3_decode.json` lleva `kickoff_dead: true`. Hay que regenerar la entrega.
+- **Documento técnico** reescrito en inglés: variantes A y B, banco, protocolo, activos usados y descartados, y reproducción.
+- **Reproducibilidad de la variante A:** la pasada de vídeo es idéntica bit a bit en la misma máquina (`vision/repro_check.py`). El reentrenamiento del YOLO (`atd_pl_repro`) se colgó a las 13:42, cuando la gestión de memoria de Claude Code mató su shell; se paró a las 15:35 sin terminar.
+- **Aviso de la otra sesión (email de la organización del 3 nov):** no se puede entrenar ni ajustar con el vídeo del reto. U6/E075 usa el YOLO afinado con recortes del vídeo táctico, así que **deja de valer para la entrega**, y reentrenarlo tampoco cumple. Por eso E099/E099b (medidos sobre E075) y la comprobación de reproducibilidad del YOLO sirven solo como información. La base nueva es E058b, sin vídeo (0,7410). La otra sesión lleva E110-E129 y ADR-0023/0024 en la rama `competidores`.
+- **Lección:** las shells de fondo de Claude Code se matan cuando falta memoria, y sus hijos de Python quedan huérfanos. Las evaluaciones largas, mejor en una terminal aparte (`bash scripts/cola.sh`).
+- Pendiente:
+  - E099nv (40 features sin vídeo, frente a E049), en marcha desde las 15:26.
+  - La generación con la regla del saque (`data/derived/sub_kick1/2`) usa E075: sirve para comprobar la regla y que se repite, **no es la entrega**. La entrega provisional será el artefacto de E058b + la regla de 3 s + ADR-0022.
+  - Medir la retención de 2 s sobre el OOF de E058b.
+  - T6: combinación final, congelación el 14 nov.
+- Bloqueos / preguntas para el equipo: revisar los ADR 0015-0022, sobre todo el 0022, porque vuelve a usar el Smart Tagging en la entrega.
+
 ## 2026-10-27 (noche) — Manel (con agente) · U7 cerrada, U10 pasa la puerta; dos fallos de la cola
 - **U7 (E091):** no pasa. El saque de banda tiene lift 1,65, pero solo cubre el 6,3 % de los frames dudosos, y el equipo del portero acuerda 0,404. Cerrada.
 - **U10 (E097):** pasa la puerta de equipo: acuerdo 0,86-0,93 con la predicción segura y cobertura del 20-31 % de los dudosos. La de paradas no pasa (lift 1,37-1,48). E098 la lleva al banco con la fiabilidad medida.
