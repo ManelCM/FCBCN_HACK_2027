@@ -78,6 +78,13 @@ def main(argv=None) -> int:
                         help="regla de D cortos de la entrega en frames (ADR-0021, E090); 0 = sin regla")
     parser.add_argument("--bag", type=int, default=1, help="M5e: media de N modelos con desfases del submuestreo")
     parser.add_argument("--xgb-mix", action="store_true", help="M5d: media de LightGBM y XGBoost en cada modelo")
+    parser.add_argument("--spell-weight", action="store_true",
+                        help="E113: pesos por posesion (8 s / duracion en la GT controlada de --controlled/-dfl)")
+    parser.add_argument("--controlled", type=float, default=1.5, help="T de Metrica para los pesos por posesion")
+    parser.add_argument("--controlled-dfl", type=float, default=2.0, help="T de DFL para los pesos por posesion")
+    parser.add_argument("--two-heads", action="store_true", help="E115: P(vivo) y P(local | vivo)")
+    parser.add_argument("--extra-sc", type=int, default=0, help="E114: + k partidos de SkillCorner (solo entrenar)")
+    parser.add_argument("--sc-team-only", action="store_true", help="E114: SkillCorner solo H/A con balon visto")
     parser.add_argument("--video-fill", action="store_true",
                         help="banco con el relleno de balon por video simulado; la entrega lo aplica (E063)")
     args = parser.parse_args(argv)
@@ -105,12 +112,31 @@ def main(argv=None) -> int:
                        extras=tuple(x for x in args.extras.split("+") if x), conductor=conductor, actions=actions)
     os.makedirs(ARTIFACTS, exist_ok=True)
     features, labels = [df for df, _ in games], [gt for _, gt in games]
+    names = BENCHES[args.bench]
+    l3.HEADS = 2 if args.two_heads else 1
+    n_sc = 0
+    if args.extra_sc:
+        from hackbarca.pipeline.extra_data import skillcorner_training_games
+        from hackbarca.pipeline.tune_l3 import read_features
+        sc = skillcorner_training_games(args.features, BENCH_PARAMS[args.bench], args.extra_sc,
+                                        team_only=args.sc_team_only,
+                                        extras=tuple(x for x in args.extras.split("+") if x))
+        features += [read_features(path) for path, _ in sc]
+        labels += [gt for _, gt in sc]
+        n_sc = len(sc)
+    weights = None
+    if args.spell_weight:   # igual que tune_l3 --spell-weight: duraciones de la GT controlada del banco
+        from hackbarca.io.external import controlled_possession, is_dfl
+        weights = [l3.spell_weights(controlled_possession(
+            gt, int(round((args.controlled_dfl if is_dfl(n) else args.controlled) * 25)))) for gt, n in zip(labels, names)]
+        weights += [l3.spell_weights(gt) for gt in labels[len(names):]]
+    team_only = [False] * len(names) + [True] * n_sc if (args.sc_team_only and args.two_heads) else None
     if args.stack:
-        stage1, stage2 = train_stacked(features, labels)
+        stage1, stage2 = train_stacked(features, labels, weights=weights, team_only=team_only)
         save_model(stage1)
         save_model(stage2, STAGE2_PATH)
     else:
-        save_model(train(features, labels))
+        save_model(train(features, labels, weights, team_only))
         if os.path.exists(STAGE2_PATH):
             os.remove(STAGE2_PATH)
     for path in (SEQ_PATH,) + CHANGE_PATHS:   # nada de restos de un artefacto anterior
@@ -135,6 +161,8 @@ def main(argv=None) -> int:
                    "ball_actions_lite": args.ba_lite, "short_dead_frames": args.short_dead,
                    "kickoff_dead": not args.no_kickoff_dead,
                    "bag": args.bag, "xgb_mix": args.xgb_mix,
+                   "spell_weight": args.spell_weight, "two_heads": args.two_heads,
+                   "extra_sc": args.extra_sc, "sc_team_only": args.sc_team_only,
                    "extras": [x for x in args.extras.split("+") if x]},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)

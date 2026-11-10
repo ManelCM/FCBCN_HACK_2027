@@ -31,6 +31,32 @@ XGB_MIX = False  # M5d (E096): cada capa promedia LightGBM con un XGBoost de cap
 XGB_PARAMS = dict(objective="multi:softprob", num_class=3, eta=0.05, grow_policy="lossguide", max_leaves=127,
                   max_depth=0, min_child_weight=20, subsample=0.8, colsample_bytree=0.8, reg_lambda=1.0,
                   tree_method="hist", nthread=4, seed=SEED)
+# E115 (I4, katenaball/FCB-Hacks): dos cabezas binarias, P(vivo) y P(local | vivo), en vez de un multiclase
+HEADS = 1
+# E113 (I2, FCB-Hacks): peso de un frame vivo = SPELL_REF_S / duracion de su posesion, recortado
+SPELL_REF_S = 8.0
+SPELL_CLIP = (0.25, 4.0)
+
+
+def spell_weights(gt: np.ndarray, fps: int = 25, ref_s: float = SPELL_REF_S, clip=SPELL_CLIP) -> np.ndarray:
+    """Pesos por frame para que cada posesion cuente parecido, como en spellF1.
+
+    Cada racha maxima de H o de A (un D o un X la corta) pesa ref_s / su duracion por frame, recortado a
+    `clip`. Despues se reescalan los frames vivos para que su peso total sea su numero de frames: el
+    equilibrio entre vivo y D no cambia. D y X pesan 1."""
+    gt = np.asarray(gt)
+    w = np.ones(len(gt))
+    if not len(gt):
+        return w
+    edges = np.flatnonzero(np.diff(gt.astype(np.int16)) != 0) + 1
+    bounds = np.concatenate(([0], edges, [len(gt)]))
+    for a, b in zip(bounds[:-1], bounds[1:]):
+        if gt[a] in (0, 1):
+            w[a:b] = np.clip(ref_s * fps / (b - a), *clip)
+    live = (gt == 0) | (gt == 1)
+    if live.any():
+        w[live] *= live.sum() / w[live].sum()
+    return w
 
 
 @dataclass(frozen=True)
@@ -91,8 +117,27 @@ class XgbModel:
         return self.names
 
 
+class TwoHeads:
+    """P(vivo) y P(local | vivo) (E115) con la interfaz de lgb.Booster: predict da (n, 3) H/A/D."""
+
+    def __init__(self, alive, home):
+        self.alive, self.home = alive, home
+
+    def predict(self, df):
+        pa, ph = self.alive.predict(df), self.home.predict(df)
+        return np.stack([pa * ph, pa * (1 - ph), 1 - pa], axis=1)
+
+    def feature_importance(self, kind: str = "split"):
+        return self.alive.feature_importance(kind) + self.home.feature_importance(kind)
+
+    def feature_name(self):
+        return self.alive.feature_name()
+
+
 def model_to_dict(model) -> dict:
-    """Bag / XgbModel / lgb.Booster a un dict de texto, para guardarlo en el artefacto."""
+    """Bag / XgbModel / TwoHeads / lgb.Booster a un dict de texto, para guardarlo en el artefacto."""
+    if isinstance(model, TwoHeads):
+        return {"two_heads": [model_to_dict(model.alive), model_to_dict(model.home)]}
     if isinstance(model, Bag):
         return {"bag": [model_to_dict(m) for m in model.boosters]}
     if isinstance(model, XgbModel):
@@ -101,6 +146,8 @@ def model_to_dict(model) -> dict:
 
 
 def model_from_dict(data: dict):
+    if "two_heads" in data:
+        return TwoHeads(*(model_from_dict(m) for m in data["two_heads"]))
     if "bag" in data:
         return Bag(model_from_dict(m) for m in data["bag"])
     if "xgb" in data:
@@ -111,27 +158,54 @@ def model_from_dict(data: dict):
     return lgb.Booster(model_str=data["lgb"])
 
 
-def _train_one(features, labels, offset: int):
-    xs, ys = [], []
-    for df, y in zip(features, labels):
+def _train_two_heads(x, y, w, team_only, offset: int):
+    """E115: P(vivo) con las filas de partidos con D (no las de team_only) y P(local) con las filas H/A."""
+    params = {k: v for k, v in LGB_PARAMS.items() if k != "num_class"}
+    params.update(objective="binary", seed=LGB_PARAMS["seed"] + offset)
+    rows = ~team_only
+    alive = lgb.train(params, lgb.Dataset(x[rows], (y[rows] != 2).astype(int),
+                                          weight=None if w is None else w[rows]), num_boost_round=N_ROUNDS)
+    live = y != 2
+    home = lgb.train(params, lgb.Dataset(x[live], (y[live] == 0).astype(int),
+                                         weight=None if w is None else w[live]), num_boost_round=N_ROUNDS)
+    return TwoHeads(alive, home)
+
+
+def _train_one(features, labels, offset: int, weights=None, team_only=None):
+    xs, ys, ws, ts = [], [], [], []
+    for i, (df, y) in enumerate(zip(features, labels)):
         keep = np.flatnonzero(y != 3)[offset::SUBSAMPLE]
         xs += [df.iloc[keep], swap_teams(df.iloc[keep])]
         ys += [y[keep], _swap_labels(y[keep])]
+        if weights is not None:
+            ws += [weights[i][keep]] * 2
+        flag = bool(team_only[i]) if team_only is not None else False
+        ts += [np.full(len(keep), flag)] * 2
     x, y = pd.concat(xs, ignore_index=True), np.concatenate(ys)
-    model = lgb.train(dict(LGB_PARAMS, seed=LGB_PARAMS["seed"] + offset), lgb.Dataset(x, y), num_boost_round=N_ROUNDS)
+    w = np.concatenate(ws) if weights is not None else None
+    if HEADS == 2:
+        return _train_two_heads(x, y, w, np.concatenate(ts), offset)
+    if team_only is not None and any(team_only):
+        raise ValueError("team_only (filas solo de equipo) necesita HEADS = 2")
+    model = lgb.train(dict(LGB_PARAMS, seed=LGB_PARAMS["seed"] + offset), lgb.Dataset(x, y, weight=w),
+                      num_boost_round=N_ROUNDS)
     if not XGB_MIX:
         return model
     import xgboost as xgb
-    other = xgb.train(dict(XGB_PARAMS, seed=XGB_PARAMS["seed"] + offset), xgb.DMatrix(x, y), num_boost_round=N_ROUNDS)
+    other = xgb.train(dict(XGB_PARAMS, seed=XGB_PARAMS["seed"] + offset), xgb.DMatrix(x, y, weight=w),
+                      num_boost_round=N_ROUNDS)
     return Bag([model, XgbModel(other, x.columns)])
 
 
-def train(features: list[pd.DataFrame], labels: list[np.ndarray]):
+def train(features: list[pd.DataFrame], labels: list[np.ndarray], weights=None, team_only=None):
     """features/labels por partido; labels 0/1/2 (H/A/D) y 3 (X, se descarta). Con BAGS > 1, un Bag
-    de modelos con desfases repartidos en el submuestreo (y semillas distintas)."""
+    de modelos con desfases repartidos en el submuestreo (y semillas distintas).
+
+    weights: pesos por frame de cada partido (E113, `spell_weights`) o None.
+    team_only: por partido, True si sus filas solo valen para la cabeza de equipo (E114/E115, HEADS = 2)."""
     if BAGS == 1:
-        return _train_one(features, labels, 0)
-    return Bag(_train_one(features, labels, round(k * SUBSAMPLE / BAGS)) for k in range(BAGS))
+        return _train_one(features, labels, 0, weights, team_only)
+    return Bag(_train_one(features, labels, round(k * SUBSAMPLE / BAGS), weights, team_only) for k in range(BAGS))
 
 
 def predict_proba(model: lgb.Booster, df: pd.DataFrame) -> np.ndarray:
@@ -197,18 +271,24 @@ def _stack_input(df: pd.DataFrame, proba: np.ndarray) -> pd.DataFrame:
 INNER_FOLDS = 3  # con <= 3 partidos equivale a dejar uno fuera (E018); con 10 evita 10 modelos
 
 
-def train_stacked(features: list[pd.DataFrame], labels: list[np.ndarray], inner_folds: int = INNER_FOLDS):
+def train_stacked(features: list[pd.DataFrame], labels: list[np.ndarray], inner_folds: int = INNER_FOLDS,
+                  weights=None, team_only=None):
     """(capa1, capa2). La capa 2 se entrena con probabilidades de capa 1 fuera de muestra
-    (cada grupo de partidos predicho por un modelo entrenado con los demas)."""
+    (cada grupo de partidos predicho por un modelo entrenado con los demas). weights / team_only como
+    en `train`, por partido, en las dos capas."""
     n = len(features)
+
+    def pick(xs, idx):
+        return None if xs is None else [xs[j] for j in idx]
+
     inner = [None] * n
     for group in np.array_split(np.arange(n), min(inner_folds, n)):
         rest = [j for j in range(n) if j not in group]
-        m = train([features[j] for j in rest], [labels[j] for j in rest])
+        m = train([features[j] for j in rest], [labels[j] for j in rest], pick(weights, rest), pick(team_only, rest))
         for i in group:
             inner[i] = _stack_input(features[i], predict_proba(m, features[i]))
-    stage2 = train(inner, labels)
-    stage1 = train(features, labels)
+    stage2 = train(inner, labels, weights, team_only)
+    stage1 = train(features, labels, weights, team_only)
     return stage1, stage2
 
 

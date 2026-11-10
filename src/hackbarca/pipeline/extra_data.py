@@ -19,19 +19,49 @@ from hackbarca.pipeline.tune_l3 import FEATURE_CACHE, feature_path
 SEED0 = 200
 
 
-def skillcorner_training_games(version, params, limit: int | None = None):
-    """[(ruta de features en cache, gt)] de los partidos de SkillCorner ya descargados."""
+def team_only_gt(gt: np.ndarray, ball_x: np.ndarray) -> np.ndarray:
+    """E114 (I3): SkillCorner no tiene etiqueta de balon muerto (su `possession.group` nulo es
+    "desconocido", no D; lo documentan katenaball y jekkiechan). Su D sale de `ball_state` de kloppy y su
+    balon falta sobre todo fuera de plano. Solo se conservan H/A con el balon visto en el tracking limpio;
+    el resto pasa a X (se descarta al entrenar)."""
+    from hackbarca.io.external import GT_D, GT_X
+    out = np.asarray(gt).copy()
+    out[(out == GT_D) | ~np.isfinite(ball_x)] = GT_X
+    return out
+
+
+def _save(df, path):
+    tmp = path[:-4] + ".tmp.npz"
+    np.savez(tmp, columns=np.array(df.columns, dtype=str), values=df.to_numpy(np.float32))
+    os.replace(tmp, path)
+
+
+def skillcorner_training_games(version, params, limit: int | None = None, team_only: bool = False, extras=()):
+    """[(ruta de features en cache, gt)] de los partidos de SkillCorner ya descargados.
+
+    team_only: GT solo con H/A y el balon visto (E114); las features y su cache no cambian.
+    extras: familias de entrenador (como `tune_l3 --extras`). Se anaden a la cache base, que no se recalcula,
+    en un fichero aparte con su propia clave."""
     from hackbarca.io.skillcorner import available, load_skillcorner_bench
     os.makedirs(FEATURE_CACHE, exist_ok=True)
     out = []
     for k, match_id in enumerate(available()[:limit]):
         match, gt = load_skillcorner_bench(match_id)
+        if team_only:
+            gt = team_only_gt(gt, match.ball_x)
         name = "sc" + match_id
         path = feature_path(name, SEED0 + k, version, False, params)
         if not os.path.exists(path):
-            df = features_for(degrade(match, params, seed=SEED0 + k), None, version=version)
-            tmp = path[:-4] + ".tmp.npz"
-            np.savez(tmp, columns=np.array(df.columns, dtype=str), values=df.to_numpy(np.float32))
-            os.replace(tmp, path)
+            _save(features_for(degrade(match, params, seed=SEED0 + k), None, version=version), path)
+        if extras:
+            full = feature_path(name, SEED0 + k, version, False, params, extras=tuple(extras))
+            if not os.path.exists(full):
+                import pandas as pd
+
+                from hackbarca.features.coach import extra_features
+                from hackbarca.pipeline.tune_l3 import read_features
+                degraded = degrade(match, params, seed=SEED0 + k)   # la misma semilla: el mismo degradado
+                _save(pd.concat([read_features(path), extra_features(degraded, tuple(extras))], axis=1), full)
+            path = full
         out.append((path, gt))
     return out

@@ -161,7 +161,7 @@ def _fit_predict(job):
     Los partidos llegan como rutas de la cache (o DataFrames si son degradaciones extra): asi un
     worker no recibe copias de todo el banco y solo carga lo que usa.
     """
-    items, eval_item, stack, lgb_params, n_rounds, dynamic, bags, xgb_mix = job
+    items, eval_item, stack, lgb_params, n_rounds, dynamic, bags, xgb_mix, weights, team_only, heads = job
     train_sets = [(_materialize(x), gt) for x, gt in items]
     eval_df = _materialize(eval_item)
     from hackbarca.models import l3
@@ -169,15 +169,16 @@ def _fit_predict(job):
     l3.N_ROUNDS = n_rounds
     l3.BAGS = bags
     l3.XGB_MIX = xgb_mix
+    l3.HEADS = heads
     features, labels = [df for df, _ in train_sets], [gt for _, gt in train_sets]
     p_change = None
     if dynamic:  # E032: detector de cambio entrenado con los mismos partidos del pliegue
         from hackbarca.models.change import predict_change, train_change
         p_change = predict_change(train_change(features, labels), eval_df)
     if stack:
-        models = l3.train_stacked(features, labels)
+        models = l3.train_stacked(features, labels, weights=weights, team_only=team_only)
         return l3.predict_stacked(models, eval_df), models[1], p_change
-    model = l3.train(features, labels)
+    model = l3.train(features, labels, weights, team_only)
     return l3.predict_proba(model, eval_df), model, p_change
 
 
@@ -251,6 +252,13 @@ def main(argv=None) -> int:
                         help="E075s: con --video-conductor, simulacion pesimista (io/video_conductor.VIDEO_CONDUCTOR_STRESS)")
     parser.add_argument("--extra-sc", type=int, default=0,
                         help="M3 (E054): anade a todos los pliegues los k primeros partidos de SkillCorner (solo entrenar)")
+    parser.add_argument("--sc-team-only", action="store_true",
+                        help="E114 (I3): con --extra-sc, SkillCorner solo aporta H/A con el balon visto (sus D y huecos a X); "
+                             "con --two-heads entra solo en la cabeza de equipo")
+    parser.add_argument("--spell-weight", action="store_true",
+                        help="E113 (I2): pesos por frame = 8 s / duracion de su posesion (GT controlada), [0,25, 4]")
+    parser.add_argument("--two-heads", action="store_true",
+                        help="E115 (I4): dos cabezas binarias, P(vivo) y P(local | vivo)")
     parser.add_argument("--train-subset", type=int, default=0,
                         help="curva de aprendizaje (E053): cada pliegue entrena con k de los otros partidos (semilla fija)")
     parser.add_argument("--jobs", type=int, default=1, help="pliegues en paralelo (4 hilos cada uno)")
@@ -319,7 +327,15 @@ def main(argv=None) -> int:
     sc_games = []
     if args.extra_sc:
         from hackbarca.pipeline.extra_data import skillcorner_training_games
-        sc_games = skillcorner_training_games(args.features, BENCH_PARAMS[args.bench], args.extra_sc)
+        sc_games = skillcorner_training_games(args.features, BENCH_PARAMS[args.bench], args.extra_sc,
+                                              team_only=args.sc_team_only,
+                                              extras=tuple(x for x in args.extras.split("+") if x))
+    # E113: los pesos salen de la GT controlada del partido (la definicion de posesion que se puntua),
+    # aunque se entrene con la original; SkillCorner y las degradaciones extra, de su propia GT
+    weight_of = None
+    if args.spell_weight:
+        from hackbarca.models.l3 import spell_weights
+        weight_of = {o: spell_weights(games[o][1]) for o in range(len(games))}
     oof = []
     if args.from_oof:
         blob = np.load(os.path.join(_REPO_ROOT, "external_data", args.from_oof))
@@ -333,8 +349,16 @@ def main(argv=None) -> int:
         if args.train_subset:
             others = sorted(np.random.default_rng(1000 + g).choice(others, args.train_subset, replace=False).tolist())
         train_sets = [train_games[o] for o in others] + [e for o in others for e in extra.get(o, [])] + sc_games
+        weights = None
+        if weight_of is not None:
+            from hackbarca.models.l3 import spell_weights
+            weights = ([weight_of[o] for o in others] + [spell_weights(gt) for o in others for _, gt in extra.get(o, [])]
+                       + [spell_weights(gt) for _, gt in sc_games])
+        team_only = None
+        if args.sc_team_only and args.two_heads:
+            team_only = [False] * (len(train_sets) - len(sc_games)) + [True] * len(sc_games)
         jobs.append((train_sets, eval_games[g][0], args.stack, dict(l3.LGB_PARAMS), l3.N_ROUNDS, args.dynamic,
-                     args.bag, args.xgb_mix))
+                     args.bag, args.xgb_mix, weights, team_only, 2 if args.two_heads else 1))
     if jobs:
         if args.jobs > 1:
             from concurrent.futures import ProcessPoolExecutor
@@ -363,7 +387,11 @@ def main(argv=None) -> int:
     if args.train_subset:
         name = name.replace(".npz", "_sub{}.npz".format(args.train_subset))
     if args.extra_sc:
-        name = name.replace(".npz", "_sc{}.npz".format(args.extra_sc))
+        name = name.replace(".npz", "_sc{}{}.npz".format(args.extra_sc, "t" if args.sc_team_only else ""))
+    if args.spell_weight:
+        name = name.replace(".npz", "_sw.npz")
+    if args.two_heads:
+        name = name.replace(".npz", "_2h.npz")
     if args.broadcast:
         name = name.replace(".npz", "_bc.npz")
     if args.video_conductor:
