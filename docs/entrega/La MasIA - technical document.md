@@ -82,7 +82,6 @@ for it, before the 3 Nov clarification.
 | TODO: + equal weight per possession (E113) | TODO | TODO |
 | TODO: + two heads, live and who (E115) | TODO | TODO |
 | TODO: + SkillCorner for "who" only (E114) | TODO | TODO |
-| TODO: + sustained-control features (E099nv) | TODO | TODO |
 
 For reference, the official baseline scores 0.2433 on the public window and our first rule-based
 model scored ~0.36 on the original bench. The bench is still somewhat easier than the challenge, so
@@ -108,10 +107,6 @@ trained on every match twice with the teams swapped:
 
 Every family is described with its change *after minus before* over 1-3 s windows: after a steal, the
 change is informative while the current level is not.
-
-TODO if E099nv passes: **sustained control** (40 columns): fraction of the last and next 1-3 s with a
-player of the team clearly closest to the ball, team support around the ball, and collective
-deceleration and directional coherence.
 
 ### 3.2 Layers and training
 - First layer: LightGBM, 3 classes, 127 leaves, 400 rounds, deterministic mode.
@@ -169,6 +164,7 @@ excess is injected. TODO: its effect on the final model's shape on the challenge
 | broadcast audio: whistle, commentary, crowd, kick sound | dropped | whistle heard at only ~10 % of stoppages; other cues AUC 0.47-0.55 |
 | pose (throw-ins, goalkeeper with the ball), referee position | dropped | did not pass their gates |
 | other coach-style families: formation, game situations, pressing, territory, game state | dropped | below the gate |
+| sustained control (40 columns: closest-player persistence, support, collective deceleration) | dropped | 0.7296 vs. 0.7254, 4/10 |
 | player-possessor model (PathCRF-like), MS-TCN, XGBoost blend, bagging | dropped | 0.7236 / 0.7207 vs. 0.7254; blend −0.008; bagging −0.011 |
 | 20 SkillCorner open matches as extra training data (all labels) | dropped | 0.6856 vs. 0.7254 (worse in 9/10). SkillCorner has no dead-ball label; see E114 |
 | decoder: direct change cheaper than stop + restart | dropped | ≤ +0.005 |
