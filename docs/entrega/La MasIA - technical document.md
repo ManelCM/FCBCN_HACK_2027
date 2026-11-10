@@ -20,8 +20,9 @@ sequences, not frames:
 3. **An offline Viterbi decoder** per half, with switch costs between H, A and D. It turns
    probabilities into possessions and places each boundary where the evidence on both sides is best
    explained, so there is no systematic lag.
-4. **One post-processing rule**: a predicted dead ball shorter than 3 s between two live spells is
-   given to the previous spell (section 3.4).
+4. **Two post-processing rules**: a predicted dead ball shorter than 3 s between two live spells is
+   given to the previous spell (section 3.4), and everything before each half's kick-off is D
+   (section 4).
 
 **Why this rather than something else.** There is one unlabeled match and no leaderboard, so the
 decisive problem is *validation*, not model capacity. We built an external bench (section 2), fixed a
@@ -150,9 +151,13 @@ it sees *who carries it*.
 - **Ball missing (41 % of graded frames).** Inside a gap the model relies on team context: who had
   the ball before and after the gap, team movement and collective speed (plus, in variant A, the
   visual carrier).
-- **Start of the second half.** The graded window starts before kick-off and those frames are D. We
-  handle this with the general dead-ball model and no frame-specific constant. TODO: aggregate check
-  of the share of D predicted there.
+- **Before each kick-off.** The second half is graded from about two minutes before its kick-off, and
+  those frames are D. The model alone predicted only 46 % D there. A general rule, with no
+  match-specific constant, now sets everything before each half's kick-off to D. The kick-off comes
+  from the Smart Tagging instance `Kick Off (Start)`, a ~5 s window that contains it. Inside that
+  window, the kick-off is the first frame where the tracked ball moves more than 1 m. Compared with
+  the kick-off frames published in the FAQ, this detection is 0.16 s late in the first half and 3.2 s
+  early in the second.
 - **No X on graded frames.** X appears only outside the two halves.
 
 ## 5. Assets used and dropped
@@ -162,7 +167,7 @@ it sees *who carries it*.
 | tactical tracking (players + ball) | **used** | main input |
 | Metrica and DFL/IDSSE open data | **used** | validation and training bench |
 | tactical video + homography | **used in variant A** | visual carrier, +0.044, 10/10 |
-| Smart Tagging | dropped | +0.008 (noise); only 13 % of long gaps end with a tagged restart |
+| Smart Tagging | **used only for the kick-off rule** (section 4) | as model features it gave +0.008 (noise), and only 13 % of long gaps end with a tagged restart |
 | broadcast tracking as a ball source | dropped | fills 7.5 % of the tactical gaps: it loses the ball in the same plays |
 | generic ball detector (YOLO COCO) | dropped | ball within 2 m on 24 % of frames |
 | filling the ball with the fine-tuned detector | dropped | +0.008, 6/10; on the real match it turned stoppages into live play |
