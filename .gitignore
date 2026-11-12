@@ -38,3 +38,4 @@ desktop.ini
 
 # Salidas por defecto de Ultralytics (pueden contener recortes del video del reto)
 /runs/
+!src/hackbarca/models/artifacts/possessor.pt
