@@ -241,6 +241,7 @@ documented in our decision log (ADR-0019, ADR-0023):
 None of these chose between model versions.
 
 **Labelled data register.**
+
 | data | labels | who | amount |
 |---|---|---|---|
 | Metrica sample matches | derived from their public events | algorithm | 3 matches |
