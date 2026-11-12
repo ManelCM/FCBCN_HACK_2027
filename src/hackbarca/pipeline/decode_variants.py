@@ -185,6 +185,14 @@ def main(argv=None) -> int:
         print("%-22s %-9s banco %.4f | inyectado %.4f | por partido %s" % (
             "libre (tune_l3)", ("sin regla", "regla 3 s")[r], pooled(gts, held)["spell_f1_mean"],
             injected(chosen_free[r], r), " ".join("%.3f" % x for x in ref_per[r])))
+    for r in (0, 1):   # la del artefacto: la mejor media en los 10 partidos, como tune_l3
+        best = i_base[int(np.argmax(clean[r][i_base].mean(1)))]
+        b = cands[best]
+        picks = sorted({(round(cands[c].temperature, 3), round(cands[c].switch, 2), round(cands[c].to_dead, 2),
+                         round(cands[c].from_dead, 2)) for c in chosen_free[r]})
+        print("libre %-9s elegidas por pliegue %s | mejor en todos: T %r cambio %r a D %r desde D %r (media %.4f)" % (
+            ("sin regla", "regla 3 s")[r], picks, b.temperature, b.switch, b.to_dead, b.from_dead,
+            clean[r][best].mean()))
     variants = [("libre+", i_plus)] + [
         ("m=%d" % m, [c for c in i_plus if cands[c].to_dead + cands[c].from_dead >= cands[c].switch + m])
         for m in MARGINS]
