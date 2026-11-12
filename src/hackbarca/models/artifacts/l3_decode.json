@@ -1,9 +1,9 @@
 {
   "decode": {
-    "temperature": 1.0,
-    "switch": 20.0,
-    "to_dead": 10.0,
-    "from_dead": 10.0,
+    "temperature": 1.0224660109323296,
+    "switch": 35.81318288460761,
+    "to_dead": 165.64765077035295,
+    "from_dead": 10.960713295319051,
     "alpha_switch": 0.0,
     "alpha_dead": 0.0
   },
@@ -21,11 +21,12 @@
   "kickoff_dead": true,
   "bag": 1,
   "xgb_mix": false,
-  "spell_weight": false,
+  "spell_weight": true,
   "two_heads": false,
   "extra_sc": 0,
   "sc_team_only": false,
   "extras": [
     "transition"
-  ]
+  ],
+  "possessor_weight": 0.3
 }

@@ -1,6 +1,6 @@
 # 0020 — Guardarraíl relativo: un candidato entra si no empeora ninguna medida de forma del reto
 
-- **Estado**: Aceptada por Manel el 27 oct (falta la revisión de las otras dos personas)
+- **Estado**: Aceptada por Manel el 27 oct (falta la revisión de las otras dos personas) · **Sustituida por ADR-0024** (12 nov)
 - **Fecha**: 2026-10-27
 - **Autor/a**: Manel (con agente)
 - **Revisado por**: ☐ ☐

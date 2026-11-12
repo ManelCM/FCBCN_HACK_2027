@@ -82,3 +82,5 @@ Las tres copias coinciden. **Falta confirmarlo con el email original**, que debe
   con la regla de 3 s y la del saque. Se reproduce igual en dos ejecuciones y el artefacto queda en
   `external_data/artefactos/e058b/`. En el reto, frente a las entregas anteriores sin vídeo, mejora las
   cuatro medidas del guardarraíl (E110 en `docs/experimentos.md`).
+- **12 nov: la entrega pasa a E122** (E113 + poseedor al 30 %, sha `2223250da5edc7ed`) con el criterio de
+  ADR-0024. Sigue sin vídeo ni GT del reto: el poseedor se entrena solo con el banco externo.
