@@ -95,7 +95,8 @@ def main(argv=None) -> int:
                 label, np.mean([x[2] for x in r]), np.mean([x[3] for x in r]), sum(x[4] for x in r)))
     if args.folds == "all":
         gts = [load_bench_game(nm)[1] for nm in names]
-        out = os.path.join(_REPO_ROOT, "external_data", "oof_poss_v3_1%s.npz" % ("" if args.seed is None else "_s%d" % args.seed))
+        out = os.path.join(_REPO_ROOT, "external_data", "oof_poss_v3_1%s%s.npz" % (
+            "" if args.seed is None else "_s%d" % args.seed, "" if args.epochs == 6 else "_e%d" % args.epochs))
         np.savez_compressed(out, **{"p%d" % i: oof[i] for i in range(len(names))}, **{"gt%d" % i: g for i, g in enumerate(gts)})
         print("guardado", out)
     return 0
