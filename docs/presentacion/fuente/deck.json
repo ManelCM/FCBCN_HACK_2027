@@ -1,0 +1,84 @@
+{
+  "v": 4,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-21T18:00:00Z"
+  },
+  "lists": "css",
+  "title": "La MasIA — Fase 1: posesión frame a frame",
+  "order": [
+    "cover",
+    "objetivo",
+    "reto",
+    "metrica",
+    "reglas",
+    "glosario",
+    "datos-mapa",
+    "datos-atd",
+    "datos-video",
+    "datos-broadcast",
+    "datos-tagging",
+    "datos-gt",
+    "datos-externos",
+    "combinar",
+    "atd",
+    "validar",
+    "banco",
+    "arquitectura",
+    "features",
+    "modelo",
+    "viterbi",
+    "resultados",
+    "definicion",
+    "margen",
+    "perdemos",
+    "causas",
+    "conseguimos",
+    "reproducir",
+    "historia1",
+    "historia2",
+    "decisiones",
+    "fallos",
+    "riesgos",
+    "ahora",
+    "plan",
+    "siguiente"
+  ],
+  "sections": {
+    "s1": {
+      "description": "Objetivo, reto, métrica y reglas del juego",
+      "start": "cover"
+    },
+    "s2": {
+      "description": "Los datos: qué es cada fuente, qué aporta y cómo se combinan",
+      "start": "datos-mapa"
+    },
+    "s3": {
+      "description": "Qué validamos y cómo, sin leaderboard",
+      "start": "validar"
+    },
+    "s4": {
+      "description": "Cómo funciona el modelo, resultados, análisis de fallos y qué se consigue",
+      "start": "arquitectura"
+    },
+    "s5": {
+      "description": "Historia de experimentos, decisiones y lo que no funcionó",
+      "start": "historia1"
+    },
+    "s6": {
+      "description": "Qué estamos haciendo ahora y el plan hasta el 17 de noviembre",
+      "start": "ahora"
+    }
+  },
+  "faces": {
+    "oswald": {
+      "family": "Oswald",
+      "href": "https://fonts.googleapis.com/css2?family=Oswald:wght@400..700&display=swap"
+    },
+    "public-sans": {
+      "family": "Public Sans",
+      "href": "https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap"
+    }
+  },
+  "designSystems": []
+}

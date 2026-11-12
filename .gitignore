@@ -13,8 +13,8 @@ __pycache__/
 .ipynb_checkpoints/
 *.egg-info/
 
-# Modelos / artefactos pesados
-models/
+# Modelos / artefactos pesados (solo en la raiz, no src/hackbarca/models)
+/models/
 *.pkl
 *.joblib
 *.parquet
@@ -29,3 +29,13 @@ desktop.ini
 
 # Config local de Claude Code (personal)
 .claude/settings.local.json
+
+# Datos abiertos externos (DFL/IDSSE, Metrica sample): se descargan, no se versionan
+/external_data/
+
+# Pesos de modelos preentrenados (se descargan solos)
+*.pt
+
+# Salidas por defecto de Ultralytics (pueden contener recortes del video del reto)
+/runs/
+!src/hackbarca/models/artifacts/possessor.pt

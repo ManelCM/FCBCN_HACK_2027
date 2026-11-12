@@ -1,0 +1,36 @@
+<section id="fallos" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:30px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">11 · Lo que no funcionó</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:64px;font-weight:600;line-height:1.1;color:#0F1B2D">Un experimento fallido también es información</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:28px;border-left:8px solid #E07A2F;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">Features v2 → cuarentena</h3>
+<p style="font-size:25px;color:#3D4757;line-height:1.35">+0,083 en un banco con ruido blanco; con el balón real (filtrado) apenas detectaban toques</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:28px;border-left:8px solid #E07A2F;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">Smart Tagging → descartado</h3>
+<p style="font-size:25px;color:#3D4757;line-height:1.35">+0,008 (ruido); solo el 13 % de los huecos acaba en una reanudación etiquetada</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:28px;border-left:8px solid #6A7280;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">v4 y aleatorizar dominio</h3>
+<p style="font-size:25px;color:#3D4757;line-height:1.35">+0,009 y +0,003, no consistentes: el protocolo los rechaza (de momento)</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:28px;border-left:8px solid #6A7280;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">Regularizar → peor</h3>
+<p style="font-size:25px;color:#3D4757;line-height:1.35">Más capacidad mejoraba de forma monótona: el límite son los datos, no el sobreajuste</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:28px;border-left:8px solid #6A7280;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">Apilado + aleatorizar</h3>
+<p style="font-size:25px;color:#3D4757;line-height:1.35">0,550, más que el elegido, pero empeora un partido: el protocolo lo rechaza</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FCFBF8;padding:28px;border-left:8px solid #E07A2F;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">Entrenar con la GT nueva</h3>
+<p style="font-size:25px;color:#3D4757;line-height:1.35">0,6225 frente a 0,6245: la definición cambió la medida, no el modelo</p>
+</div>
+</div>
+<div style="display:flex;gap:24px;align-items:center;background:#0F1B2D;padding:24px 32px;border-radius:12px">
+<x-icon name="Warning" style="color:#F0954A;width:48px;height:48px"></x-icon>
+<p style="font-size:26px;color:#D7DEE8">Bloqueos: DFL (7 partidos más) solo se descarga a mano; falta el ATD broadcast; una evaluación se cortó por falta de memoria</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7280">E010 · E012 · E013 · E015 · E016 · E019 · E021 · 12</p>
+<aside>La lección principal: medir el tracking real con agregados antes de fiarse de una mejora en el banco. Así se detectó el problema de v2 antes de entregarlo.</aside>
+</section>

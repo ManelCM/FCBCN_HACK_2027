@@ -1,0 +1,374 @@
+{
+ "oof": "oof_l3_notags_f3_stack.npz",
+ "decode": {
+  "temperature": 1.0,
+  "switch": 20.0,
+  "to_dead": 10.0,
+  "from_dead": 10.0
+ },
+ "controlled_s": 1.5,
+ "spell": 0.627895392278954,
+ "n_pred": 738,
+ "n_gt": 868,
+ "per_iou": {
+  "0.3": {
+   "precision": 0.8021680216802168,
+   "recall": 0.6820276497695853,
+   "f1": 0.7372353673723536,
+   "n_matched": 592,
+   "n_spurious": 146,
+   "n_missed": 276
+  },
+  "0.4": {
+   "precision": 0.7574525745257452,
+   "recall": 0.6440092165898618,
+   "f1": 0.6961394769613947,
+   "n_matched": 559,
+   "n_spurious": 179,
+   "n_missed": 309
+  },
+  "0.5": {
+   "precision": 0.7100271002710027,
+   "recall": 0.6036866359447005,
+   "f1": 0.6525529265255292,
+   "n_matched": 524,
+   "n_spurious": 214,
+   "n_missed": 344
+  },
+  "0.6": {
+   "precision": 0.6219512195121951,
+   "recall": 0.5288018433179723,
+   "f1": 0.5716064757160647,
+   "n_matched": 459,
+   "n_spurious": 279,
+   "n_missed": 409
+  },
+  "0.7": {
+   "precision": 0.524390243902439,
+   "recall": 0.44585253456221197,
+   "f1": 0.48194271481942713,
+   "n_matched": 387,
+   "n_spurious": 351,
+   "n_missed": 481
+  }
+ },
+ "taxonomy": {
+  "equipo contrario": 145,
+  "tapada por D": 33,
+  "fusionada: paron no detectado": 9,
+  "fusionada: posesion rival corta no detectada": 79,
+  "fusionada: ambos": 49,
+  "partida en trozos": 11,
+  "fronteras desplazadas o recortadas": 18,
+  "consumida por otra": 0
+ },
+ "false_spells": {
+  "solapa una real pero mal ajustada": 122,
+  "equipo inexistente (sin GT del mismo equipo debajo)": 67,
+  "trozo corto (<3 s) de una posesion real": 25
+ },
+ "by_duration": {
+  "<3 s": {
+   "n": 152,
+   "found": 0.23684210526315788
+  },
+  "3-10 s": {
+   "n": 331,
+   "found": 0.5226586102719033
+  },
+  "10-30 s": {
+   "n": 275,
+   "found": 0.7963636363636364
+  },
+  ">30 s": {
+   "n": 110,
+   "found": 0.8727272727272727
+  }
+ },
+ "by_gap": {
+  "0 %": {
+   "n": 547,
+   "found": 0.6416819012797075
+  },
+  "1-50 %": {
+   "n": 113,
+   "found": 0.8407079646017699
+  },
+  ">50 %": {
+   "n": 208,
+   "found": 0.375
+  }
+ },
+ "by_start": {
+  "robo: intercepcion": {
+   "n": 305,
+   "found": 0.5344262295081967
+  },
+  "robo: balon suelto": {
+   "n": 220,
+   "found": 0.5772727272727273
+  },
+  "reanudacion: saque de banda": {
+   "n": 110,
+   "found": 0.6727272727272727
+  },
+  "reanudacion: falta": {
+   "n": 92,
+   "found": 0.8043478260869565
+  },
+  "robo: entrada": {
+   "n": 36,
+   "found": 0.6111111111111112
+  },
+  "robo: tras duelo": {
+   "n": 28,
+   "found": 0.6428571428571429
+  },
+  "reanudacion: corner": {
+   "n": 26,
+   "found": 0.4230769230769231
+  },
+  "reanudacion: saque de centro": {
+   "n": 18,
+   "found": 0.8888888888888888
+  },
+  "robo: parada o bloqueo": {
+   "n": 13,
+   "found": 0.8461538461538461
+  },
+  "robo: otro (pass)": {
+   "n": 11,
+   "found": 0.45454545454545453
+  },
+  "robo: otro (ball lost)": {
+   "n": 5,
+   "found": 0.2
+  },
+  "robo: otro (carry)": {
+   "n": 2,
+   "found": 1.0
+  },
+  "reanudacion: saque de puerta": {
+   "n": 1,
+   "found": 0.0
+  },
+  "reanudacion: penalti": {
+   "n": 1,
+   "found": 0.0
+  }
+ },
+ "by_end": {
+  "perdida: pase interceptado": {
+   "n": 301,
+   "found": 0.6212624584717608
+  },
+  "perdida: otra": {
+   "n": 147,
+   "found": 0.5306122448979592
+  },
+  "paron: balon fuera": {
+   "n": 136,
+   "found": 0.6470588235294118
+  },
+  "paron: falta": {
+   "n": 76,
+   "found": 0.6052631578947368
+  },
+  "perdida: robo": {
+   "n": 63,
+   "found": 0.6666666666666666
+  },
+  "perdida: tiro sin paron": {
+   "n": 40,
+   "found": 0.7
+  },
+  "perdida: cabezazo": {
+   "n": 25,
+   "found": 0.44
+  },
+  "perdida: sin evento": {
+   "n": 18,
+   "found": 0.5555555555555556
+  },
+  "perdida: despeje": {
+   "n": 16,
+   "found": 0.125
+  },
+  "paron: otro": {
+   "n": 15,
+   "found": 0.6
+  },
+  "paron: tiro": {
+   "n": 14,
+   "found": 0.6428571428571429
+  },
+  "perdida: duelo": {
+   "n": 11,
+   "found": 0.9090909090909091
+  },
+  "fin de parte": {
+   "n": 6,
+   "found": 0.6666666666666666
+  }
+ },
+ "by_passes": {
+  "0": {
+   "n": 229,
+   "found": 0.33624454148471616
+  },
+  "1-2": {
+   "n": 284,
+   "found": 0.5352112676056338
+  },
+  "3-5": {
+   "n": 195,
+   "found": 0.7692307692307693
+  },
+  "6+": {
+   "n": 160,
+   "found": 0.90625
+  }
+ },
+ "by_zone": {
+  "tercio 1": {
+   "n": 218,
+   "found": 0.5779816513761468
+  },
+  "tercio 2": {
+   "n": 357,
+   "found": 0.6582633053221288
+  },
+  "tercio 3": {
+   "n": 293,
+   "found": 0.5563139931740614
+  }
+ },
+ "boundaries": {
+  "cambio de equipo (H<->A)": {
+   "n": 621,
+   "within_0_5s": 0.27375201288244766,
+   "within_1s": 0.37359098228663445,
+   "within_2s": 0.48470209339774556,
+   "median_offset": 1.0,
+   "mae_frames": 15.352159468438538,
+   "false_within_2s": 145
+  },
+  "paron (H/A->D)": {
+   "n": 241,
+   "within_0_5s": 0.48132780082987553,
+   "within_1s": 0.5311203319502075,
+   "within_2s": 0.5892116182572614,
+   "median_offset": 1.0,
+   "mae_frames": 7.323943661971831,
+   "false_within_2s": 145
+  },
+  "reanudacion (D->H/A)": {
+   "n": 241,
+   "within_0_5s": 0.42738589211618255,
+   "within_1s": 0.5601659751037344,
+   "within_2s": 0.7344398340248963,
+   "median_offset": 0.0,
+   "mae_frames": 14.045197740112995,
+   "false_within_2s": 109
+  }
+ },
+ "frames": {
+  "balon visible": {
+   "share": 259527.0,
+   "acc": 0.9155579188292547,
+   "confusion": [
+    [
+     0.9140462462105451,
+     0.07958492200304006,
+     0.006368831786414857
+    ],
+    [
+     0.08097730272570358,
+     0.9159582421842549,
+     0.003064455090041444
+    ],
+    [
+     0.04014718640619858,
+     0.04026685015107548,
+     0.9195859634427259
+    ]
+   ]
+  },
+  "hueco corto (<=4 s)": {
+   "share": 3628.0,
+   "acc": 0.8958103638368247,
+   "confusion": [
+    [
+     0.8468354430379746,
+     0.09620253164556962,
+     0.056962025316455694
+    ],
+    [
+     0.0679886685552408,
+     0.7634560906515581,
+     0.16855524079320114
+    ],
+    [
+     0.04080675422138837,
+     0.0014071294559099437,
+     0.9577861163227017
+    ]
+   ]
+  },
+  "hueco largo (>4 s)": {
+   "share": 161731.0,
+   "acc": 0.7777296869493171,
+   "confusion": [
+    [
+     0.6619103484025864,
+     0.12059040187706327,
+     0.2174992497203503
+    ],
+    [
+     0.1320374721552592,
+     0.6472490921851637,
+     0.22071343565957707
+    ],
+    [
+     0.06436131604320365,
+     0.06559632530577313,
+     0.8700423586510232
+    ]
+   ]
+  }
+ },
+ "nearest": {
+  "balon degradado": {
+   "acc": 0.6985979655019903,
+   "model_when_right": 0.9509854197134591,
+   "model_when_wrong": 0.8314672692855152
+  },
+  "balon limpio": {
+   "acc": 0.7943423685646717,
+   "model_when_right": 0.9110557654872323,
+   "model_when_wrong": 0.7774952086097597
+  }
+ },
+ "calibration": {
+  "0.33-0.50": 0.407966203983102,
+  "0.50-0.70": 0.5223490621792279,
+  "0.70-0.90": 0.6706838157375278,
+  "0.90-1.00": 0.9224397590361446
+ },
+ "oracles": {
+  "huecos largos perfectos (balon fusionado ideal)": 0.7858513189448441,
+  "la mitad de los huecos largos perfectos": 0.7089908256880734,
+  "huecos cortos perfectos": 0.626946847960445,
+  "D perfecto (frames D)": 0.668671679197995,
+  "equipo perfecto (frames vivos)": 0.9420371412492965,
+  "posesiones cortas (<3 s) perfectas": 0.7272727272727273,
+  "frames en vuelo perfectos": 0.589155370177268,
+  "causa: equipo contrario": 0.8290109890109889,
+  "causa: tapada por D": 0.6562268803945747,
+  "causa: fusionada: paron no detectado": 0.6378109452736318,
+  "causa: fusionada: posesion rival corta no detectada": 0.752140762463343,
+  "causa: fusionada: ambos": 0.708972073677956,
+  "causa: partida en trozos": 0.6427672955974842,
+  "causa: fronteras desplazadas o recortadas": 0.6382554517133957
+ }
+}

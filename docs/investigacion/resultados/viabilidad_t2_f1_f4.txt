@@ -1,0 +1,10 @@
+
+senales de equipo - AUC de 'posee el local' (|AUC - 0,5| es la fuerza)
+senal                           vivo  en hueco 0-3 s tras robo
+fo_with                        0.775     0.729           0.399
+pi_mean                        0.292     0.316           0.695
+fo_with_chg75                  0.558     0.511           0.682
+fo_with_chg25                  0.539     0.508           0.618
+pi_carrier_chg75               0.580     0.612           0.590
+pi_carrier                     0.478     0.554           0.402
+pi_carrier_chg25               0.544       nan           0.551

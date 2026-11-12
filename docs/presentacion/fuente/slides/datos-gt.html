@@ -1,0 +1,27 @@
+<section id="datos-gt" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">Los datos · 5. Las etiquetas (GT)</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:60px;font-weight:600;line-height:1.1;color:#0F1B2D">Solo vemos 5 minutos de respuestas; el resto es secreto</h2>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;height:64px;border-radius:10px;overflow:hidden">
+<div style="width:90px;background:#D9D4C7"></div><div style="width:60px;background:#E07A2F"></div><div style="flex:1;background:#2F6FD0"></div><div style="width:150px;background:#D9D4C7"></div><div style="flex:1;background:#2F6FD0"></div><div style="width:40px;background:#D9D4C7"></div>
+</div>
+<p style="font-size:24px;color:#3D4757"><span style="color:#B5541A"><b>■ GT pública: 5 min</b></span>   <span style="color:#1F4E9A"><b>■ GT privada: ~106 min de las dos partes (la que puntúa)</b></span>   <span style="color:#6A7280"><b>■ sin evaluar: antes, descanso, después</b></span></p>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FCFBF8;padding:28px;border:2px solid #D9D4C7;border-radius:16px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">GT pública</h3>
+<p style="font-size:25px;color:#3D4757;line-height:1.4">7.500 frames, 17 posesiones (media de 14,2 s), 20 % D. Es pública: la podemos mirar.</p>
+<p style="font-size:25px;color:#3D4757;line-height:1.4"><b>Uso:</b> comprobar que el pipeline está bien (el baseline da 0,3256, como dice la organización).</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FCFBF8;padding:28px;border:2px solid #D9D4C7;border-radius:16px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#0F1B2D">Por qué no elegimos con ella</h3>
+<p style="font-size:25px;color:#3D4757;line-height:1.4">Con 17 posesiones el ruido es enorme. El propio repo oficial muestra que <b>invierte el orden</b> de los modelos frente al partido completo.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#0F1B2D;padding:28px;border-radius:16px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:34px;font-weight:600;color:#F0954A">GT privada</h3>
+<p style="font-size:25px;color:#D7DEE8;line-height:1.4">Partido completo, solo en la máquina de la organización. <b>Nunca</b> sabremos nuestra nota antes del final.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6A7280">evaluation/gt/ del repo oficial · E005 · ADR-0005</p>
+<aside>La GT sale mecánicamente del tracking corregido: D donde el balón está muerto y, si no, el equipo que el tracking marca como dueño. Nadie la retoca a mano.</aside>
+</section>

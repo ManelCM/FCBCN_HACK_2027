@@ -80,5 +80,19 @@ Frames evaluados: 1ª parte **11.185–90.651** y 2ª parte **110.808–190.197*
 | Q1 | ¿Se permite etiquetar a mano unos minutos solo para **validar o entrenar** (RULES.md lo permite y el FAQ dice que no)? | Pendiente |
 | Q2 | ¿Las métricas agregadas (spellF1 sobre la ventana pública, conteos de posesiones) cuentan como "extractos" que no se pueden enseñar a un LLM en la nube? | Pendiente |
 | Q3 | ¿Podemos usar datos públicos de Metrica (sample-data) para entrenar? (RULES dice que sí a datos externos; confirmar) | Probablemente sí |
+| Q4 | ¿Se puede versionar en el repo público un fichero **derivado** del vídeo (posiciones del balón detectadas por nuestro modelo) para que la entrega se reproduzca sin GPU? (ADR-0010) | Pendiente: **enviar** |
+| Q5 | ¿Se pueden usar las etiquetas de la GT pública de 5 min para **entrenar** (no solo para evaluar)? Hoy no lo hacemos. | Pendiente |
+| Q6 | ¿Podemos usar el **audio del `broadcast.mp4`** entregado (silbato, comentarios transcritos en local) como señal? Entendemos que fuentes externas de este partido (crónicas, radio) quedan fuera por la regla 2. (ADR-0013) | Pendiente: **enviar** |
+| Q7 | ¿La «posesión controlada» exige un tiempo mínimo? En la GT pública los robos sin control no cambian la posesión; ¿hay un umbral (p. ej. ~1-2 s o 2 pases) que podamos asumir? (ADR-0012) | Opcional: la GT pública basta |
+
+**Borrador para enviar (issue en el repo oficial, en inglés):**
+
+> Hi! Four quick questions to make sure we stay within the rules:
+> 1. *Aggregates and LLMs.* We never share challenge data with cloud LLMs. Do aggregate statistics computed locally (e.g. the spellF1 of our own submission on the public window, or the percentage of frames with a visible ball) count as "extracts" under the T&C?
+> 2. *Derived files in the public repo.* If we run a ball detector locally on the tactical video, may we commit the resulting per-frame ball positions to our public repository, so that the submission can be reproduced without a GPU? The detector code and the command that regenerates the file would be included.
+> 3. *Public ground truth for training.* May the labels of the public 5-minute ground truth be used for training, or only for validation?
+> 4. *Broadcast audio.* May we use the audio track of the provided broadcast video (e.g. detecting the referee's whistle, or transcribing the commentary locally) as an input signal? We assume external sources about this fixture (live text commentary, radio) are not allowed under rule 2, so we would not use them.
+>
+> Thanks!
 
 ## Fase 2 (top 20): retos abiertos sobre 10 partidos, con mentoría. Fase 3 (top 5): pitch ante jurado.

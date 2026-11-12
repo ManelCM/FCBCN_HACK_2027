@@ -1,0 +1,15 @@
+1. Cobertura del balon del video en los huecos del ATD (frames de hueco: 64643)
+   predicho D                   frames   58801  con balon de video 55.2%  de ellos a <1.5 m de alguien 46.2%
+   predicho vivo                frames    5842  con balon de video 62.9%  de ellos a <1.5 m de alguien 77.0%
+   vivo y seguro (pmax>=0,9)    frames    2091  con balon de video 70.0%  de ellos a <1.5 m de alguien 88.3%
+   vivo y dudoso (pmax<0,7)     frames    1907  con balon de video 56.7%  de ellos a <1.5 m de alguien 66.4%
+
+2. Acuerdo 'equipo mas cercano al balon del video' con el equipo predicho (juego vivo en hueco)
+   pmax >= 0,9          frames    1292  acuerdo 0.924
+   0,7 <= pmax < 0,9    frames     818  acuerdo 0.936
+   pmax < 0,7           frames     718  acuerdo 0.671
+   referencia: balon del ATD, pmax >= 0,9: frames 28146  acuerdo 0.927
+
+3. Candidatos a robo no visto: >= 1 s seguido del balon del video pegado al otro equipo
+   minutos de juego vivo predicho en hueco 3.9 | candidatos 2 (0.51 por minuto de hueco vivo)
+

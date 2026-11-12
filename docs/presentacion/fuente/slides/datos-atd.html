@@ -1,0 +1,26 @@
+<section id="datos-atd" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">Los datos · 1. ATD táctico (la base de todo)</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:60px;font-weight:600;line-height:1.1;color:#0F1B2D">Una línea por frame: dónde está cada jugador y el balón</h2>
+<div style="display:flex;gap:32px">
+<div style="flex:1.1;display:flex;flex-direction:column;gap:18px">
+<p style="font-size:26px;color:#3D4757;font-weight:700">Formato (DATA.md)</p>
+<p style="font-family:'Courier New', monospace;font-size:24px;color:#F5F3EE;background:#0F1B2D;padding:24px;border-radius:12px;line-height:1.5">frame : x,y,v ; x,y,v ; … (46 slots) : xb,yb,vb</p>
+<ul style="font-size:26px;color:#3D4757;line-height:1.5">
+<li>Coordenadas 0–1 → las pasamos a <b>metros</b> (105 × 68)</li>
+<li>Cada slot es de un equipo (XML), pero <b>no es una persona</b>: el tracker los corta y reasigna</li>
+<li>NaN cuando el tracker pierde algo: ~22 jugadores visibles por frame</li>
+<li>Velocidad de los jugadores en el 90 % de los frames; la del balón casi nunca</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#0F1B2D;padding:32px;border-radius:16px">
+<p style="font-size:24px;color:#F0954A;font-weight:700;letter-spacing:2px;text-transform:uppercase">Qué sacamos de aquí</p>
+<p style="font-size:26px;color:#D7DEE8;line-height:1.4"><b>Proximidad:</b> qué equipo está más cerca del balón y cuántos hay alrededor</p>
+<p style="font-size:26px;color:#D7DEE8;line-height:1.4"><b>Toques:</b> cambios bruscos en la trayectoria del balón y quién estaba ahí</p>
+<p style="font-size:26px;color:#D7DEE8;line-height:1.4"><b>Colectivo:</b> velocidad del grupo (parón = todos lentos), altura de cada bloque</p>
+<p style="font-size:26px;color:#D7DEE8;line-height:1.4"><b>Huecos:</b> quién tenía el balón al perderlo y al recuperarlo</p>
+</div>
+</div>
+<p style="font-size:26px;color:#3D4757">Su gran limitación: <b>el balón falta en el 41 % de los frames evaluados</b>, y ahí hay que deducir la posesión solo con los jugadores.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6A7280">src/hackbarca/io/load_match.py · features/frame_features.py</p>
+<aside>El ATD es tracking automático, no corregido: tiene huecos, ruido y cortes de identidad. La GT del reto sale de la versión corregida, que no tenemos.</aside>
+</section>

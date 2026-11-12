@@ -1,0 +1,30 @@
+<section id="perdemos" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:104px 128px 150px;display:flex;flex-direction:column;gap:26px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">Análisis de fallos · por qué perdemos posesiones</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:58px;font-weight:600;line-height:1.1;color:#0F1B2D">No vemos la mitad de los robos, y cada uno cuesta tres posesiones</h2>
+<div style="display:flex;gap:36px">
+<div style="flex:1.1;display:flex;flex-direction:column;gap:10px">
+<p style="font-size:23px;color:#6A7280;font-weight:700;letter-spacing:2px;text-transform:uppercase">344 posesiones perdidas de 868 · causa</p>
+<div style="display:flex;align-items:center;gap:14px"><p style="width:330px;font-size:23px;color:#3D4757">Equipo contrario</p><div style="width:390px;height:30px;background:#E07A2F;border-radius:5px"></div><p style="font-size:23px;font-weight:700">145</p></div>
+<div style="display:flex;align-items:center;gap:14px"><p style="width:330px;font-size:23px;color:#3D4757">Fusionada: rival corto</p><div style="width:212px;height:30px;background:#E07A2F;border-radius:5px"></div><p style="font-size:23px;font-weight:700">79</p></div>
+<div style="display:flex;align-items:center;gap:14px"><p style="width:330px;font-size:23px;color:#3D4757">Fusionada: rival y parón</p><div style="width:132px;height:30px;background:#E07A2F;border-radius:5px"></div><p style="font-size:23px;font-weight:700">49</p></div>
+<div style="display:flex;align-items:center;gap:14px"><p style="width:330px;font-size:23px;color:#3D4757">Tapada por D</p><div style="width:89px;height:30px;background:#8FB2E8;border-radius:5px"></div><p style="font-size:23px;font-weight:700">33</p></div>
+<div style="display:flex;align-items:center;gap:14px"><p style="width:330px;font-size:23px;color:#3D4757">Fronteras desplazadas</p><div style="width:48px;height:30px;background:#B9B3A6;border-radius:5px"></div><p style="font-size:23px;font-weight:700">18</p></div>
+<div style="display:flex;align-items:center;gap:14px"><p style="width:330px;font-size:23px;color:#3D4757">Partida en trozos</p><div style="width:30px;height:30px;background:#B9B3A6;border-radius:5px"></div><p style="font-size:23px;font-weight:700">11</p></div>
+<div style="display:flex;align-items:center;gap:14px"><p style="width:330px;font-size:23px;color:#3D4757">Fusionada: parón</p><div style="width:24px;height:30px;background:#8FB2E8;border-radius:5px"></div><p style="font-size:23px;font-weight:700">9</p></div>
+<p style="font-size:24px;color:#9A4613;font-weight:700;margin-top:6px">Naranja = robo no visto: 79 % de las pérdidas</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FCFBF8;padding:26px;border:2px solid #D9D4C7;border-radius:16px">
+<p style="font-size:23px;color:#6A7280;font-weight:700;letter-spacing:2px;text-transform:uppercase">El mecanismo</p>
+<p style="font-size:22px;color:#3D4757">Realidad: 3 posesiones</p>
+<div style="display:flex;height:44px;gap:4px"><div style="flex:8;background:#2F6FD0;border-radius:5px;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center">H</div><div style="flex:4;background:#E07A2F;border-radius:5px;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center">A</div><div style="flex:8;background:#2F6FD0;border-radius:5px;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center">H</div></div>
+<p style="font-size:22px;color:#3D4757">Nosotros: 1 posesión larga</p>
+<div style="display:flex;height:44px"><div style="flex:1;background:#2F6FD0;border-radius:5px;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center">H</div></div>
+<p style="font-size:22px;color:#3D4757;line-height:1.4">La A desaparece, y nuestra H larga solapa cada H real solo un 40 % (&lt; 50 %): <b>se pierden las 3</b> y sobra 1.</p>
+<p style="font-size:22px;color:#3D4757;line-height:1.4"><b>Peores casos:</b> robos por intercepción (53 %), córners (42 %), posesiones sin pases (34 %), despejes (12,5 %)</p>
+<p style="font-size:22px;color:#3D4757;line-height:1.4"><b>Mejores:</b> saque de centro (89 %), 6 o más pases (91 %)</p>
+</div>
+</div>
+<p style="font-size:24px;color:#3D4757">Solo el <b>49 %</b> de los cambios de equipo tiene una frontera nuestra a menos de 2 s. Cuando la tenemos, está en su sitio (0-1 frame): <b>no llegamos tarde, no lo vemos</b>.</p>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6A7280">GT controlada (1,5 s) · banco v2.1 · dejando un partido fuera · E020</p>
+<aside>Las causas naranjas son dos caras del mismo fallo: no detectar un cambio de posesión. Cuando no vemos un robo, perdemos la posesión del rival y además las dos del equipo original se funden en una que no empareja con ninguna.</aside>
+</section>

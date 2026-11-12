@@ -1,0 +1,26 @@
+<section id="reproducir" data-transition="fade" style="background:#0F1B2D;color:#F5F3EE;font-family:'Public Sans', Arial, sans-serif;padding:104px 128px 150px;display:flex;flex-direction:column;gap:26px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#F0954A;font-weight:700">Cómo reproducir la entrega</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:56px;font-weight:600;line-height:1.1;color:#F5F3EE">Cuatro pasos, el mismo fichero byte a byte</h2>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:24px"><p style="font-family:'Oswald', Arial, sans-serif;font-size:44px;font-weight:600;color:#F0954A;width:56px">1</p><p style="font-family:'Courier New', monospace;font-size:26px;color:#F5F3EE;background:#1B2A41;padding:16px 24px;border-radius:10px;flex:1">git clone --recursive &lt;repo&gt; ; cd &lt;repo&gt;</p></div>
+<div style="display:flex;align-items:center;gap:24px"><p style="font-family:'Oswald', Arial, sans-serif;font-size:44px;font-weight:600;color:#F0954A;width:56px">2</p><p style="font-family:'Courier New', monospace;font-size:26px;color:#F5F3EE;background:#1B2A41;padding:16px 24px;border-radius:10px;flex:1">uv sync    (Python 3.11, versiones fijadas en uv.lock)</p></div>
+<div style="display:flex;align-items:center;gap:24px"><p style="font-family:'Oswald', Arial, sans-serif;font-size:44px;font-weight:600;color:#F0954A;width:56px">3</p><p style="font-family:'Courier New', monospace;font-size:26px;color:#F5F3EE;background:#1B2A41;padding:16px 24px;border-radius:10px;flex:1">datos del reto en data/  (o MTAH_DATA_DIR)</p></div>
+<div style="display:flex;align-items:center;gap:24px"><p style="font-family:'Oswald', Arial, sans-serif;font-size:44px;font-weight:600;color:#F0954A;width:56px">4</p><p style="font-family:'Courier New', monospace;font-size:26px;color:#F5F3EE;background:#1B2A41;padding:16px 24px;border-radius:10px;flex:1">uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA"</p></div>
+</div>
+<div style="display:flex;gap:28px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#1B2A41;padding:24px;border-radius:12px">
+<p style="font-size:24px;color:#F0954A;font-weight:700">Salida</p>
+<p style="font-size:24px;color:#D7DEE8;line-height:1.4">submissions/La MasIA.csv validado + su sha256 para comparar</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#1B2A41;padding:24px;border-radius:12px">
+<p style="font-size:24px;color:#F0954A;font-weight:700">Por qué es exacto</p>
+<p style="font-size:24px;color:#D7DEE8;line-height:1.4">El modelo va versionado: la entrega no reentrena, solo predice</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px;background:#1B2A41;padding:24px;border-radius:12px">
+<p style="font-size:24px;color:#F0954A;font-weight:700">Antes del 14 nov</p>
+<p style="font-size:24px;color:#D7DEE8;line-height:1.4">Otra persona lo prueba en un clon limpio: mismo sha256</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#8C9AB0">README.md · ADR-0007 · ADR-0011</p>
+<aside>Las bases exigen que la organización pueda regenerar el mismo fichero con el repo y los datos. Lo comprobaremos en otra máquina antes de entregar.</aside>
+</section>

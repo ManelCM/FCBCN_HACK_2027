@@ -1,0 +1,13 @@
+RETO (balon visible del ATD; grupos por nuestra prediccion de la entrega)
+  vivo predicho                      frames   81857 | vel. p25/p50  3.29/ 5.96 m/s | lento  5.6% | congelado  0.0% | tramos lentos >=1 s por minuto  0.55
+  D corto predicho (< 5 s)           frames    4090 | vel. p25/p50  0.64/ 1.18 m/s | lento 52.2% | congelado  0.1% | tramos lentos >=1 s por minuto 11.37
+  D largo predicho (>= 5 s)          frames    8267 | vel. p25/p50  0.21/ 0.85 m/s | lento 63.1% | congelado  2.0% | tramos lentos >=1 s por minuto  7.62
+
+BANCO degradado (balon visible; grupos por la GT controlada)
+  vivo (GT)                          frames  680202 | vel. p25/p50  4.37/ 7.09 m/s | lento  3.3% | congelado  0.0% | tramos lentos >=1 s por minuto  0.01
+  D (GT)                             frames  142295 | vel. p25/p50  0.61/ 0.95 m/s | lento 69.0% | congelado  0.1% | tramos lentos >=1 s por minuto  0.73
+
+BANCO limpio frente a degradado (juego vivo, GT controlada; lento = < 0,05 m/frame = 1,25 m/s)
+limpio     tramos lentos >=1 s por minuto de vivo visible 1.08 | frames lentos 8.8%
+degradado  tramos lentos >=1 s por minuto de vivo visible 0.01 | frames lentos 3.3%
+partido 1: frames vivos lentos (limpio) 10376, de ellos visibles tras degradar 78.3%

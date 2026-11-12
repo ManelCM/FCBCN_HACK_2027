@@ -1,0 +1,36 @@
+........                                                                 [100%]
+8 passed in 3.88s
+medida                              reto: prediccion     publica: GT 5 min   publica: prediccion             banco: GT     banco: prediccion
+minutes                                      105.905                 5.000                 5.000               951.687               951.687
+possessions_per_min                            3.173                 3.400                 3.600                 3.031                 2.831
+dur_mean                                      10.440                14.191                14.411                11.845                12.135
+dur_p10                                        1.720                 2.232                 2.192                 2.312                 2.382
+dur_p25                                        2.720                 3.480                 3.340                 3.680                 3.800
+dur_p50                                        6.020                 7.560                10.540                 7.334                 7.865
+dur_p75                                       13.810                20.000                24.960                14.895                15.575
+dur_p90                                       27.780                38.088                33.748                27.990                27.597
+short_share                                    0.280                 0.176                 0.222                 0.175                 0.174
+dead_share                                     0.448                 0.196                 0.135                 0.404                 0.430
+dead_runs_per_min                              1.775                 0.800                 2.400                 1.002                 1.058
+dead_p50                                       7.900                16.400                 2.480                18.289                18.741
+direct_changes_per_min                         1.397                 2.400                 1.000                 2.026                 1.767
+restarts_per_min                               1.756                 0.800                 2.400                 0.988                 1.043
+long_gap_share                                 0.406                     -                     -                 0.415                 0.415
+short_dead_runs_per_min                        0.680                     -                     -                 0.092                 0.119
+short_dead_in_long_gap                         0.097                     -                     -                 0.380                 0.516
+dead_runs_in_long_gap                          0.362                     -                     -                 0.451                 0.502
+short_dead_same_team_per_min                   0.472                     -                     -                 0.035                 0.048
+short_dead_other_team_per_min                  0.208                     -                     -                 0.049                 0.064
+direct_changes_in_long_gap                     0.047                     -                     -                 0.199                 0.140
+direct_per_min_visible                         2.243                     -                     -                 2.775                 2.613
+direct_per_min_gap                             0.163                     -                     -                 0.975                 0.588
+pmax_p50_visible                               0.991                     -                     -                     -                 0.997
+unsure_share_visible                           0.091                     -                     -                     -                 0.070
+pmax_p50_gap                                   0.998                     -                     -                     -                 0.998
+unsure_share_gap                               0.065                     -                     -                     -                 0.069
+resumen en docs\investigacion\resultados\real_vs_bench.json
+
+medida                              reto: prediccion     publica: GT 5 min   publica: prediccion             banco: GT     banco: prediccion
+dead_share                                     0.448                 0.196                 0.135                 0.404                 0.430
+dead_share_in_long_gap                         0.911                     -                     -                 0.712                 0.766
+dead_share_visible                             0.131                     -                     -                 0.175                 0.183

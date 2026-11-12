@@ -1,0 +1,46 @@
+
+F3/F5 - AUC de 'posee el local' (|AUC - 0,5| es la fuerza)
+senal                           vivo  en hueco 0-3 s tras robo
+tr_cen_v_chg75                 0.608     0.589           0.902
+tr_cen_v_chg25                 0.602     0.588           0.885
+tr_wide_v_chg75                0.587     0.568           0.883
+tr_open_chg75                  0.582     0.513           0.822
+tr_press                       0.294     0.334           0.332
+te_height_m750                 0.671     0.664           0.468
+te_height_m250                 0.643     0.661           0.402
+te_height_m75                  0.612     0.639           0.341
+tr_press_chg75                 0.509     0.485           0.369
+tr_wide_v                      0.686     0.599           0.505
+tr_cen_v                       0.681     0.594           0.473
+te_push_m75                    0.684     0.592           0.453
+tr_press_chg25                 0.507       nan           0.457
+te_tilt_m250                   0.500     0.500           0.500
+te_tilt_chg75                  0.500     0.500           0.500
+
+F6 - AUC de 'balon muerto' (|AUC - 0,5| es la fuerza)
+senal                           todo  en hueco
+gs_speed_p0.8                  0.089     0.121
+gs_speed_p2                    0.097     0.124
+gs_speed_p0.4                  0.090     0.125
+gs_stand_p2                    0.892     0.867
+gs_speed                       0.094     0.133
+gs_stand_p0.8                  0.895     0.864
+gs_stand_p0.4                  0.892     0.857
+gs_speed_m0.4                  0.101     0.146
+gs_acc_p0.8                    0.119     0.147
+gs_speed_p4                    0.125     0.149
+gs_sprint_p0.8                 0.116     0.150
+gs_acc_p0.4                    0.120     0.150
+gs_acc_p2                      0.127     0.151
+gs_sprint_p0.4                 0.116     0.152
+gs_stand                       0.887     0.847
+gs_stand_p4                    0.868     0.846
+gs_sprint_p2                   0.128     0.156
+gs_acc                         0.124     0.157
+gs_sprint                      0.118     0.159
+gs_speed_m0.8                  0.110     0.161
+gs_stand_m0.4                  0.880     0.833
+gs_acc_m0.4                    0.130     0.168
+gs_sprint_m0.4                 0.124     0.168
+gs_acc_p4                      0.156     0.178
+gs_acc_m0.8                    0.138     0.181

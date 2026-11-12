@@ -1,0 +1,32 @@
+{
+  "decode": {
+    "temperature": 1.0224660109323296,
+    "switch": 35.81318288460761,
+    "to_dead": 165.64765077035295,
+    "from_dead": 10.960713295319051,
+    "alpha_switch": 0.0,
+    "alpha_dead": 0.0
+  },
+  "use_tags": false,
+  "features": "touch+ball+players+blocks+structure+restart",
+  "stack": true,
+  "bench": "v3_1",
+  "deep_weight": 0.0,
+  "video_fill": false,
+  "broadcast": false,
+  "video_conductor": false,
+  "ball_actions": false,
+  "ball_actions_lite": false,
+  "short_dead_frames": 75,
+  "kickoff_dead": true,
+  "bag": 1,
+  "xgb_mix": false,
+  "spell_weight": true,
+  "two_heads": false,
+  "extra_sc": 0,
+  "sc_team_only": false,
+  "extras": [
+    "transition"
+  ],
+  "possessor_weight": 0.3
+}

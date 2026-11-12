@@ -1,0 +1,28 @@
+<section id="datos-externos" data-transition="fade" style="background:#F5F3EE;color:#1B2433;font-family:'Public Sans', Arial, sans-serif;padding:112px 128px 150px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#B5541A;font-weight:700">Los datos · 6. Datos abiertos externos</p>
+<h2 style="font-family:'Oswald', Arial, sans-serif;font-size:60px;font-weight:600;line-height:1.1;color:#0F1B2D">Sin etiquetas del reto, aprendemos de partidos públicos</h2>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#FCFBF8;padding:32px;border-top:10px solid #2F6FD0;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:38px;font-weight:600;color:#0F1B2D">Metrica sample-data · en uso</h3>
+<ul style="font-size:25px;color:#3D4757;line-height:1.5">
+<li>3 partidos con tracking <b>limpio</b> + eventos (pases, recuperaciones, saques…)</li>
+<li>Construimos la GT H/A/D desde los eventos: ~1.140 posesiones</li>
+<li>Los <b>degradamos</b> para que parezcan el ATD y ahí entrenamos y validamos</li>
+</ul>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#FCFBF8;padding:32px;border-top:10px solid #6A7280;border-radius:12px">
+<h3 style="font-family:'Oswald', Arial, sans-serif;font-size:38px;font-weight:600;color:#0F1B2D">DFL / IDSSE · bloqueado</h3>
+<ul style="font-size:25px;color:#3D4757;line-height:1.5">
+<li>7 partidos de la Bundesliga con <b>posesión y balón muerto del tracking</b>, como la GT del reto</li>
+<li>Figshare bloquea la descarga automática: hay que bajarlo con el navegador</li>
+<li>Con ellos: banco de 10 partidos, menos ruido y más datos para entrenar</li>
+</ul>
+</div>
+</div>
+<div style="display:flex;gap:24px;align-items:center;background:#0F1B2D;padding:24px 32px;border-radius:12px">
+<x-icon name="Lightbulb" style="color:#F0954A;width:48px;height:48px"></x-icon>
+<p style="font-size:26px;color:#D7DEE8">Por qué importa: la calidad del modelo <b>sigue subiendo con más capacidad</b>. El límite son los datos de entrenamiento, no el algoritmo.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6A7280">src/hackbarca/io/external.py · metrica_open.py · dfl.py · E010</p>
+<aside>Las bases permiten datos externos. El modelo que entregamos se entrena solo con estos datos públicos: nunca con los del reto.</aside>
+</section>

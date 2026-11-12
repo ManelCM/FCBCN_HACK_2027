@@ -1,0 +1,1161 @@
+{
+ "goal": {
+  "resid_std": 0.04423034485631615,
+  "dv_p50": 1.7657233952501583,
+  "dv_p90": 5.5883110206673585,
+  "dv_p99": 11.80683943521438,
+  "speed_p50": 5.082542605175487,
+  "speed_p90": 14.274270169800037,
+  "speed_p99": 24.517574454947948,
+  "speed_before_gap_p50": 2.0041771979983762,
+  "touches_per_s": 0.042721888466682234,
+  "live_slow_share": 0.088,
+  "live_slow_runs_per_min": 1.08
+ },
+ "v3": {
+  "params": {
+   "ball_drop_rate": 0.45,
+   "ball_gap_mean": 20.0,
+   "occlusion_radius": 2.0,
+   "occlusion_boost": 1.0,
+   "ball_noise": 0.02,
+   "dead_ball_visible": 0.55,
+   "ball_model": "long",
+   "gap_median": 268.0,
+   "gap_sigma": 0.9,
+   "short_gap_frac": 0.2,
+   "short_gap_mean": 10.0,
+   "dead_weight": 100.0,
+   "ball_smooth_sigma": 10.0,
+   "ball_corr_noise": 0.8,
+   "ball_corr_tau": 75.0,
+   "ball_corr_smooth": 0.0,
+   "tracklet_mean": 750.0,
+   "player_gap_mean": 25.0,
+   "player_noise": 0.2,
+   "team_flip_prob": 0.0,
+   "slots_per_team": 23
+  },
+  "loss": 160.20310719515035,
+  "stats": {
+   "ball_missing": 0.4228702724286004,
+   "resid_std": 0.1078928979678404,
+   "dv_p50": 2.196405898198561,
+   "dv_p90": 4.901252552528248,
+   "dv_p99": 8.05068849046803,
+   "touches_per_s": 0.03190639201429817,
+   "speed_p50": 5.005219297018911,
+   "speed_p90": 12.355721935741634,
+   "speed_p99": 18.71379969048906,
+   "speed_before_gap_p50": 0.806493011334249,
+   "live_slow_share": 0.03203880121351747,
+   "live_slow_runs_per_min": 0.005661044906393031
+  }
+ },
+ "grid": [
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 139.4324353250364,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04457691422471122,
+    "dv_p50": 1.2356959780994825,
+    "dv_p90": 5.139837233339544,
+    "dv_p99": 10.126784483124716,
+    "touches_per_s": 0.06204650115638079,
+    "speed_p50": 4.689431640012691,
+    "speed_p90": 13.145177744253717,
+    "speed_p99": 19.903946113008637,
+    "speed_before_gap_p50": 0.7590130437700913,
+    "live_slow_share": 0.061287838248090476,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 139.45081668538404,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04411328845895908,
+    "dv_p50": 1.0974274436844504,
+    "dv_p90": 5.095065498374202,
+    "dv_p99": 10.08278309242788,
+    "touches_per_s": 0.06104164711261938,
+    "speed_p50": 4.626774804053713,
+    "speed_p90": 13.084989204332565,
+    "speed_p99": 19.80965126685,
+    "speed_before_gap_p50": 0.7487475801783404,
+    "live_slow_share": 0.06878313234219254,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 139.4689606753382,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04410725973964407,
+    "dv_p50": 1.0909422345150879,
+    "dv_p90": 5.093291773289351,
+    "dv_p99": 10.091722297358071,
+    "touches_per_s": 0.06106412019440286,
+    "speed_p50": 4.638149017413497,
+    "speed_p90": 13.093677709744696,
+    "speed_p99": 19.834762466607618,
+    "speed_before_gap_p50": 0.7579741764554915,
+    "live_slow_share": 0.06686199388556303,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 139.4928264359438,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04408609174847104,
+    "dv_p50": 1.089121571366246,
+    "dv_p90": 5.093010764907317,
+    "dv_p99": 10.086833979143606,
+    "touches_per_s": 0.061037860113096434,
+    "speed_p50": 4.623961937754264,
+    "speed_p90": 13.082504119842799,
+    "speed_p99": 19.809060222198607,
+    "speed_before_gap_p50": 0.7453468994894911,
+    "live_slow_share": 0.06932834405976893,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 139.62258213727603,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.044066691492154815,
+    "dv_p50": 1.0813793029360899,
+    "dv_p90": 5.090093592585835,
+    "dv_p99": 10.084453417225586,
+    "touches_per_s": 0.06129953740573946,
+    "speed_p50": 4.625902646498213,
+    "speed_p90": 13.088774143114437,
+    "speed_p99": 19.823707507974472,
+    "speed_before_gap_p50": 0.7446211034669415,
+    "live_slow_share": 0.06895468695157955,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 139.63042451009213,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04432035056504984,
+    "dv_p50": 1.1601491930036356,
+    "dv_p90": 5.1156690442834565,
+    "dv_p99": 10.098486198207485,
+    "touches_per_s": 0.06135094517586893,
+    "speed_p50": 4.661976139933655,
+    "speed_p90": 13.119068095866597,
+    "speed_p99": 19.85931026667085,
+    "speed_before_gap_p50": 0.736613569990181,
+    "live_slow_share": 0.06451291311188626,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 139.63633797590006,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04408397936073779,
+    "dv_p50": 1.0850401196303403,
+    "dv_p90": 5.092019191875434,
+    "dv_p99": 10.087337843788463,
+    "touches_per_s": 0.06129941290441562,
+    "speed_p50": 4.628955563363686,
+    "speed_p90": 13.085435161857204,
+    "speed_p99": 19.811002923517087,
+    "speed_before_gap_p50": 0.7472667167899647,
+    "live_slow_share": 0.0685580701604806,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 139.68026906142273,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04406147283222487,
+    "dv_p50": 1.080319448484277,
+    "dv_p90": 5.0907109781019075,
+    "dv_p99": 10.085078907927292,
+    "touches_per_s": 0.0612813748642117,
+    "speed_p50": 4.619613531342218,
+    "speed_p90": 13.082926296700347,
+    "speed_p99": 19.812313068396953,
+    "speed_before_gap_p50": 0.7289402505984378,
+    "live_slow_share": 0.06991168008485436,
+    "live_slow_runs_per_min": 0.012481047943187102
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 139.68542456648584,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04406215840200225,
+    "dv_p50": 1.0804165463881055,
+    "dv_p90": 5.090552385531341,
+    "dv_p99": 10.084415350889383,
+    "touches_per_s": 0.061282580435139046,
+    "speed_p50": 4.619569539494253,
+    "speed_p90": 13.082725448804005,
+    "speed_p99": 19.811803476079703,
+    "speed_before_gap_p50": 0.735463149558891,
+    "live_slow_share": 0.0699685482064495,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 139.69433071751223,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04406872008431281,
+    "dv_p50": 1.0814868356992897,
+    "dv_p90": 5.09166410241802,
+    "dv_p99": 10.084268024354936,
+    "touches_per_s": 0.06141752546449406,
+    "speed_p50": 4.620570242333941,
+    "speed_p90": 13.079561602041672,
+    "speed_p99": 19.809074026871492,
+    "speed_before_gap_p50": 0.7428824774906222,
+    "live_slow_share": 0.06963564831137715,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 139.6947824943735,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04408762234691398,
+    "dv_p50": 1.0857184069047003,
+    "dv_p90": 5.091924619724615,
+    "dv_p99": 10.089389618959304,
+    "touches_per_s": 0.06117864174076975,
+    "speed_p50": 4.632697359723651,
+    "speed_p90": 13.091938953575857,
+    "speed_p99": 19.826287189119356,
+    "speed_before_gap_p50": 0.7449476601223092,
+    "live_slow_share": 0.06779419379099365,
+    "live_slow_runs_per_min": 0.00814231565697988
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 139.70264782425562,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04406219546667003,
+    "dv_p50": 1.0805364188894206,
+    "dv_p90": 5.091091634190472,
+    "dv_p99": 10.083914741998615,
+    "touches_per_s": 0.061291096418967767,
+    "speed_p50": 4.622020801325018,
+    "speed_p90": 13.084622076300164,
+    "speed_p99": 19.81316473475153,
+    "speed_before_gap_p50": 0.7283521785516168,
+    "live_slow_share": 0.06960432631929327,
+    "live_slow_runs_per_min": 0.012474196101564675
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 139.7069109999378,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04406568553944803,
+    "dv_p50": 1.0812285342427181,
+    "dv_p90": 5.091547664347498,
+    "dv_p99": 10.084869447289769,
+    "touches_per_s": 0.061319001359989266,
+    "speed_p50": 4.621353260763983,
+    "speed_p90": 13.080351003030335,
+    "speed_p99": 19.805703347419705,
+    "speed_before_gap_p50": 0.7373403640846051,
+    "live_slow_share": 0.06975471888785435,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 139.71699109690348,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04406389216430314,
+    "dv_p50": 1.0808796380984838,
+    "dv_p90": 5.090977910509356,
+    "dv_p99": 10.083110700238944,
+    "touches_per_s": 0.061324041287312364,
+    "speed_p50": 4.62290769188774,
+    "speed_p90": 13.084798239792995,
+    "speed_p99": 19.812538428434628,
+    "speed_before_gap_p50": 0.7354643839071306,
+    "live_slow_share": 0.06956279022500371,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 139.73304770947254,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.044074397109082245,
+    "dv_p50": 1.0831166786626014,
+    "dv_p90": 5.091290639769635,
+    "dv_p99": 10.084157537880746,
+    "touches_per_s": 0.06136447329565709,
+    "speed_p50": 4.626146288776399,
+    "speed_p90": 13.084816914494445,
+    "speed_p99": 19.81051832759031,
+    "speed_before_gap_p50": 0.7397972971617285,
+    "live_slow_share": 0.06886529305639827,
+    "live_slow_runs_per_min": 0.010311681800083489
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 139.73973941242485,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04428557035064202,
+    "dv_p50": 1.1492120098698273,
+    "dv_p90": 5.112814108667765,
+    "dv_p99": 10.095789013299878,
+    "touches_per_s": 0.06144920383539375,
+    "speed_p50": 4.652615895659716,
+    "speed_p90": 13.109132507860146,
+    "speed_p99": 19.84532075944779,
+    "speed_before_gap_p50": 0.7353849181601853,
+    "live_slow_share": 0.0652557017361056,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 139.78461253639392,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.04417250150460129,
+    "dv_p50": 1.1156576345963864,
+    "dv_p90": 5.102249491117416,
+    "dv_p99": 10.087875521648298,
+    "touches_per_s": 0.06119452918675191,
+    "speed_p50": 4.637371912156427,
+    "speed_p90": 13.095644385157676,
+    "speed_p99": 19.825028127383153,
+    "speed_before_gap_p50": 0.7312768393421669,
+    "live_slow_share": 0.06729560451869836,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 139.81984171169043,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.044063658193435475,
+    "dv_p50": 1.0809660434036348,
+    "dv_p90": 5.0905628909074405,
+    "dv_p99": 10.082640061679758,
+    "touches_per_s": 0.06132507544590011,
+    "speed_p50": 4.625885533250721,
+    "speed_p90": 13.088794083425773,
+    "speed_p99": 19.81894656731684,
+    "speed_before_gap_p50": 0.7350859376976596,
+    "live_slow_share": 0.06904170716788582,
+    "live_slow_runs_per_min": 0.00783041104949664
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 143.09754612038552,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.056911571098313664,
+    "dv_p50": 1.3486505643911346,
+    "dv_p90": 5.18992453578763,
+    "dv_p99": 10.169465664936363,
+    "touches_per_s": 0.06735851158858393,
+    "speed_p50": 4.662567637660793,
+    "speed_p90": 13.116189618214397,
+    "speed_p99": 19.887461998081225,
+    "speed_before_gap_p50": 0.7468205698078982,
+    "live_slow_share": 0.053918217268857295,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 148.21865875688871,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.06733592754326839,
+    "dv_p50": 1.5517950719092821,
+    "dv_p90": 5.28732625537286,
+    "dv_p99": 10.26776816926858,
+    "touches_per_s": 0.07445593961506894,
+    "speed_p50": 4.707747878455498,
+    "speed_p90": 13.153022538170484,
+    "speed_p99": 19.94618741053728,
+    "speed_before_gap_p50": 0.7544001432641944,
+    "live_slow_share": 0.04706523552958696,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 160.13600737099935,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.08039439641940573,
+    "dv_p50": 1.797368329806751,
+    "dv_p90": 4.3365165065193265,
+    "dv_p99": 7.445640147644441,
+    "touches_per_s": 0.017800150453444404,
+    "speed_p50": 4.846214556813737,
+    "speed_p90": 12.18873217487864,
+    "speed_p99": 18.430444201328477,
+    "speed_before_gap_p50": 0.7874861725230742,
+    "live_slow_share": 0.038584641319791876,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 160.20310719515035,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.1078928979678404,
+    "dv_p50": 2.196405898198561,
+    "dv_p90": 4.901252552528248,
+    "dv_p99": 8.05068849046803,
+    "touches_per_s": 0.03190639201429817,
+    "speed_p50": 5.005219297018911,
+    "speed_p90": 12.355721935741634,
+    "speed_p99": 18.71379969048906,
+    "speed_before_gap_p50": 0.806493011334249,
+    "live_slow_share": 0.03203880121351747,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 160.6165026822202,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.08441782077958448,
+    "dv_p50": 1.860360811830688,
+    "dv_p90": 5.478491037940682,
+    "dv_p99": 10.455681277446468,
+    "touches_per_s": 0.08697329852380206,
+    "speed_p50": 4.798897034582733,
+    "speed_p90": 13.232240252158181,
+    "speed_p99": 20.067922959045692,
+    "speed_before_gap_p50": 0.7976391480586725,
+    "live_slow_share": 0.03964689991907995,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 161.0152285460324,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.11375508751520189,
+    "dv_p50": 2.282913480796073,
+    "dv_p90": 5.042086270121646,
+    "dv_p99": 8.205167397389218,
+    "touches_per_s": 0.037167304422750805,
+    "speed_p50": 5.047628438234664,
+    "speed_p90": 12.40740236990521,
+    "speed_p99": 18.79424423677939,
+    "speed_before_gap_p50": 0.8088798748960717,
+    "live_slow_share": 0.030904475360407427,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 161.87773088722207,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.06221470672371469,
+    "dv_p50": 1.5269891798506712,
+    "dv_p90": 4.041245057081061,
+    "dv_p99": 7.123480811847206,
+    "touches_per_s": 0.01306111187247307,
+    "speed_p50": 4.762588705550572,
+    "speed_p90": 12.101229279042487,
+    "speed_p99": 18.28516774924397,
+    "speed_before_gap_p50": 0.7630509160811499,
+    "live_slow_share": 0.044661735379188036,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 162.18272591871198,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03636514501338027,
+    "dv_p50": 1.2582416759887938,
+    "dv_p90": 3.8284115133401353,
+    "dv_p99": 6.882391261734051,
+    "touches_per_s": 0.011376974075160747,
+    "speed_p50": 4.75210601635308,
+    "speed_p90": 12.073444989353556,
+    "speed_p99": 18.2716989158108,
+    "speed_before_gap_p50": 0.7761620010278104,
+    "live_slow_share": 0.056500070367478866,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 162.6093065029255,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.05074477291848439,
+    "dv_p50": 1.3540901782194132,
+    "dv_p90": 3.8986918375452104,
+    "dv_p99": 6.959926625146851,
+    "touches_per_s": 0.01181655990471992,
+    "speed_p50": 4.724418354475116,
+    "speed_p90": 12.056455424619571,
+    "speed_p99": 18.226321391447733,
+    "speed_before_gap_p50": 0.7567634482752635,
+    "live_slow_share": 0.05043413545847603,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 163.01320002569753,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.036001728628801945,
+    "dv_p50": 1.1894649999503486,
+    "dv_p90": 3.7840805081379876,
+    "dv_p99": 6.835864816136513,
+    "touches_per_s": 0.011178997477588812,
+    "speed_p50": 4.716376854539956,
+    "speed_p90": 12.03414058510544,
+    "speed_p99": 18.20600838048152,
+    "speed_before_gap_p50": 0.7591808519174849,
+    "live_slow_share": 0.06005428178183312,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 163.09715670049462,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.036044983350214874,
+    "dv_p50": 1.1986589800128489,
+    "dv_p90": 3.7893709800960087,
+    "dv_p99": 6.8405637856964905,
+    "touches_per_s": 0.011119114062901916,
+    "speed_p50": 4.725419104079729,
+    "speed_p90": 12.044066517523968,
+    "speed_p99": 18.219821255702115,
+    "speed_before_gap_p50": 0.7480856786979282,
+    "live_slow_share": 0.059182059090369624,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 163.37924854517001,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03577052079098301,
+    "dv_p50": 1.1416013502217437,
+    "dv_p90": 3.7513991164531366,
+    "dv_p99": 6.800450717767961,
+    "touches_per_s": 0.011000984046203328,
+    "speed_p50": 4.705017339075148,
+    "speed_p90": 12.025172700386,
+    "speed_p99": 18.184807379069248,
+    "speed_before_gap_p50": 0.7692947436945567,
+    "live_slow_share": 0.0611410939101312,
+    "live_slow_runs_per_min": 0.00814231565697988
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 163.45992007674204,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03585927884665159,
+    "dv_p50": 1.1632938453331143,
+    "dv_p90": 3.764759247128381,
+    "dv_p99": 6.813651093032323,
+    "touches_per_s": 0.011099044570178474,
+    "speed_p50": 4.705143042211478,
+    "speed_p90": 12.01920608648291,
+    "speed_p99": 18.17536618903958,
+    "speed_before_gap_p50": 0.7453326629158595,
+    "live_slow_share": 0.06148419934701465,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 163.57531392763642,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03574663031512787,
+    "dv_p50": 1.1379555655136233,
+    "dv_p90": 3.7483534641064407,
+    "dv_p99": 6.793802138052388,
+    "touches_per_s": 0.011011060603238323,
+    "speed_p50": 4.6991155542852825,
+    "speed_p90": 12.01869077193598,
+    "speed_p99": 18.179022090233776,
+    "speed_before_gap_p50": 0.7479954463264443,
+    "live_slow_share": 0.06206841951081188,
+    "live_slow_runs_per_min": 0.00814231565697988
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 163.57930790366157,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03572141768390505,
+    "dv_p50": 1.1350744660797127,
+    "dv_p90": 3.7460910592213574,
+    "dv_p99": 6.787884619260881,
+    "touches_per_s": 0.011032401122611744,
+    "speed_p50": 4.693149545613215,
+    "speed_p90": 12.011958178308015,
+    "speed_p99": 18.155758342704033,
+    "speed_before_gap_p50": 0.7434943304392994,
+    "live_slow_share": 0.06301485851254285,
+    "live_slow_runs_per_min": 0.010149664451927878
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 163.59189327859534,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.035784315245600475,
+    "dv_p50": 1.1484749822846454,
+    "dv_p90": 3.7536952980249585,
+    "dv_p99": 6.80102927657117,
+    "touches_per_s": 0.010908730453396345,
+    "speed_p50": 4.696350874533981,
+    "speed_p90": 12.012005479925362,
+    "speed_p99": 18.149428019803075,
+    "speed_before_gap_p50": 0.7475194174582754,
+    "live_slow_share": 0.06280558807397854,
+    "live_slow_runs_per_min": 0.00814231565697988
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 163.63740448258557,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03572399817200884,
+    "dv_p50": 1.1347037169436798,
+    "dv_p90": 3.746297899597343,
+    "dv_p99": 6.791498721904076,
+    "touches_per_s": 0.010969796619340279,
+    "speed_p50": 4.690764109059255,
+    "speed_p90": 12.009870745724678,
+    "speed_p99": 18.136206867758638,
+    "speed_before_gap_p50": 0.7418454459527495,
+    "live_slow_share": 0.06357657723810427,
+    "live_slow_runs_per_min": 0.010149664451927878
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 10.0
+   },
+   "loss": 163.6531188738877,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03574925916241947,
+    "dv_p50": 1.1411235413330583,
+    "dv_p90": 3.750243809342744,
+    "dv_p99": 6.79561053791667,
+    "touches_per_s": 0.010938987014426476,
+    "speed_p50": 4.694199642103984,
+    "speed_p90": 12.011960859081611,
+    "speed_p99": 18.147820811094437,
+    "speed_before_gap_p50": 0.7421891657960831,
+    "live_slow_share": 0.06320135871402834,
+    "live_slow_runs_per_min": 0.00814231565697988
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 163.65631797555494,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03572038073487923,
+    "dv_p50": 1.1346385382574125,
+    "dv_p90": 3.7462606073277684,
+    "dv_p99": 6.788689531766068,
+    "touches_per_s": 0.01097004715553496,
+    "speed_p50": 4.690659050435607,
+    "speed_p90": 12.0100854705145,
+    "speed_p99": 18.14002842217664,
+    "speed_before_gap_p50": 0.7375040947111492,
+    "live_slow_share": 0.06373825788767118,
+    "live_slow_runs_per_min": 0.010149664451927878
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 163.66825563988812,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.035716207812745135,
+    "dv_p50": 1.134496205401183,
+    "dv_p90": 3.7463501917978124,
+    "dv_p99": 6.788012719048597,
+    "touches_per_s": 0.01103149114342814,
+    "speed_p50": 4.69041990854583,
+    "speed_p90": 12.008939156257439,
+    "speed_p99": 18.144434804546655,
+    "speed_before_gap_p50": 0.7340226021334304,
+    "live_slow_share": 0.06356223408397674,
+    "live_slow_runs_per_min": 0.010149664451927878
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 163.6687946136365,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03574229543899908,
+    "dv_p50": 1.1371412678050516,
+    "dv_p90": 3.747381698883363,
+    "dv_p99": 6.793104481550112,
+    "touches_per_s": 0.010972839928933706,
+    "speed_p50": 4.694914030498017,
+    "speed_p90": 12.013867243964963,
+    "speed_p99": 18.154631842583996,
+    "speed_before_gap_p50": 0.7457611837729557,
+    "live_slow_share": 0.06265376908609842,
+    "live_slow_runs_per_min": 0.00814231565697988
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 163.68382604759842,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03571817115243226,
+    "dv_p50": 1.1347425664345288,
+    "dv_p90": 3.746081321880122,
+    "dv_p99": 6.787277391803477,
+    "touches_per_s": 0.011034534453021569,
+    "speed_p50": 4.689994168577765,
+    "speed_p90": 12.00765057966214,
+    "speed_p99": 18.14816104927149,
+    "speed_before_gap_p50": 0.7321542024661688,
+    "live_slow_share": 0.06354844067575124,
+    "live_slow_runs_per_min": 0.010149664451927878
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 163.71402367921382,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.035717867291336296,
+    "dv_p50": 1.1349736291081902,
+    "dv_p90": 3.746496286633172,
+    "dv_p99": 6.785588897551359,
+    "touches_per_s": 0.01103149114342814,
+    "speed_p50": 4.692423765276019,
+    "speed_p90": 12.01077420112426,
+    "speed_p99": 18.15344478223412,
+    "speed_before_gap_p50": 0.739151611004643,
+    "live_slow_share": 0.06313273832018751,
+    "live_slow_runs_per_min": 0.007668393701341029
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 25.0
+   },
+   "loss": 163.7203249648694,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.035730710992266046,
+    "dv_p50": 1.1360217722281305,
+    "dv_p90": 3.746107417530061,
+    "dv_p99": 6.791487673173809,
+    "touches_per_s": 0.01100681895586606,
+    "speed_p50": 4.693805522645705,
+    "speed_p90": 12.014091300259219,
+    "speed_p99": 18.152108127052212,
+    "speed_before_gap_p50": 0.7375126962616722,
+    "live_slow_share": 0.06293586587496816,
+    "live_slow_runs_per_min": 0.00814231565697988
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 163.72678001187856,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03571546683561846,
+    "dv_p50": 1.1343458781265139,
+    "dv_p90": 3.7454808497608,
+    "dv_p99": 6.791666830609536,
+    "touches_per_s": 0.010905559858048352,
+    "speed_p50": 4.6890360507227395,
+    "speed_p90": 12.006074626599315,
+    "speed_p99": 18.135481211367978,
+    "speed_before_gap_p50": 0.7293197129911646,
+    "live_slow_share": 0.06385739005774943,
+    "live_slow_runs_per_min": 0.01231903059503149
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 0.4,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 50.0
+   },
+   "loss": 163.78149568123467,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.03571624666218521,
+    "dv_p50": 1.134459009853065,
+    "dv_p90": 3.7454012011687454,
+    "dv_p99": 6.789740109229193,
+    "touches_per_s": 0.010905559858048352,
+    "speed_p50": 4.688761235152928,
+    "speed_p90": 12.00586791121729,
+    "speed_p99": 18.137425754642507,
+    "speed_before_gap_p50": 0.7309156662108096,
+    "live_slow_share": 0.06388500349124897,
+    "live_slow_runs_per_min": 0.010149664451927878
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 0.8,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 201.94632462679954,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.11092231991288583,
+    "dv_p50": 2.2993804139546605,
+    "dv_p90": 5.8759161621144855,
+    "dv_p99": 10.842372268235758,
+    "touches_per_s": 0.11526865575329576,
+    "speed_p50": 4.9768589821457825,
+    "speed_p90": 13.38480190100906,
+    "speed_p99": 20.32103733168882,
+    "speed_before_gap_p50": 0.8599179769686514,
+    "live_slow_share": 0.03214708040217172,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 150.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 219.09723847388318,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.11663196964110532,
+    "dv_p50": 2.3923234831404474,
+    "dv_p90": 5.983713210038365,
+    "dv_p99": 10.938353617087307,
+    "touches_per_s": 0.12454635128538787,
+    "speed_p50": 5.02859903167716,
+    "speed_p90": 13.42512777770741,
+    "speed_p99": 20.38685225498411,
+    "speed_before_gap_p50": 0.8267404073273185,
+    "live_slow_share": 0.0310322648488776,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 10.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 252.56804572604108,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.15680685868645228,
+    "dv_p50": 2.906226693679644,
+    "dv_p90": 6.155480574524137,
+    "dv_p99": 9.487222430002664,
+    "touches_per_s": 0.12694033141711755,
+    "speed_p50": 5.3934377463403,
+    "speed_p90": 12.801388481970145,
+    "speed_p99": 19.39972690763513,
+    "speed_before_gap_p50": 0.8269792343406689,
+    "live_slow_share": 0.0248413558097703,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  },
+  {
+   "params": {
+    "ball_smooth_sigma": 6.0,
+    "ball_corr_noise": 1.2,
+    "ball_corr_tau": 75.0,
+    "ball_corr_smooth": 0.0
+   },
+   "loss": 491.6171951375717,
+   "stats": {
+    "ball_missing": 0.4228702724286004,
+    "resid_std": 0.15890543791793396,
+    "dv_p50": 3.0512160837155493,
+    "dv_p90": 6.909459265999107,
+    "dv_p99": 11.78583700626895,
+    "touches_per_s": 0.21951053544481067,
+    "speed_p50": 5.415404416844031,
+    "speed_p90": 13.758590565366505,
+    "speed_p99": 20.955277043730987,
+    "speed_before_gap_p50": 0.8485068692438711,
+    "live_slow_share": 0.024274588579805634,
+    "live_slow_runs_per_min": 0.005661044906393031
+   }
+  }
+ ]
+}
