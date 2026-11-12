@@ -11,6 +11,27 @@ Formato: la entrada más nueva va **arriba**.
 
 ---
 
+## 2026-11-12 — Manel (con agente) · nueva entrega E122 (pesos por posesión + poseedor); I6 e I8-TCN cerradas
+- **E120 (I6, frontera al toque):** empeora siempre. Se cierra.
+- **E121 (I8, mezcla en logit):**
+  - con el MS-TCN, peor (0,7514 frente a 0,7555);
+  - **con el poseedor de E078 al 30 %, sobre E113: 0,7621 con la regla de 3 s (+0,011, 8 de 10).**
+- **E122:** el poseedor entrenado con los 10 partidos (`train_possessor_final`, `artifacts/possessor.pt`, versionado con una excepción en `.gitignore`) y mezclado en `make_submission`.
+  - Las dos decodificaciones pre-registradas caen en el veto relativo de ADR-0020 por los cambios directos (1,435 y 1,492 frente a 1,539).
+- **ADR-0024 (decisión de Manel):** manda el banco, con veto absoluto en D cortos ≤ 0,25, tramos D 0,8-1,3 y % de D 0,38-0,50. Sustituye a ADR-0020.
+  - **Entrega = E122**, `La MasIA.csv` sha `2223250da5edc7ed` (dos ejecuciones iguales; 97,3 % de D antes del saque).
+  - En el reto: D cortos 0,142, tramos D 1,039, cambios directos 1,435 (riesgo declarado).
+  - Banco: 0,7621 frente a 0,7355 de E110.
+- **Documento técnico actualizado para E122.**
+- La cola corre en una ventana aparte desde las 12:37: E115 (dos cabezas sobre E113) y luego E114.
+- Pendiente:
+  - si E115 o E114 pasan frente a E113, mezclar su OOF con el poseedor, aplicar el pre-registro, el veto de ADR-0024 y generar el artefacto;
+  - I7, si sobra tiempo.
+- Bloqueos / preguntas para el equipo:
+  - revisar ADR-0023 y ADR-0024;
+  - confirmar el email del 3 nov;
+  - reproducción en una segunda máquina.
+
 ## 2026-11-10 (noche) — Manel (con agente) · E110 entrega provisional; E113 pasa el banco pero no el veto
 - **E110** (artefacto de E058b, sin vídeo) es la entrega provisional: `La MasIA.csv`, sha `df01cd02b266e933`.
   - Es reproducible y da 97,3 % de D antes del saque.
