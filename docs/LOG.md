@@ -26,7 +26,7 @@ Formato: la entrada más nueva va **arriba**.
   - Documento técnico cerrado, sin TODO.
 - Pendiente (personas):
   - subir al Google Form el CSV, el enlace del repo y el documento;
-  - fusionar `competidores` en `main` (PR) y hacer público el repo;
+  - ~~fusionar `competidores` en `main` y hacer público el repo~~ hecho el 12 nov: fusión directa por decisión de Manel, **excepción a la revisión por otra persona por el plazo** (avance directo, sin conflictos); el repo ya era público;
   - reproducción en una segunda máquina, si da tiempo.
 - Bloqueos / preguntas para el equipo: confirmar el email del 3 nov; revisión de ADR-0023/0024; reproducción en una segunda máquina.
 
