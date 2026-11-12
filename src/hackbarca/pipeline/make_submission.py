@@ -100,6 +100,16 @@ def predict(model: str, data_dir: str | None, dump_proba: str | None = None,
             w = config["deep_weight"]
             deep = predict_seq_numpy(load_numpy_state(SEQ_PATH), tokens, mask, glob, match.n_frames)
             proba = (1 - w) * proba + w * deep
+        if config.get("possessor_weight"):
+            # E121/E122: mezcla en logit con el poseedor (models/possessor, pesos en artifacts/possessor.pt),
+            # predicho en CPU con algoritmos deterministas
+            from hackbarca.models.possessor import predict_possessor
+            from hackbarca.models.seq import seq_inputs
+            from hackbarca.pipeline.logit_blend import blend
+            from hackbarca.pipeline.train_possessor_final import load_possessor
+            tokens, mask, glob = seq_inputs(match)
+            poss = predict_possessor(load_possessor(), tokens, mask, glob, match.n_frames)
+            proba = blend(proba, poss, config["possessor_weight"])
         if dump_proba:
             os.makedirs(os.path.dirname(dump_proba), exist_ok=True)
             np.savez_compressed(dump_proba, proba=proba.astype(np.float32), ball_known=~np.isnan(match.ball_x))

@@ -85,6 +85,8 @@ def main(argv=None) -> int:
     parser.add_argument("--two-heads", action="store_true", help="E115: P(vivo) y P(local | vivo)")
     parser.add_argument("--extra-sc", type=int, default=0, help="E114: + k partidos de SkillCorner (solo entrenar)")
     parser.add_argument("--sc-team-only", action="store_true", help="E114: SkillCorner solo H/A con balon visto")
+    parser.add_argument("--possessor-weight", type=float, default=0.0,
+                        help="E122: peso en logit del poseedor (artifacts/possessor.pt, train_possessor_final)")
     parser.add_argument("--video-fill", action="store_true",
                         help="banco con el relleno de balon por video simulado; la entrega lo aplica (E063)")
     args = parser.parse_args(argv)
@@ -163,6 +165,7 @@ def main(argv=None) -> int:
                    "bag": args.bag, "xgb_mix": args.xgb_mix,
                    "spell_weight": args.spell_weight, "two_heads": args.two_heads,
                    "extra_sc": args.extra_sc, "sc_team_only": args.sc_team_only,
+                   "possessor_weight": args.possessor_weight,
                    "extras": [x for x in args.extras.split("+") if x]},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)
