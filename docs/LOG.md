@@ -14,8 +14,11 @@ Formato: la entrada más nueva va **arriba**.
 ## 2026-11-12 (tarde) — Manel (con agente) · E115 y mezclas no pasan; pruebas baratas mientras corre la cola
 - **E115 (dos cabezas sobre E113):** 0,7549 frente a 0,7555 (5 de 10). Con el poseedor al 30 %: 0,7603 frente a 0,7621 de E122. No pasa.
 - **E124 (mezclas en logit de E113, E115, poseedor y MS-TCN):** ninguna supera a E122 (de −0,002 a −0,005).
-- **E125 (poseedor con más semillas, para promediarlas):** `train_possessor(seed=)` y `tune_possessor --seed` (OOF `oof_poss_v3_1_s<semilla>.npz`). En marcha en GPU.
-- **E126/E127 (pesos del poseedor por separado para vivo y equipo; umbral de la regla de D cortos):** en marcha, sobre los OOF guardados.
+- **E125 (poseedor con otras semillas):** 0,7587 y 0,7581; la media de las tres semillas, 0,7615, frente a 0,7621. **La semilla mueve unos 0,004**: la de E122 fue la más afortunada. No cambia la entrega.
+- **E126 (pesos distintos para vivo y equipo):** 0,7613. Toda la ganancia del poseedor está en el reparto H/A.
+- **E127 (umbral de la regla):** con la decodificación de E122 la regla apenas actúa en el banco; se mantienen 3 s.
+- **E128 (10 épocas):** 0,7563; sobreajusta.
+- **E129 (peso según balón visible o en hueco):** 0,7608; el óptimo es 0,3 en los dos casos.
 - Cola: E123 (balón muerto llevado a sacar) desde las 15:11; después E114.
 - Pendiente: leer E123, E114 y E125-E127; si alguno supera a E122 en el banco, pre-registro, veto de ADR-0024 y artefacto.
 - Bloqueos / preguntas para el equipo: confirmar el email del 3 nov; revisión de ADR-0023/0024; reproducción en una segunda máquina.
