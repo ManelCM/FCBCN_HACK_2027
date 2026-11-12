@@ -110,12 +110,12 @@ def _swap(tokens, glob, y):
     return t, glob, yy
 
 
-def train_possessor(games, epochs: int = 6, device: str | None = None, w_poss: float = 1.0):
-    """games: [(tokens, mask, glob, labels 0-3, poss_target)] a 5 fps."""
+def train_possessor(games, epochs: int = 6, device: str | None = None, w_poss: float = 1.0, seed: int = SEED):
+    """games: [(tokens, mask, glob, labels 0-3, poss_target)] a 5 fps. `seed` cambia la semilla (E125, bagging)."""
     import torch
     from torch import nn
-    torch.manual_seed(SEED)
-    rng = np.random.default_rng(SEED)
+    torch.manual_seed(seed)
+    rng = np.random.default_rng(seed)
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     model = build_model().to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)

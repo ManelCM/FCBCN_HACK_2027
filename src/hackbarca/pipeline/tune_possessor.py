@@ -54,6 +54,7 @@ def main(argv=None) -> int:
     parser.add_argument("--folds", default="0,3,7", help="indices de los partidos retenidos, o 'all'")
     parser.add_argument("--epochs", type=int, default=6)
     parser.add_argument("--base-oof", default=None, help="OOF del LightGBM (external_data/) para la puerta")
+    parser.add_argument("--seed", type=int, default=None, help="semilla distinta (E125); el OOF lleva _s<semilla>")
     args = parser.parse_args(argv)
     from hackbarca.models.l3 import DecodeParams, decode
     from hackbarca.models.possessor import predict_possessor, train_possessor
@@ -67,7 +68,8 @@ def main(argv=None) -> int:
     oof = {}
     rows = []
     for g in folds:
-        model = train_possessor([d[:5] for o, d in enumerate(data) if o != g], epochs=args.epochs)
+        kw = {} if args.seed is None else {"seed": args.seed}
+        model = train_possessor([d[:5] for o, d in enumerate(data) if o != g], epochs=args.epochs, **kw)
         tokens, mask, glob, _, _, n = data[g]
         p = predict_possessor(model, tokens, mask, glob, n)
         oof[g] = p
@@ -93,7 +95,7 @@ def main(argv=None) -> int:
                 label, np.mean([x[2] for x in r]), np.mean([x[3] for x in r]), sum(x[4] for x in r)))
     if args.folds == "all":
         gts = [load_bench_game(nm)[1] for nm in names]
-        out = os.path.join(_REPO_ROOT, "external_data", "oof_poss_v3_1.npz")
+        out = os.path.join(_REPO_ROOT, "external_data", "oof_poss_v3_1%s.npz" % ("" if args.seed is None else "_s%d" % args.seed))
         np.savez_compressed(out, **{"p%d" % i: oof[i] for i in range(len(names))}, **{"gt%d" % i: g for i, g in enumerate(gts)})
         print("guardado", out)
     return 0

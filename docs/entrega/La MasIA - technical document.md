@@ -88,7 +88,6 @@ for it, before the 3 Nov clarification.
 | retrained on bench v3.1 | 0.7254 | 10 / 10 vs. the line above |
 | + steal signatures (section 3.1) | **0.7410** | 9 / 10 vs. the line above |
 | + equal weight per possession | **0.7555** | 8 / 10 vs. the line above |
-| TODO: + two heads, live and who (E115) | TODO | TODO |
 | TODO: + SkillCorner for "who" only (E114) | TODO | TODO |
 
 The submitted pipeline adds the short dead-ball rule and the possessor blend; it is scored the same way,
@@ -217,7 +216,9 @@ It changes team directly less often than the bench ground truth, mostly inside b
 | 20 SkillCorner open matches as extra training data (all labels) | dropped | 0.6856 vs. 0.7254 (worse in 9/10). SkillCorner has no dead-ball label; see E114 |
 | decoder: direct change cheaper than stop + restart | dropped | ≤ +0.005 |
 | minimum possession of 2 s (post-processing) | dropped | +0.005, 6/10; it also removes real short possessions |
-| TODO: two heads (live, and who), SkillCorner for "who" only | TODO | TODO |
+| two heads: P(live) and P(home \| live) | dropped | 0.7549 vs. 0.7555, 5/10; with the possessor blend 0.7603 vs. 0.7621 |
+| blending more models in logit space (two-head LightGBM, MS-TCN, other possessor weights) | dropped | −0.002 to −0.005 vs. the submitted blend, 2-4/10 |
+| TODO: SkillCorner for "who" only (with two heads) | TODO | TODO |
 
 Equal weight per possession, the logit blend with a sequence model, boundaries snapped to touches, a
 cheaper direct change in the decoder and a minimum possession came from reading other participants'
