@@ -103,3 +103,24 @@ def test_stacked_team_only_at_the_end(monkeypatch):
     flags = [False] * 3 + [True] * 4
     stage1, stage2 = l3.train_stacked(list(feats), list(labels), team_only=flags)
     assert l3.predict_stacked((stage1, stage2), feats[0]).shape == (600, 3)
+
+
+def test_carry_reveal_walks_then_waits():
+    """E123: el balón muerto revelado espera, se lleva andando y se queda quieto en el punto de saque."""
+    from hackbarca.io.dead_carry import carry_reveal
+    n = 1000
+    bx = np.full(n, np.nan)
+    by = np.full(n, np.nan)
+    bx[:100], by[:100] = 10.0, 20.0
+    bx[900:], by[900:] = 40.0, 20.0
+    missing = np.isnan(bx)
+    carry_reveal(np.random.default_rng(0), bx, by, missing, prob=1.0, noise=0.0)
+    assert np.all(np.isfinite(bx))
+    speed = np.hypot(np.diff(bx), np.diff(by)) * 25
+    assert speed[99:900].max() < 4.0                       # paso de jugador (+ vaivén), nunca un pase
+    assert np.allclose(bx[100:110], 10.0, atol=0.5)       # primero quieto donde quedó
+    assert np.allclose(bx[850:900], 40.0, atol=1e-6)      # al final, quieto en el punto de saque
+    short_x = np.array([0.0] + [np.nan] * 10 + [30.0])    # hueco corto: interpolación de siempre
+    short_y = np.zeros(12)
+    carry_reveal(np.random.default_rng(0), short_x, short_y, np.isnan(short_x), prob=1.0, noise=0.0)
+    np.testing.assert_allclose(short_x, np.linspace(0, 30, 12))

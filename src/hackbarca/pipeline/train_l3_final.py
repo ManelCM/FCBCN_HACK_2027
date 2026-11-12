@@ -85,6 +85,8 @@ def main(argv=None) -> int:
     parser.add_argument("--two-heads", action="store_true", help="E115: P(vivo) y P(local | vivo)")
     parser.add_argument("--extra-sc", type=int, default=0, help="E114: + k partidos de SkillCorner (solo entrenar)")
     parser.add_argument("--sc-team-only", action="store_true", help="E114: SkillCorner solo H/A con balon visto")
+    parser.add_argument("--dead-carry", action="store_true",
+                        help="E123: + una copia por partido con el balon muerto llevado a sacar (solo entrenar)")
     parser.add_argument("--possessor-weight", type=float, default=0.0,
                         help="E122: peso en logit del poseedor (artifacts/possessor.pt, train_possessor_final)")
     parser.add_argument("--video-fill", action="store_true",
@@ -126,13 +128,24 @@ def main(argv=None) -> int:
         features += [read_features(path) for path, _ in sc]
         labels += [gt for _, gt in sc]
         n_sc = len(sc)
+    n_carry = 0
+    if args.dead_carry:
+        from hackbarca.pipeline.extra_data import dead_carry_games
+        from hackbarca.pipeline.tune_l3 import read_features
+        carry = dead_carry_games(args.features, BENCH_PARAMS[args.bench], names,
+                                 extras=tuple(x for x in args.extras.split("+") if x))
+        features += [read_features(path) for path, _ in carry]
+        labels += [gt for _, gt in carry]
+        n_carry = len(carry)
     weights = None
     if args.spell_weight:   # igual que tune_l3 --spell-weight: duraciones de la GT controlada del banco
         from hackbarca.io.external import controlled_possession, is_dfl
         weights = [l3.spell_weights(controlled_possession(
             gt, int(round((args.controlled_dfl if is_dfl(n) else args.controlled) * 25)))) for gt, n in zip(labels, names)]
-        weights += [l3.spell_weights(gt) for gt in labels[len(names):]]
-    team_only = [False] * len(names) + [True] * n_sc if (args.sc_team_only and args.two_heads) else None
+        weights += [l3.spell_weights(gt) for gt in labels[len(names):len(labels) - n_carry]]
+        weights += weights[:n_carry]    # E123: la copia lleva la misma GT que su partido
+    team_only = ([False] * len(names) + [True] * n_sc + [False] * n_carry
+                 if (args.sc_team_only and args.two_heads) else None)
     if args.stack:
         stage1, stage2 = train_stacked(features, labels, weights=weights, team_only=team_only)
         save_model(stage1)
@@ -165,7 +178,7 @@ def main(argv=None) -> int:
                    "bag": args.bag, "xgb_mix": args.xgb_mix,
                    "spell_weight": args.spell_weight, "two_heads": args.two_heads,
                    "extra_sc": args.extra_sc, "sc_team_only": args.sc_team_only,
-                   "possessor_weight": args.possessor_weight,
+                   "possessor_weight": args.possessor_weight, "dead_carry": args.dead_carry,
                    "extras": [x for x in args.extras.split("+") if x]},
                   handle, indent=2)
     print("guardado", MODEL_PATH, DECODE_PATH)

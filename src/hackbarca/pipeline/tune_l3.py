@@ -250,6 +250,8 @@ def main(argv=None) -> int:
                         help="M5d (E096): cada capa promedia LightGBM con XGBoost")
     parser.add_argument("--vc-stress", action="store_true",
                         help="E075s: con --video-conductor, simulacion pesimista (io/video_conductor.VIDEO_CONDUCTOR_STRESS)")
+    parser.add_argument("--dead-carry", action="store_true",
+                        help="E123 (I7): + una copia por partido con el balon muerto llevado a sacar (solo entrenar)")
     parser.add_argument("--extra-sc", type=int, default=0,
                         help="M3 (E054): anade a todos los pliegues los k primeros partidos de SkillCorner (solo entrenar)")
     parser.add_argument("--sc-team-only", action="store_true",
@@ -324,6 +326,11 @@ def main(argv=None) -> int:
     gts = [gt for _, gt in games]
     runs = [pm.valid_runs(gt) for gt in gts]
     extra = augmented_games(args.augment, args.features) if args.augment else {}
+    carry = {}
+    if args.dead_carry:
+        from hackbarca.pipeline.extra_data import dead_carry_games
+        carry = dict(enumerate(dead_carry_games(args.features, BENCH_PARAMS[args.bench], names,
+                                                extras=tuple(x for x in args.extras.split("+") if x))))
     sc_games = []
     if args.extra_sc:
         from hackbarca.pipeline.extra_data import skillcorner_training_games
@@ -348,11 +355,13 @@ def main(argv=None) -> int:
         others = [o for o in range(len(games)) if o != g]
         if args.train_subset:
             others = sorted(np.random.default_rng(1000 + g).choice(others, args.train_subset, replace=False).tolist())
-        train_sets = [train_games[o] for o in others] + [e for o in others for e in extra.get(o, [])] + sc_games
+        train_sets = ([train_games[o] for o in others] + [e for o in others for e in extra.get(o, [])]
+                      + [carry[o] for o in others if o in carry] + sc_games)
         weights = None
         if weight_of is not None:
             from hackbarca.models.l3 import spell_weights
             weights = ([weight_of[o] for o in others] + [spell_weights(gt) for o in others for _, gt in extra.get(o, [])]
+                       + [weight_of[o] for o in others if o in carry]       # la copia tiene la misma GT
                        + [spell_weights(gt) for _, gt in sc_games])
         team_only = None
         if args.sc_team_only and args.two_heads:
@@ -390,6 +399,8 @@ def main(argv=None) -> int:
         name = name.replace(".npz", "_sc{}{}.npz".format(args.extra_sc, "t" if args.sc_team_only else ""))
     if args.spell_weight:
         name = name.replace(".npz", "_sw.npz")
+    if args.dead_carry:
+        name = name.replace(".npz", "_dc.npz")
     if args.two_heads:
         name = name.replace(".npz", "_2h.npz")
     if args.broadcast:

@@ -65,3 +65,34 @@ def skillcorner_training_games(version, params, limit: int | None = None, team_o
             path = full
         out.append((path, gt))
     return out
+
+
+def dead_carry_games(version, params, names, extras=()):
+    """E123 (I7): por partido del banco, una copia degradada con el balón muerto llevado a sacar
+    (`io/dead_carry.py`), **solo para entrenar**. [(ruta de features en cache, gt original)].
+
+    Misma semilla que el banco (la posición del partido). La clave de la caché lleva el código de
+    `dead_carry.py`, así que cambiarlo invalida solo estas copias."""
+    import hashlib
+
+    import pandas as pd
+
+    from hackbarca.io.dead_carry import degrade_with_carry
+    from hackbarca.io.external import load_bench_game
+    src = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "io", "dead_carry.py")
+    with open(src, "rb") as handle:
+        tag = hashlib.sha1(handle.read().replace(b"\r\n", b"\n")).hexdigest()[:8]
+    os.makedirs(FEATURE_CACHE, exist_ok=True)
+    out = []
+    for i, game in enumerate(names):
+        match, gt = load_bench_game(game)
+        path = feature_path("%s_carry%s" % (game, tag), i, version, False, params, extras=tuple(extras))
+        if not os.path.exists(path):
+            degraded = degrade_with_carry(match, params, seed=i)
+            df = features_for(degraded, None, version=version)
+            if extras:
+                from hackbarca.features.coach import extra_features
+                df = pd.concat([df, extra_features(degraded, tuple(extras))], axis=1)
+            _save(df, path)
+        out.append((path, gt))
+    return out
