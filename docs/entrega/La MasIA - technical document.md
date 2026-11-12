@@ -1,6 +1,6 @@
 # La MasIA — Possession from automatic tracking (More Than A Hack 2027, Initial Challenge)
 
-> DRAFT (2026-11-10). Values marked **TODO** are filled in when the model is frozen (14 Nov). The
+> DRAFT (2026-11-12). Values marked **TODO** are filled in when the model is frozen (14 Nov). The
 > submitted file is the one we have reproduced bit for bit on a second machine (section 9).
 > To be exported as `La MasIA.pdf`.
 
@@ -15,11 +15,15 @@ sequences, not frames:
    and context around the gaps where the ball is missing.
 2. **A stacked LightGBM**. A first layer predicts H/A/D per frame. A second layer re-reads the first
    layer's out-of-fold probabilities summarised 1-10 s backwards, centred and forwards, so it learns
-   how far to trust them.
-3. **An offline Viterbi decoder** per half, with switch costs between H, A and D. It turns
+   how far to trust them. Training gives **every possession the same total weight**, so short
+   possessions (the ones spellF1 punishes when missed) count as much as long ones.
+3. **A player-possessor network blended in logit space** (30 %): attention between the visible players
+   of each frame plus a bidirectional GRU over 10 s, which estimates *which player* has the ball and
+   derives the team from it (section 3.3).
+4. **An offline Viterbi decoder** per half, with switch costs between H, A and D. It turns
    probabilities into possessions and places each boundary where the evidence on both sides is best
    explained, so there is no systematic lag.
-4. **Two post-processing rules**: a predicted dead ball shorter than 3 s between two live spells is
+5. **Two post-processing rules**: a predicted dead ball shorter than 3 s between two live spells is
    given to the previous spell (section 3.4), and everything before each half's kick-off is D
    (section 4).
 
@@ -65,10 +69,14 @@ for it, before the 3 Nov clarification.
 - Leave-one-match-out over the ten matches, pooled spellF1.
 - A change is accepted only if it improves the pooled score by **≥ 0.01** *and* improves **at least 7
   of the 10** held-out matches.
-- **Shape check on the challenge** (automatic pass/fail, no parameter is fitted with it): a candidate
-  that passes the bench must not make the shape of our own prediction on the real match worse than the
-  current one (short dead-ball spells per minute, dead-ball spells per minute, direct H↔A changes per
-  minute, share of D). These are aggregates of our own prediction, with no ground truth.
+- **Shape check on the challenge** (automatic pass/fail veto, no parameter is fitted with it). Aggregates
+  of our own prediction on the real match, with no ground truth. A candidate that passes the bench is
+  submitted only if its prediction meets fixed limits on the known defect of the challenge: at most 0.25
+  dead-ball spells under 5 s per minute, 0.8-1.3 dead-ball spells per minute, and 38-50 % of D. Among the
+  candidates that pass, the best on the bench wins, with the order written down before the challenge is
+  looked at. The check never chooses between candidates. (Until 12 Nov the veto was relative to the
+  previous submission; every candidate that improved the bench lowered the direct H↔A changes, so we
+  moved to absolute limits on the dead-ball measures and report the direct changes as a known risk.)
 - **Domain check**: before accepting a feature family we compare its percentiles on the real tracking
   and on the bench. This caught a fixed-threshold touch detector that worked on the bench and not on
   the heavily filtered real ball.
@@ -79,9 +87,13 @@ for it, before the 3 Nov clarification.
 | model trained on the previous bench (v3), decoded as submitted | 0.7010 | — |
 | retrained on bench v3.1 | 0.7254 | 10 / 10 vs. the line above |
 | + steal signatures (section 3.1) | **0.7410** | 9 / 10 vs. the line above |
-| TODO: + equal weight per possession (E113) | TODO | TODO |
+| + equal weight per possession | **0.7555** | 8 / 10 vs. the line above |
 | TODO: + two heads, live and who (E115) | TODO | TODO |
 | TODO: + SkillCorner for "who" only (E114) | TODO | TODO |
+
+The submitted pipeline adds the short dead-ball rule and the possessor blend; it is scored the same way,
+with the rule inside: steal signatures 0.7389 → + equal weight per possession 0.7513 → **+ possessor blend
+0.7621** (8 / 10 vs. the line before).
 
 For reference, the official baseline scores 0.2433 on the public window and our first rule-based
 model scored ~0.36 on the original bench. The bench is still somewhat easier than the challenge, so
@@ -114,31 +126,50 @@ change is informative while the current level is not.
   plus the original features.
 - Trained on the ten bench matches with their raw labels. The controlled-possession rule is used to
   score, not to train: training on it did not help.
-- TODO (E113-E116): sample weights per possession, two heads, extra SkillCorner matches.
+- **Equal weight per possession**: each live frame weighs 8 s divided by the length of its possession in
+  the controlled-possession labels, clipped to [0.25, 4], and the live weights are rescaled so that their
+  sum is unchanged. Dead-ball frames weigh 1. Same weights on the team-swapped copy and in both layers.
+  Alone it moves the bench from 0.7410 to 0.7555 (8 / 10).
 
-### 3.3 Decoder
-Viterbi per half with fixed costs (temperature 1, switch 20, to-dead 10, from-dead 10), chosen on the
-bench. Tuning the decoder, a duration model (HSMM), a minimum duration of 2 s, or making a direct change
-cheaper than going through a dead ball was worth +0.005 at most.
+### 3.3 Player-possessor network
+- Input per frame (5 fps): the visible player slots (position, velocity, team, distance to the ball) and
+  global context. Attention between players, then a bidirectional GRU over 10 s windows.
+- Two heads: H/A/D, and "which player controls the ball" (or nobody), whose target comes from the clean
+  bench tracking (the nearest player of the possessing team within 2 m of the clean ball). P(H) and P(A)
+  combine the two heads; the prediction is averaged with the team-swapped input.
+- Trained on the ten bench matches (6 epochs, fixed seed). Its weights are versioned (`possessor.pt`,
+  0.8 MB). It runs on CPU with deterministic algorithms at submission time.
+- Averaged with the LightGBM it did not help (0.7236 vs. 0.7254). **Blended in logit space** with weight
+  0.3 (p ∝ p_LGBM^0.7 · p_possessor^0.3), chosen leaving one match out, it adds +0.011 with the short
+  dead-ball rule (8 / 10).
 
-### 3.4 Short dead-ball rule
+### 3.4 Decoder
+Viterbi per half. The costs are chosen on the bench with the same leave-one-match-out search as the
+model (40 sampled settings), for the final blend and with the short dead-ball rule inside: temperature
+1.02, switch 35.8, to-dead 165.6, from-dead 11.0. Opening a dead ball is expensive and closing it is
+cheap: a new dead-ball spell needs strong evidence, which removes the short dead balls that split
+possessions on the challenge. A duration model (HSMM), a minimum duration of 2 s, snapping boundaries to
+the nearest touch, or making a direct change cheaper than going through a dead ball did not help.
+
+### 3.5 Short dead-ball rule
 On the challenge our prediction had about 0.68 dead-ball spells under 5 s per minute; the bench ground
 truth has 0.09. Most of them split one possession in two (H D H), which costs two possessions in
 spellF1. The rule (a D under 3 s between two live spells takes the previous label) was fixed on the
 bench, where it is neutral on clean predictions (+0.001) and recovers +0.023 when the challenge's
 excess is injected. On the challenge, the shape of our prediction moved as follows (aggregates of our
 own prediction, no ground truth; the first two columns are earlier tracking-only versions, **without**
-the short dead-ball rule or the kick-off rule; the last one is the submitted model, which also adds the
-steal signatures):
+the short dead-ball rule or the kick-off rule; the third adds the steal signatures and both rules; the
+last one is the submitted model):
 
-| per minute of graded play | model trained on bench v3, no rules | retrained on bench v3.1, no rules | submitted model + both rules |
-|---|---|---|---|
-| dead-ball spells under 5 s | 0.680 | 0.529 | **0.274** |
-| dead-ball spells | 1.775 | 1.605 | **1.360** |
-| direct H↔A changes | 1.397 | 1.482 | **1.539** |
-| share of D | 0.448 | 0.428 | **0.436** |
+| per minute of graded play | bench v3, no rules | bench v3.1, no rules | + steal signatures + both rules | **submitted** | limit |
+|---|---|---|---|---|---|
+| dead-ball spells under 5 s | 0.680 | 0.529 | 0.274 | **0.142** | ≤ 0.25 |
+| dead-ball spells | 1.775 | 1.605 | 1.360 | **1.039** | 0.8-1.3 |
+| direct H↔A changes | 1.397 | 1.482 | 1.539 | **1.435** | reported |
+| share of D | 0.448 | 0.428 | 0.436 | **0.442** | 0.38-0.50 |
 
-The submitted model predicts 2.88 possessions per minute; the bench ground truth has 3.03.
+The submitted model predicts 2.46 possessions per minute (mean 13.6 s); the bench ground truth has 3.03.
+It changes team directly less often than the bench ground truth, mostly inside ball gaps (section 8).
 
 ## 4. Possession rules implemented
 
@@ -148,7 +179,7 @@ The submitted model predicts 2.88 possessions per minute; the bench ground truth
   bench is scored with controlled possession. The decoder's switch cost then requires sustained
   evidence for the other team, so a deflection or a duel without control does not flip possession.
 - **Restarts and dead ball.** D comes from collective speed, restart layouts, the ball near or beyond
-  the lines, and the context of long ball gaps. Short dead balls inside play follow section 3.4.
+  the lines, and the context of long ball gaps. Short dead balls inside play follow sections 3.4 and 3.5.
 - **Ball missing (41 % of graded frames).** Inside a gap the model relies on team context: who had
   the ball before and after the gap, team movement and collective speed.
 - **Before each kick-off.** The second half is graded from about two minutes before its kick-off, and
@@ -178,14 +209,20 @@ The submitted model predicts 2.88 possessions per minute; the bench ground truth
 | pose (throw-ins, goalkeeper with the ball), referee position | dropped | did not pass their gates |
 | other coach-style families: formation, game situations, pressing, territory, game state | dropped | below the gate |
 | sustained control (40 columns: closest-player persistence, support, collective deceleration) | dropped | 0.7296 vs. 0.7254, 4/10 |
-| player-possessor model (PathCRF-like), MS-TCN, XGBoost blend, bagging | dropped | 0.7236 / 0.7207 vs. 0.7254; blend −0.008; bagging −0.011 |
+| equal weight per possession | **used** | +0.0145, 8/10 |
+| player-possessor network (PathCRF-like), blended in logit space | **used** | +0.011 with the short dead-ball rule, 8/10 (averaged in probability: 0.7236 vs. 0.7254) |
+| MS-TCN, averaged or blended in logit space | dropped | averaged 0.7207 vs. 0.7254; in logit 0.7514 vs. 0.7555 |
+| XGBoost blend, bagging | dropped | blend −0.008; bagging −0.011 |
+| boundaries snapped to the nearest touch | dropped | −0.0004 to −0.013: the bench touch detector is too noisy |
 | 20 SkillCorner open matches as extra training data (all labels) | dropped | 0.6856 vs. 0.7254 (worse in 9/10). SkillCorner has no dead-ball label; see E114 |
 | decoder: direct change cheaper than stop + restart | dropped | ≤ +0.005 |
 | minimum possession of 2 s (post-processing) | dropped | +0.005, 6/10; it also removes real short possessions |
-| TODO: equal weight per possession, two heads, SkillCorner for "who" only | TODO | TODO |
+| TODO: two heads (live, and who), SkillCorner for "who" only | TODO | TODO |
 
-The last four ideas came from reading other participants' public repositories after the 3 Nov
-clarification. We re-implemented them on our bench and judged them with the same protocol.
+Equal weight per possession, the logit blend with a sequence model, boundaries snapped to touches, a
+cheaper direct change in the decoder and a minimum possession came from reading other participants'
+public repositories after the 3 Nov clarification. We re-implemented them on our bench and judged them
+with the same protocol.
 
 ## 6. Public window and labelled data
 
@@ -228,7 +265,7 @@ data as inputs, automatic checks, and any dataset with usage rights.
 | simulator of the bench | aggregates of the challenge's *tracking* (share of missing ball, gap lengths, ball dynamics, players' speed in gaps) to make the **external** matches look like it | no ground truth or video; no model parameter is fitted on the challenge |
 | per-match features (touch threshold, team blocks as z-scores per half) | the challenge's own tracking, at inference | a fixed computation applied to the input |
 | shape check (section 2.3) | aggregates of our own prediction | automatic pass/fail check, no parameter is fitted |
-| short dead-ball rule (3 s) and decoder costs | chosen on the bench only | complies |
+| short dead-ball rule (3 s), decoder costs, possession weights, possessor and its blend weight | chosen and trained on the bench only | complies |
 | kick-off rule | Smart Tagging `Kick Off (Start)` and the tracked ball, as inputs | complies; the FAQ kick-off frames were only used to report its error |
 | AI assistants | coding agents never read challenge data; they ran scripts that print aggregates only | no challenge data uploaded |
 
@@ -239,7 +276,10 @@ data as inputs, automatic checks, and any dataset with usage rights.
   identical to it.
 - Undetected steals remain the main loss, especially short possessions with no pass.
 - Inside long ball gaps, accuracy drops sharply; the bench still under-represents live play inside
-  crowded gaps.
+  crowded gaps. On the challenge the submitted model changes team directly 1.44 times per minute (bench
+  ground truth 2.03), and only 0.16 per minute inside ball gaps (bench 0.98): inside a gap it tends to
+  go through a dead ball instead. We accepted this risk because the bench, our only measure of accuracy,
+  improves by +0.027 over the previous submission.
 - Without the video, the model cannot see who carries the ball inside the tracker's gaps. A ball
   detector trained only on external video would bring that signal back in a compliant way; there was no
   time to train and validate it before the deadline.
@@ -256,17 +296,21 @@ uv sync                                  # Python 3.11, versions pinned in uv.lo
 uv run python -m hackbarca.pipeline.make_submission --model l3 --team-name "La MasIA"
 ```
 
-The trained model is committed in `src/hackbarca/models/artifacts/`. It can be retrained from open data
-with:
+The trained models are committed in `src/hackbarca/models/artifacts/`. They can be retrained from open
+data with:
 
 ```bash
 uv run python -m hackbarca.pipeline.train_l3_final --bench v3_1 --no-tags --stack \
-  --features touch+ball+players+blocks+structure+restart --extras transition \
-  --temperature 1 --switch 20 --to-dead 10 --from-dead 10
+  --features touch+ball+players+blocks+structure+restart --extras transition --spell-weight \
+  --temperature 1.0224660109323296 --switch 35.81318288460761 \
+  --to-dead 165.64765077035295 --from-dead 10.960713295319051 --possessor-weight 0.3
+uv run python -m hackbarca.pipeline.train_possessor_final     # GPU if available, ~3 min
 ```
 
 The short dead-ball rule and the kick-off rule are on by default. LightGBM runs with
 `deterministic=True` and forced column-wise histograms, the model files are written byte for byte
-identically, and `make_submission` prints the sha256 of the file. Two runs of the current model give
-the same file, sha256 prefix `df01cd02b266e933` (305 possessions, mean 11.7 s). TODO: final model if
-E113-E115 change it, full sha256, commit and the second-machine check.
+identically, and `make_submission` prints the sha256 of the file. The possessor is trained on a GPU with
+a fixed seed, which does not guarantee identical bits on retraining, so its weights are versioned; the
+submission runs it on CPU with deterministic algorithms. Two runs of the submitted model give the same
+file, sha256 prefix `2223250da5edc7ed` (260 possessions, mean 13.6 s). TODO: final model if E114-E115
+change it, full sha256, commit and the second-machine check.
