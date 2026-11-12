@@ -19,8 +19,15 @@ Formato: la entrada más nueva va **arriba**.
 - **E127 (umbral de la regla):** con la decodificación de E122 la regla apenas actúa en el banco; se mantienen 3 s.
 - **E128 (10 épocas):** 0,7563; sobreajusta.
 - **E129 (peso según balón visible o en hueco):** 0,7608; el óptimo es 0,3 en los dos casos.
-- Cola: E123 (balón muerto llevado a sacar) desde las 15:11; después E114.
-- Pendiente: leer E123, E114 y E125-E127; si alguno supera a E122 en el banco, pre-registro, veto de ADR-0024 y artefacto.
+- **E123 (balón muerto llevado a sacar):** 0,7368 frente a 0,7555; peor. **E114:** parado a las 22:04 sin terminar.
+- **Cierre de la entrega (decisión de Manel, 22:00): E122.**
+  - `make_submission` por tercera vez: el mismo sha `2223250da5edc7ed`.
+  - Pasa el `validate_submission.py` oficial: 199.319 filas, 260 posesiones de 13,6 s.
+  - Documento técnico cerrado, sin TODO.
+- Pendiente (personas):
+  - subir al Google Form el CSV, el enlace del repo y el documento;
+  - fusionar `competidores` en `main` (PR) y hacer público el repo;
+  - reproducción en una segunda máquina, si da tiempo.
 - Bloqueos / preguntas para el equipo: confirmar el email del 3 nov; revisión de ADR-0023/0024; reproducción en una segunda máquina.
 
 ## 2026-11-12 — Manel (con agente) · nueva entrega E122 (pesos por posesión + poseedor); I6 e I8-TCN cerradas

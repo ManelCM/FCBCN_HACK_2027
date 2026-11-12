@@ -1,8 +1,7 @@
 # La MasIA — Possession from automatic tracking (More Than A Hack 2027, Initial Challenge)
 
-> DRAFT (2026-11-12). Values marked **TODO** are filled in when the model is frozen (14 Nov). The
-> submitted file is the one we have reproduced bit for bit on a second machine (section 9).
-> To be exported as `La MasIA.pdf`.
+> Final version (2026-11-12). The submitted file `La MasIA.csv` is regenerated bit for bit by the
+> command in section 9 (three runs, same sha256 prefix `2223250da5edc7ed`).
 
 ## 1. Approach in one paragraph
 
@@ -88,7 +87,6 @@ for it, before the 3 Nov clarification.
 | retrained on bench v3.1 | 0.7254 | 10 / 10 vs. the line above |
 | + steal signatures (section 3.1) | **0.7410** | 9 / 10 vs. the line above |
 | + equal weight per possession | **0.7555** | 8 / 10 vs. the line above |
-| TODO: + SkillCorner for "who" only (E114) | TODO | TODO |
 
 The submitted pipeline adds the short dead-ball rule and the possessor blend; it is scored the same way,
 with the rule inside: steal signatures 0.7389 → + equal weight per possession 0.7513 → **+ possessor blend
@@ -213,12 +211,14 @@ It changes team directly less often than the bench ground truth, mostly inside b
 | MS-TCN, averaged or blended in logit space | dropped | averaged 0.7207 vs. 0.7254; in logit 0.7514 vs. 0.7555 |
 | XGBoost blend, bagging | dropped | blend −0.008; bagging −0.011 |
 | boundaries snapped to the nearest touch | dropped | −0.0004 to −0.013: the bench touch detector is too noisy |
-| 20 SkillCorner open matches as extra training data (all labels) | dropped | 0.6856 vs. 0.7254 (worse in 9/10). SkillCorner has no dead-ball label; see E114 |
+| 20 SkillCorner open matches as extra training data (all labels) | dropped | 0.6856 vs. 0.7254 (worse in 9/10). SkillCorner has no dead-ball label |
 | decoder: direct change cheaper than stop + restart | dropped | ≤ +0.005 |
 | minimum possession of 2 s (post-processing) | dropped | +0.005, 6/10; it also removes real short possessions |
 | two heads: P(live) and P(home \| live) | dropped | 0.7549 vs. 0.7555, 5/10; with the possessor blend 0.7603 vs. 0.7621 |
 | blending more models in logit space (two-head LightGBM, MS-TCN, other possessor weights) | dropped | −0.002 to −0.005 vs. the submitted blend, 2-4/10 |
-| TODO: SkillCorner for "who" only (with two heads) | TODO | TODO |
+| simulated dead ball carried to the restart spot (extra training copies) | dropped | 0.7368 vs. 0.7555, worse |
+| possessor with other seeds, averaged seeds, 10 epochs, separate weights for live/team or ball visible/in a gap | dropped | 0.7536-0.7615 vs. 0.7621 |
+| SkillCorner for "who" only (with two heads) | not finished | stopped at the deadline; not used |
 
 Equal weight per possession, the logit blend with a sequence model, boundaries snapped to touches, a
 cheaper direct change in the decoder and a minimum possession came from reading other participants'
@@ -245,7 +245,6 @@ None of these chose between model versions.
 |---|---|---|---|
 | Metrica sample matches | derived from their public events | algorithm | 3 matches |
 | DFL/IDSSE open data | ball-status and possession flags of their tracking | provider | 7 matches |
-| TODO (if E114 passes): SkillCorner open data | possession group, live ball with visible ball only | provider | 20 matches |
 | shape check on the challenge | aggregates of our own prediction | algorithm | — |
 | **hand labels** | **none, on any match** | — | — |
 
@@ -281,6 +280,9 @@ data as inputs, automatic checks, and any dataset with usage rights.
   ground truth 2.03), and only 0.16 per minute inside ball gaps (bench 0.98): inside a gap it tends to
   go through a dead ball instead. We accepted this risk because the bench, our only measure of accuracy,
   improves by +0.027 over the previous submission.
+- The possessor network's contribution depends on its training seed: with two other seeds the bench
+  gain is +0.012 instead of +0.016 (averaging three seeds: +0.015). The bench score of the submitted
+  blend is therefore slightly optimistic.
 - Without the video, the model cannot see who carries the ball inside the tracker's gaps. A ball
   detector trained only on external video would bring that signal back in a compliant way; there was no
   time to train and validate it before the deadline.
@@ -312,6 +314,6 @@ The short dead-ball rule and the kick-off rule are on by default. LightGBM runs 
 `deterministic=True` and forced column-wise histograms, the model files are written byte for byte
 identically, and `make_submission` prints the sha256 of the file. The possessor is trained on a GPU with
 a fixed seed, which does not guarantee identical bits on retraining, so its weights are versioned; the
-submission runs it on CPU with deterministic algorithms. Two runs of the submitted model give the same
-file, sha256 prefix `2223250da5edc7ed` (260 possessions, mean 13.6 s). TODO: final model if E114-E115
-change it, full sha256, commit and the second-machine check.
+submission runs it on CPU with deterministic algorithms. Three runs of the submitted model give the same
+file, sha256 prefix `2223250da5edc7ed` (260 possessions, mean 13.6 s), and it passes the official
+`validate_submission.py`. All runs were on the same machine (Windows 11, CPU).
